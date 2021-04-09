@@ -1,0 +1,173 @@
+"""Fixtures for algorithms"""
+
+import sys
+from typing import Dict
+import networkx as nx
+import pytest
+import tspwplib.types as tp
+from pctsp.constants import NULL_VERTEX
+
+# pylint: disable=redefined-outer-name
+
+
+@pytest.fixture(scope="function")
+def suurballes_directed_graph(suurballes_vertices, suurballes_edges) -> nx.DiGraph:
+    """A digraph from Suurballe and Tarjan's 1984 paper"""
+    G = nx.DiGraph()
+    G.add_nodes_from(suurballes_vertices)
+    G.add_weighted_edges_from(suurballes_edges)
+    return G
+
+
+@pytest.fixture(scope="function")
+def expected_labeled(suurballes_vertices):
+    """Expected labels at the end of Suurballe's algorithm"""
+    return dict(
+        zip(
+            suurballes_vertices,
+            [
+                True,
+                False,
+                True,
+                False,
+                True,
+                True,
+                True,
+                False,
+            ],
+        )
+    )
+
+
+def empty_list_lookup(vertices):
+    """Vertex to empty list lookup"""
+    return {v: [] for v in vertices}
+
+
+@pytest.fixture(scope="function")
+def expected_edges_incident_to_vertex(suurballes_vertices):
+    """Expected value of the lookup i - empty lists"""
+    return empty_list_lookup(suurballes_vertices)
+
+
+@pytest.fixture(scope="function")
+def expected_children_after_suurballe(suurballes_vertices):
+    """Expected children of each vertex in the tree after Suurballe's algorithm"""
+    # all empty apart from vertex C is a child of A
+    children = empty_list_lookup(suurballes_vertices)
+    children[1] = [3]
+    return children
+
+
+@pytest.fixture(scope="function")
+def expected_adjusted_cost_function(suurballes_vertices) -> tp.EdgeFunction:
+    """Expected value of the adjusted cost function of each edge"""
+    return dict(
+        zip(
+            suurballes_vertices,
+            [
+                {1: 0, 2: 0, 4: 1},
+                {3: 0, 5: 2, 4: 0},
+                {5: 0},
+                {6: 1},
+                {6: 0},
+                {7: 0},
+                {},
+                {2: 10, 6: 8},
+            ],
+        )
+    )
+
+
+@pytest.fixture(scope="function")
+def expected_tentative_distance(suurballes_vertices) -> tp.VertexFunction:
+    """Expected value of lookup d"""
+    return dict(
+        zip(
+            suurballes_vertices,
+            [
+                0,
+                sys.maxsize,
+                12,
+                sys.maxsize,
+                1,
+                2,
+                2,
+                sys.maxsize,
+            ],
+        )
+    )
+
+
+@pytest.fixture(scope="function")
+def expected_tentative_predecessor(suurballes_vertices) -> tp.VertexLookup:
+    """Expected values of p"""
+    return dict(
+        zip(
+            suurballes_vertices,
+            [
+                NULL_VERTEX,
+                NULL_VERTEX,
+                7,
+                NULL_VERTEX,
+                0,
+                1,
+                3,
+                NULL_VERTEX,
+            ],
+        )
+    )
+
+
+@pytest.fixture(scope="function")
+def expected_process_cause(suurballes_vertices) -> tp.VertexLookup:
+    """Expected value of q"""
+    return dict(
+        zip(
+            suurballes_vertices,
+            [
+                NULL_VERTEX,
+                NULL_VERTEX,
+                5,
+                NULL_VERTEX,
+                0,
+                0,
+                4,
+                NULL_VERTEX,
+            ],
+        )
+    )
+
+
+@pytest.fixture(scope="function")
+def expected_disjoint_paths(suurballes_vertices) -> Dict[tp.Vertex, tp.DisjointPaths]:
+    """The optimal disjoint paths for suurballes graph"""
+    return dict(
+        zip(
+            suurballes_vertices,
+            [
+                ([0], []),
+                ([], []),
+                ([0, 1, 5, 7, 2], [0, 2]),
+                ([], []),
+                ([0, 4], [0, 1, 4]),
+                ([0, 1, 5], [0, 2, 5]),
+                ([0, 1, 3, 6], [0, 4, 6]),
+                ([], []),
+            ],
+        )
+    )
+
+
+@pytest.fixture(scope="function")
+def tree() -> nx.DiGraph:
+    """A simple directed tree"""
+    G = nx.DiGraph()
+    G.add_edge(0, 1)
+    G.add_edge(0, 2)
+    G.add_edge(1, 3)
+    G.add_edge(1, 4)
+    G.add_edge(2, 6)
+    G.add_edge(2, 7)
+    assert nx.is_tree(G)
+    return G

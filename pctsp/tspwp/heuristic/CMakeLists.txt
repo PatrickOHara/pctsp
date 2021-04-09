@@ -1,0 +1,38 @@
+set(TARGET "heuristic")
+Python3_add_library(${TARGET} SHARED "heuristic.cpp")
+
+set_target_properties(${TARGET} PROPERTIES SUFFIX ${PYTHON_MODULE_EXTENSION})
+
+# include header files
+target_include_directories(${TARGET} PUBLIC ${PCTSP_INCLUDE_DIRS})
+
+message("graph tool include: " ${GRAPH_TOOL_INCLUDE_DIRECTORIES})
+# include and link to external dependencies, e.g. boost, graph-tool
+target_include_directories(${TARGET} PRIVATE
+	${GRAPH_TOOL_INCLUDE_DIRECTORIES}
+	${Python3_INCLUDE_DIRS}
+	${Boost_INCLUDE_DIRS}
+	${SCIP_INCLUDE_DIRS}
+)
+target_link_libraries(${TARGET} PRIVATE ${Boost_LIBRARIES} ${Python3_LIBRARIES} ${GRAPH_TOOL_LIBRARIES})
+
+# compiler options
+target_compile_options(${TARGET} PRIVATE -std=c++17)    # prevents graph-tool warnings
+
+get_filename_component(CURRENT_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+if(${SRC_DIR} STREQUAL ${CURRENT_SRC_DIR}) 
+    set(DST_DIR ".") # if parent is the base folder
+else()
+	file(RELATIVE_PATH DST_DIR ${SRC_DIR} ${CMAKE_CURRENT_SOURCE_DIR})  
+endif()
+
+# install c++ library
+install(TARGETS ${TARGET} DESTINATION ${DST_DIR} COMPONENT "EXT")
+
+# move python files
+file(GLOB PYFILES LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.py")
+install(FILES ${PYFILES} DESTINATION ${DST_DIR} COMPONENT "PY")
+
+set(TARGET_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/lib${TARGET})
+message("${TARGET} LIBS: " ${TARGET_LIBRARIES})
+list(APPEND PCTSP_LIBRARIES ${TARGET_LIBRARIES})

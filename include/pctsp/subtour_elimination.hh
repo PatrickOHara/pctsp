@@ -1,0 +1,4 @@
+#ifndef __PCTSP_SUBTOUR_ELIMINATION__
+#define __PCTSP_SUBTOUR_ELIMINATION__
+
+#endif

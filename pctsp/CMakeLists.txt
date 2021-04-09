@@ -1,0 +1,60 @@
+Python3_add_library(graph SHARED "graph.cpp")
+set_target_properties(graph PROPERTIES SUFFIX ${PYTHON_MODULE_EXTENSION})
+target_compile_options(graph PRIVATE -std=c++17)
+target_include_directories(graph PUBLIC ${PCTSP_INCLUDE_DIRS})
+target_include_directories(graph PRIVATE
+	${Python3_INCLUDE_DIRS}
+	${Boost_INCLUDE_DIRS}
+)
+target_link_libraries(graph PRIVATE
+	${Boost_LIBRARIES}
+	${Python3_LIBRARIES}
+)
+
+Python3_add_library(preprocessing SHARED "preprocessing.cpp")
+set_target_properties(preprocessing PROPERTIES SUFFIX ${PYTHON_MODULE_EXTENSION})
+target_compile_options(preprocessing PRIVATE -std=c++17)
+target_include_directories(preprocessing PUBLIC ${PCTSP_INCLUDE_DIRS})
+target_include_directories(preprocessing PRIVATE
+	${Python3_INCLUDE_DIRS}
+	${Boost_INCLUDE_DIRS}
+)
+target_link_libraries(preprocessing PRIVATE
+	${Boost_LIBRARIES}
+	${Python3_LIBRARIES}
+    graph
+)
+
+Python3_add_library(algorithms SHARED "algorithms.cpp")
+set_target_properties(algorithms PROPERTIES SUFFIX ${PYTHON_MODULE_EXTENSION})
+target_compile_options(algorithms PRIVATE -std=c++17)
+target_include_directories(algorithms PUBLIC ${PCTSP_INCLUDE_DIRS})
+target_include_directories(algorithms PRIVATE
+	${Python3_INCLUDE_DIRS}
+	${Boost_INCLUDE_DIRS}
+    ${SCIP_INCLUDE_DIRS}
+)
+target_link_libraries(algorithms PRIVATE
+	${Boost_LIBRARIES}
+	${Python3_LIBRARIES}
+    ${SCIP_LIBRARIES}
+    graph
+    preprocessing
+)
+
+
+
+# Python3_add_library(preprocessing SHARED "preprocessing.cpp")
+# Python3_add_library(algorithms SHARED "algorithms.cpp")
+
+
+# add modules - keep everything tidy in directories!
+# add_subdirectory(algorithms)
+# add_subdirectory(constants)
+# add_subdirectory(heuristic)
+# add_subdirectory(preprocessing)
+
+# copy all the py modules to dist folder
+# file(RELATIVE_PATH DST_DIR ${SRC_DIR} "${CMAKE_CURRENT_SOURCE_DIR}")
+# file(GLOB PYFILES LIST_DIRECTORIES false RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.py")
+# install(FILES ${PYFILES} DESTINATION ${DST_DIR} COMPONENT "PY") # copy all the py-files in dir

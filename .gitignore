@@ -14,3 +14,8 @@ paper/main.pdf
 # python
 *.egg-info
 __pycache__
+
+# cpp build
+build/
+dist/
+CMakeCache.txt
