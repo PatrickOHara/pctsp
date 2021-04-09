@@ -1,0 +1,34 @@
+language: python
+python:
+  - "3.8"
+cache: pip
+services: docker
+env:
+  global:
+    - PROJECT_NAME=template
+    - DOCKER_TAG="$DOCKER_USERNAME/$PROJECT_NAME:$TRAVIS_BRANCH"
+
+jobs:
+  include:
+    # build from the docker image
+    - stage: "test template"
+      name: "docker build and push image"
+      script:
+        - docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+        - docker build -t $DOCKER_TAG .
+        - docker push $DOCKER_TAG
+
+    # run all tests and code style checks
+    - name: "unit tests & code style"
+      install:
+        - pip install .
+        - pip install -r requirements.txt
+      script:
+        # Check black formatting would not make any chages
+        - black --check */
+        # Flake8 performs pyflakes, pycodestyle and McCabe complexity checks
+        - flake8 --ignore=E203,W503
+        # pylint provides stricter linting
+        - pylint --rcfile .pylintrc setup.py tests/* template
+        # Run unit tests
+        - pytest

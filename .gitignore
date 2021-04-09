@@ -1,0 +1,16 @@
+
+# latex
+paper/main.pdf
+*.aux
+*.out
+*.sav
+*.bbl
+*.blg
+*.log
+
+# misc
+.vscode
+
+# python
+*.egg-info
+__pycache__

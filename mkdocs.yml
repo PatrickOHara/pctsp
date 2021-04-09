@@ -1,0 +1,8 @@
+site_name: "template"
+
+theme:
+    name: "material"
+
+plugins:
+    - search
+    - mkdocstrings
