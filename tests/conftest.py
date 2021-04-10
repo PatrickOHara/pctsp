@@ -1,13 +1,81 @@
 """Fixtures for algorithms"""
 
 import sys
-from typing import Dict
+from typing import Dict, List, Set, Tuple
 import networkx as nx
 import pytest
 import tspwplib.types as tp
-from pctsp.constants import NULL_VERTEX
+from tspwplib import build_path_to_oplib_instance, ProfitsProblem
+from pctsp import NULL_VERTEX
 
 # pylint: disable=redefined-outer-name
+
+
+
+# fixtures that use the tspwplib
+
+@pytest.fixture(scope="function")
+def tspwplib_graph(
+    oplib_root,
+    generation,
+    graph_name,
+) -> nx.Graph:
+    """Test Suurballe's works on tspwplib instances"""
+    filepath = build_path_to_oplib_instance(oplib_root, generation, graph_name)
+    problem = ProfitsProblem.load(filepath)
+    graph = problem.get_graph()
+    return graph
+
+
+@pytest.fixture(scope="function")
+def disconnected_graph() -> nx.Graph:
+    """Graph with 3 components and 5 leaf vertices"""
+    graph = nx.Graph()
+    graph.add_edges([(0, 1), (1, 2), (0, 2), (3, 4), (5, 6), (2, 7)])
+    return graph
+
+
+# fixtures for suurballes algorithm
+
+
+@pytest.fixture(scope="function")
+def suurballe_source() -> List[int]:
+    """Start vertex"""
+    return 0
+
+
+@pytest.fixture(scope="function")
+def suurballes_vertices() -> List[int]:
+    """Vertices"""
+    return list(range(8))
+
+
+@pytest.fixture(scope="function")
+def suurballes_edges() -> Set[Tuple[int, int, int]]:
+    """Weighted edges"""
+    return [
+        (0, 1, 3),
+        (0, 4, 8),
+        (0, 2, 2),
+        (1, 3, 1),
+        (1, 4, 4),
+        (1, 5, 6),
+        (2, 5, 5),
+        (3, 6, 5),
+        (4, 6, 1),
+        (5, 7, 2),
+        (7, 2, 3),
+        (7, 6, 7),
+    ]
+
+
+@pytest.fixture(scope="function")
+def suurballes_undirected_graph(suurballes_edges) -> nx.Graph:
+    """Undirected suurballe's graph with prize of 1 on every vertex"""
+    G = nx.Graph()
+    G.add_weighted_edges_from(suurballes_edges, weight="cost")
+    nx.set_node_attributes(G, 1, name="prize")
+    return G
 
 
 @pytest.fixture(scope="function")

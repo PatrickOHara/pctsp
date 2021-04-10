@@ -6,21 +6,21 @@
 
 
 # def test_pctsp_on_suurballes_graph(
-#     suurballes_undirected_networkx_graph, suurballe_source
+#     suurballes_undirected_graph, suurballe_source
 # ):
 #     """Test the branch and cut algorithm on a small, undirected sparse graph"""
 #     quota = 6
 #     edge_list = pctsp_branch_and_cut(
-#         suurballes_undirected_networkx_graph, quota, suurballe_source
+#         suurballes_undirected_graph, quota, suurballe_source
     )
     # assert (
     #     total_prize(
-    #         nx.get_node_attributes(suurballes_undirected_networkx_graph, "prize"),
+    #         nx.get_node_attributes(suurballes_undirected_graph, "prize"),
     #         optimal_tour,
     #     )
     #     >= quota
     # )
-    # assert total_cost_networkx(suurballes_undirected_networkx_graph, optimal_tour) > 0
+    # assert total_cost_networkx(suurballes_undirected_graph, optimal_tour) > 0
 
 
 # def test_pctsp_on_tspwplib(tspwplib_graph_tool, root):
