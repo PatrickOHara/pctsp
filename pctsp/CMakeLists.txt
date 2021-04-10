@@ -11,6 +11,13 @@ target_link_libraries(graph PRIVATE
 	${Python3_LIBRARIES}
 )
 
+Python3_add_library(knapsack SHARED "knapsack.cpp")
+set_target_properties(knapsack PROPERTIES SUFFIX ${PYTHON_MODULE_EXTENSION})
+target_compile_options(knapsack PRIVATE -std=c++17)
+target_include_directories(knapsack PUBLIC ${PCTSP_INCLUDE_DIRS})
+target_include_directories(knapsack PRIVATE ${SCIP_INCLUDE_DIRS})
+target_link_libraries(knapsack PRIVATE ${SCIP_LIBRARIES})
+
 Python3_add_library(preprocessing SHARED "preprocessing.cpp")
 set_target_properties(preprocessing PROPERTIES SUFFIX ${PYTHON_MODULE_EXTENSION})
 target_compile_options(preprocessing PRIVATE -std=c++17)
