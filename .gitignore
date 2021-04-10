@@ -14,6 +14,7 @@ paper/main.pdf
 # python
 *.egg-info
 __pycache__
+.eggs
 
 # cpp build
 build/

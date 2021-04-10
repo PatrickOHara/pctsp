@@ -13,7 +13,7 @@ from tspwplib import (
     VertexLookup,
     VertexFunction,
 )
-from ..constants import NULL_VERTEX
+from .constants import NULL_VERTEX
 
 
 def find_parents_in_shortest_path_tree(

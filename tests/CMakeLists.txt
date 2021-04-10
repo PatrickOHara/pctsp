@@ -20,15 +20,17 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 # Add googletest directly to our build. This defines
 # the gtest and gtest_main targets.
 add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
-                 ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
-                 EXCLUDE_FROM_ALL)
+                ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+                EXCLUDE_FROM_ALL)
 
 enable_testing()
 
 # name of module to test - should only need to change this
-set(TARGET_TO_TEST "heuristic" "pctsp" "preprocessing")
-file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false fixtures.cpp fixtures.hh test_*.cpp)
-set(TARGET "test_tspwp")
+# set(TARGET_TO_TEST "heuristic" "pctsp" "preprocessing")
+# file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false fixtures.cpp fixtures.hh test_*.cpp)
+set(TARGET_TO_TEST "knapsack")
+file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false "fixtures.cpp" "test_knapsack.cpp" "test_pctsp.cpp")
+set(TARGET "test_pctsp")
 
 # add any test files here
 add_executable(${TARGET} ${TEST_SOURCES})
@@ -38,7 +40,6 @@ target_compile_options(${TARGET} PRIVATE -std=c++17)
 
 # link libraries and include files
 target_link_libraries(${TARGET} PRIVATE
-    ${Boost_LIBRARIES}
     ${Python3_LIBRARIES}
     ${GRAPH_TOOL_LIBRARIES}
     gtest
@@ -46,10 +47,10 @@ target_link_libraries(${TARGET} PRIVATE
     ${TARGET_TO_TEST}
     ${CMAKE_THREAD_LIBS_INIT}   # prevents -pthread issues
     ${SCIP_LIBRARIES}
+    ${PCTSP_LIBRARIES}
 )
 target_include_directories(${TARGET} PUBLIC
     ${PCTSP_INCLUDE_DIRS}
-    ${GRAPH_TOOL_INCLUDE_DIRECTORIES}
     ${Python3_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${SCIP_INCLUDE_DIRS}

@@ -243,5 +243,5 @@ TEST(TestExpandCollapse, testIndexOfReverseIterator) {
     EXPECT_EQ(indexOfReverseIterator(mylist, rit), 0);
 }
 
-INSTANTIATE_TEST_CASE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
+INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
                         ::testing::Values(4, 5));

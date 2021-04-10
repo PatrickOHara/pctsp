@@ -35,4 +35,4 @@ OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(BUILD_SHARED_LIBS TRUE)
 
 add_subdirectory(pctsp)
-# add_subdirectory(tests)
+add_subdirectory(tests)

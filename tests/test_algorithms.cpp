@@ -72,7 +72,7 @@ TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
         bool source_found = vertex_count.find(source) != vertex_count.end();
         bool target_found = vertex_count.find(target) != vertex_count.end();
         if (source == target && !source_found)
-            vertex_count[source] == 0;
+            vertex_count[source] = 0;
         else if (source != target) {
             if (source_found)
                 vertex_count[source]++;
@@ -88,7 +88,7 @@ TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
     EXPECT_EQ(vertex_count[root_vertex], 2);
 
     // every other vertex should be counted zero or two times
-    for (auto const &[vertex, count] : vertex_count) {
-        EXPECT_TRUE(count == 0 || count == 2);
+    for (auto const &[vertex, n] : vertex_count) {
+        EXPECT_TRUE(n == 0 || n == 2);
     }
 }

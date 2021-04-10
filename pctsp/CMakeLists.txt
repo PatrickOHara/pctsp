@@ -49,6 +49,8 @@ target_link_libraries(algorithms PRIVATE
     preprocessing
 )
 
+set(PCTSP_LIBRARIES algorithms graph knapsack preprocessing)
+
 
 
 # Python3_add_library(preprocessing SHARED "preprocessing.cpp")

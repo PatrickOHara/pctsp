@@ -1,17 +1,17 @@
 """Tests for exact algorithms for PCTSP"""
 
-import networkx as nx
-from pctsp.algorithms import pctsp_branch_and_cut
-from tspwplib import total_prize, total_cost_networkx
+# import networkx as nx
+# from pctsp.algorithms import pctsp_branch_and_cut
+# from tspwplib import total_prize, total_cost_networkx
 
 
-def test_pctsp_on_suurballes_graph(
-    suurballes_undirected_networkx_graph, suurballe_source
-):
-    """Test the branch and cut algorithm on a small, undirected sparse graph"""
-    quota = 6
-    edge_list = pctsp_branch_and_cut(
-        suurballes_undirected_networkx_graph, quota, suurballe_source
+# def test_pctsp_on_suurballes_graph(
+#     suurballes_undirected_networkx_graph, suurballe_source
+# ):
+#     """Test the branch and cut algorithm on a small, undirected sparse graph"""
+#     quota = 6
+#     edge_list = pctsp_branch_and_cut(
+#         suurballes_undirected_networkx_graph, quota, suurballe_source
     )
     # assert (
     #     total_prize(
