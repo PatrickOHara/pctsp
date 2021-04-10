@@ -99,7 +99,6 @@ TEST(TestGraph, testGetPyEdgeList) {
     vertex_id_map.insert(position(2, 5));
 
     std::list<PCTSPedge> edge_list = {edge1, edge2};
-    py::list py_edge_list = getPyEdgeList(graph, vertex_id_map, edge_list);
-    EXPECT_EQ(py::len(py_edge_list), edge_list.size());
+    py::list py_edge_list = getPyEdgeList(graph, vertex_id_map, edge_list);    EXPECT_EQ(py::len(py_edge_list), edge_list.size());
     EXPECT_TRUE(py_edge_list.contains(py::make_tuple(7, 3)));
 }

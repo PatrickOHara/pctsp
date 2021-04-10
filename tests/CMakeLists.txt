@@ -28,20 +28,19 @@ enable_testing()
 # name of module to test - should only need to change this
 # set(TARGET_TO_TEST "heuristic" "pctsp" "preprocessing")
 # file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false fixtures.cpp fixtures.hh test_*.cpp)
-set(TARGET_TO_TEST "knapsack")
-file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false "fixtures.cpp" "test_knapsack.cpp" "test_pctsp.cpp")
+set(TARGET_TO_TEST knapsack pctsp_graph preprocessing)
+file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false "fixtures.cpp" "test_preprocessing.cpp" "test_knapsack.cpp" "test_graph.cpp" "test_pctsp.cpp")
 set(TARGET "test_pctsp")
 
 # add any test files here
 add_executable(${TARGET} ${TEST_SOURCES})
 
-# prevents graph-tool warnings
 target_compile_options(${TARGET} PRIVATE -std=c++17)
 
 # link libraries and include files
 target_link_libraries(${TARGET} PRIVATE
     ${Python3_LIBRARIES}
-    ${GRAPH_TOOL_LIBRARIES}
+    ${Boost_LIBRARIES}
     gtest
     gmock
     ${TARGET_TO_TEST}

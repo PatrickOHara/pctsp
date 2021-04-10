@@ -15,6 +15,7 @@ from .suurballe import (
     suurballe_shortest_vertex_disjoint_paths,
     SuurballeTree,
 )
+from .libgraph import graph_from_edge_list
 
 __all__ = [
     "adjust_edge_cost",

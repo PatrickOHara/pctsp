@@ -1,7 +1,6 @@
 """Setup script for pctsp."""
 
-# from cmaketools import setup
-from setuptools import setup
+from cmaketools import setup
 
 setup(
     author="Patrick O'Hara",
@@ -11,7 +10,7 @@ setup(
         "tspwplib>=0.5.7",
     ],
     name="pctsp",
-    # setup_requires=["setuptools_scm"],
+    setup_requires=["setuptools-scm"],
     packages=["pctsp"],
     python_requires=">=3.6",
     use_scm_version=True,
@@ -25,7 +24,7 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Operating System :: OS Independent",
     ],
-    # src_dir=".",
-    # ext_module_hint="Python3_add_library",
-    # has_package_data=True,
+    src_dir=".",
+    ext_module_hint="Python3_add_library",
+    has_package_data=True,
 )

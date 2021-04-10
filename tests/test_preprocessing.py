@@ -1,5 +1,3 @@
-
-
 import networkx as nx
 from pctsp import (
     remove_leaves,
@@ -32,12 +30,3 @@ def test_remove_components(disconnected_graph):
     graph = remove_components_disconnected_from_vertex(complete, 0)
     assert complete.num_nodes() == graph.num_nodes()
     assert complete.num_edges() == graph.num_edges()
-
-
-def test_graph_from_edge_list(suurballes_undirected_graph):
-    cost_map = nx.get_edge_attributes(suurballes_undirected_graph, "cost")
-    prize_map = nx.get_node_attributes(suurballes_undirected_graph, "prize")
-    print(prize_map)
-    assert graph_from_edge_list(
-        list(suurballes_undirected_graph.edges()), prize_map, cost_map
-    )

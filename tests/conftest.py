@@ -11,8 +11,8 @@ from pctsp import NULL_VERTEX
 # pylint: disable=redefined-outer-name
 
 
-
 # fixtures that use the tspwplib
+
 
 @pytest.fixture(scope="function")
 def tspwplib_graph(
