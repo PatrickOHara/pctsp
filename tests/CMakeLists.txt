@@ -28,7 +28,7 @@ enable_testing()
 # name of module to test - should only need to change this
 # set(TARGET_TO_TEST "heuristic" "pctsp" "preprocessing")
 # file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false fixtures.cpp fixtures.hh test_*.cpp)
-set(TARGET_TO_TEST knapsack pctsp_graph preprocessing)
+set(TARGET_TO_TEST knapsack graph preprocessing)
 file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false "fixtures.cpp" "test_preprocessing.cpp" "test_knapsack.cpp" "test_graph.cpp" "test_pctsp.cpp")
 set(TARGET "test_pctsp")
 

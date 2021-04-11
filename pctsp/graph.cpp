@@ -117,7 +117,7 @@ py::list getPyEdgeList(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
     return py_list;
 }
 
-BOOST_PYTHON_MODULE(libpreprocessing) {
+BOOST_PYTHON_MODULE(libgraph) {
     using namespace py;
     def("graph_from_edge_list", graph_from_edge_list);
 }
