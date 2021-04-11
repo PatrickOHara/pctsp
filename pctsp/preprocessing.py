@@ -1,6 +1,6 @@
-"""Preprocessing steps using vertex disjoint paths"""
+"""Preprocessing of undirected input graphs"""
 
-
+import networkx as nx
 from typing import Mapping
 from tspwplib import (
     get_original_from_split_vertex,
@@ -10,11 +10,26 @@ from tspwplib import (
     Vertex,
     VertexFunction,
 )
-from ..algorithms import (
+from .suurballe import (
     edge_disjoint_path_cost,
     extract_suurballe_edge_disjoint_paths,
     SuurballeTree,
 )
+
+
+def remove_components_disconnected_from_vertex(
+    graph: nx.Graph, vertex: Vertex
+) -> nx.Graph:
+    """Get a new graph with only one connected component that contains the vertex
+
+    Args:
+        graph: Undirected graph to preprocess
+        vertex: A vertex in the graph
+
+    Returns:
+        Graph containing all vertices connected to the given vertex
+    """
+    return graph.subgraph(nx.node_connected_component(graph, vertex))
 
 
 def undirected_vertex_disjoint_paths_map(
@@ -67,3 +82,24 @@ def vertex_disjoint_cost_map(
             original_vertex = get_original_from_split_vertex(biggest_vertex_id, vertex)
             cost_map[original_vertex] = edge_disjoint_path_cost(tree, vertex)
     return cost_map
+
+
+def remove_leaves(graph: nx.Graph) -> nx.Graph:
+    """Remove leaves from the graph
+
+    Args:
+        graph: Undirected graph
+
+    Returns:
+        New graph with no leaves
+    """
+    leaf_vertices = set()
+    leaf_vertex_found = False
+    for vertex, degree in nx.degree(graph):
+        if degree == 1:
+            leaf_vertices.add(vertex)
+            leaf_vertex_found = True
+    subgraph = graph.subgraph(set(graph.nodes()) - leaf_vertices)
+    if leaf_vertex_found:
+        return remove_leaves(subgraph)
+    return subgraph

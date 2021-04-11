@@ -16,6 +16,11 @@ from .suurballe import (
     SuurballeTree,
 )
 from .libgraph import graph_from_edge_list
+from .preprocessing import (
+    remove_leaves,
+    remove_components_disconnected_from_vertex,
+    vertex_disjoint_cost_map,
+)
 
 __all__ = [
     "adjust_edge_cost",
