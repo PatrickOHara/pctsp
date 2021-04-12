@@ -1,11 +1,8 @@
 #include "pctsp/graph.hh"
 #include "pctsp/exception.hh"
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/python.hpp>
+#include <iostream>
 
-using namespace boost;
 using namespace std;
-namespace py = boost::python;
 
 int findOrInsertVertex(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
                        int py_vertex, int &vertex_id) {
@@ -117,7 +114,24 @@ py::list getPyEdgeList(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
     return py_list;
 }
 
+// void in_the_library(PyObject *obj)
+// {
+//     std::cout << "  PyList_Check(): " << PyList_Check(obj) << std::endl <<
+//     std::flush; std::cout << "Our &PyDict_Type: " << &PyList_Type <<
+//     std::endl << std::flush; std::cout << "        Its type: " <<
+//     obj->ob_type << std::endl << std::flush; py::list d =
+//     py::extract<py::list>(obj)(); // <= exception potentially raised here
+// }
+
+// void graph_from_edge_list(py::list &py_list) {
+//     std::cout << "Hello, world!" << endl;
+//     // in_the_library(&py_list);
+//     // py::list my_list = py::extract<py::list>(py_list);
+//     std::cout << "length: " << py::len(py_list) << endl;
+// }
+
 BOOST_PYTHON_MODULE(libgraph) {
     using namespace py;
+    Py_Initialize();
     def("graph_from_edge_list", graph_from_edge_list);
 }

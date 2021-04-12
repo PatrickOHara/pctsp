@@ -10,6 +10,7 @@ paper/main.pdf
 
 # misc
 .vscode
+.env
 
 # python
 *.egg-info

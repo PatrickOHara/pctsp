@@ -73,7 +73,7 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Operating System :: OS Independent",
     ],
-    ext_modules=[CMakeExtension("pctsp/graph")],
+    ext_modules=[CMakeExtension("pctsp/libpctsp")],
     cmdclass={
         "build_ext": build_ext,
     }

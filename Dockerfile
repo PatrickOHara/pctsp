@@ -1,12 +1,7 @@
-# Build from official python image
-FROM python:3.8
-
-# Set working directory
-WORKDIR /app
+from patrickohara/scip:latest
 
 # Copy the source code to the image
-COPY setup.py setup.py
-COPY template template
+COPY . /app/pctsp
 
 # Install package
-RUN pip install .
+RUN pip3 install /app/pctsp

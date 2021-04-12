@@ -13,10 +13,15 @@ if(result)
   message(FATAL_ERROR "Build step for googletest failed: ${result}")
 endif()
 
+
+
 # Prevent overriding the parent project's compiler/linker
 # settings on Windows
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
+if (${Python_ROOT_DIR}=="")
+  message(WARNING "Python_ROOT_DIR is not set. gtest may use the wrong python version")
+endif()
 # Add googletest directly to our build. This defines
 # the gtest and gtest_main targets.
 add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
@@ -36,6 +41,9 @@ set(TARGET "test_pctsp")
 add_executable(${TARGET} ${TEST_SOURCES})
 
 target_compile_options(${TARGET} PRIVATE -std=c++17)
+# if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )
+#     set_target_properties(${TARGET} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup" )
+# endif()
 
 # link libraries and include files
 target_link_libraries(${TARGET} PRIVATE
@@ -54,3 +62,4 @@ target_include_directories(${TARGET} PUBLIC
     ${Boost_INCLUDE_DIRS}
     ${SCIP_INCLUDE_DIRS}
 )
+message("done testing")

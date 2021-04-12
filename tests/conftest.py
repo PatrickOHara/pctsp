@@ -31,7 +31,7 @@ def tspwplib_graph(
 def disconnected_graph() -> nx.Graph:
     """Graph with 3 components and 5 leaf vertices"""
     graph = nx.Graph()
-    graph.add_edges([(0, 1), (1, 2), (0, 2), (3, 4), (5, 6), (2, 7)])
+    graph.add_edges_from([(0, 1), (1, 2), (0, 2), (3, 4), (5, 6), (2, 7)])
     return graph
 
 
