@@ -1,6 +1,17 @@
-/** Algorithms for the prize collecting TSP */
 
 #include "pctsp/algorithms.hh"
+#include "pctsp/graph.hh"
+
+
+bool graph_from_edge_list(py::list &edge_list, py::dict &prize_dict,
+                          py::dict &cost_dict) {
+    VertexIdMap vertex_id_map;
+    PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
+    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
+    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
+    BOOST_ASSERT(boost::num_edges(graph) == py::len(edge_list));
+    return true;
+}
 
 py::list pctsp_branch_and_cut_bind(py::list &py_edge_list, py::dict &prize_dict,
                                    py::dict &cost_dict, int quota,
@@ -26,7 +37,14 @@ py::list pctsp_branch_and_cut_bind(py::list &py_edge_list, py::dict &prize_dict,
     return getPyEdgeList(graph, vertex_id_map, edge_list);
 }
 
-BOOST_PYTHON_MODULE(libalgorithms) {
+BOOST_PYTHON_MODULE(libpypctsp) {
     using namespace py;
+    Py_Initialize();
+
+    // graph
+    def("graph_from_edge_list", graph_from_edge_list);
+
+    // algorithms
     def("pctsp_branch_and_cut_bind", pctsp_branch_and_cut_bind);
+
 }

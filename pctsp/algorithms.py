@@ -4,7 +4,7 @@ import networkx as nx
 from tspwplib import EdgeFunctionName, Vertex, VertexFunctionName, VertexList
 
 # pylint: disable=import-error
-from .libalgorithms import pctsp_branch_and_cut_bind
+from .libpypctsp import pctsp_branch_and_cut_bind
 
 # pylint: enable=import-error
 

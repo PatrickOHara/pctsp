@@ -15,7 +15,7 @@ from .suurballe import (
     suurballe_shortest_vertex_disjoint_paths,
     SuurballeTree,
 )
-from .libgraph import graph_from_edge_list
+from .libpypctsp import graph_from_edge_list
 from .preprocessing import (
     remove_leaves,
     remove_components_disconnected_from_vertex,

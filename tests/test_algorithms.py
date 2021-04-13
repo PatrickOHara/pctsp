@@ -5,12 +5,10 @@ from pctsp import pctsp_branch_and_cut
 from tspwplib import edge_list_from_walk, total_prize, total_cost_networkx
 
 
-def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, suurballe_source):
+def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root):
     """Test the branch and cut algorithm on a small, undirected sparse graph"""
     quota = 6
-    edge_list = pctsp_branch_and_cut(
-        suurballes_undirected_graph, quota, suurballe_source
-    )
+    edge_list = pctsp_branch_and_cut(suurballes_undirected_graph, quota, root)
     assert len(edge_list) > 0
     # assert (
     #     total_prize(

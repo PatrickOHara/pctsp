@@ -25,11 +25,11 @@ def test_adjust_edge_cost():
 
 
 def test_adjusted_edge_cost_for_graph(
-    suurballes_directed_graph, suurballe_source, expected_adjusted_cost_function
+    suurballes_directed_graph, root, expected_adjusted_cost_function
 ):
     """Test the adjust cost on whole graph"""
     distance_from_source = nx.single_source_dijkstra_path_length(
-        suurballes_directed_graph, suurballe_source
+        suurballes_directed_graph, root
     )
     actual_adjusted_cost = adjust_edge_cost_for_graph(
         suurballes_directed_graph, distance_from_source
@@ -40,17 +40,13 @@ def test_adjusted_edge_cost_for_graph(
             assert expected_cost == actual_adjusted_cost[u][v]
 
 
-def test_find_parents_in_shortest_path_tree(
-    suurballes_directed_graph, suurballe_source
-):
+def test_find_parents_in_shortest_path_tree(suurballes_directed_graph, root):
     """Test finding the parent of every vertex in the shortest path tree"""
-    path_from_source = nx.single_source_dijkstra_path(
-        suurballes_directed_graph, suurballe_source
-    )
+    path_from_source = nx.single_source_dijkstra_path(suurballes_directed_graph, root)
     parents_in_tree = find_parents_in_shortest_path_tree(path_from_source)
-    assert parents_in_tree[suurballe_source] == NULL_VERTEX
-    assert parents_in_tree[1] == suurballe_source
-    assert parents_in_tree[2] == suurballe_source
+    assert parents_in_tree[root] == NULL_VERTEX
+    assert parents_in_tree[1] == root
+    assert parents_in_tree[2] == root
     assert parents_in_tree[3] == 1
     assert parents_in_tree[4] == 1
     assert parents_in_tree[5] == 2
@@ -82,13 +78,13 @@ def test_is_ancestor(tree):
     assert not is_ancestor(tree, 1, 0)
 
 
-def test_suurballe_tree_init(suurballes_directed_graph, suurballe_source):
+def test_suurballe_tree_init(suurballes_directed_graph, root):
     """Test the init function of the Suurballe tree"""
     distance_from_source, path_from_source = nx.single_source_dijkstra(
-        suurballes_directed_graph, suurballe_source
+        suurballes_directed_graph, root
     )
     parents_in_tree = find_parents_in_shortest_path_tree(path_from_source)
-    tree = SuurballeTree(suurballe_source, distance_from_source, parents_in_tree)
+    tree = SuurballeTree(root, distance_from_source, parents_in_tree)
     assert len(tree.parent) == 0
     assert len(tree.children) == 0
     assert len(tree.edges_incident_to_vertex) == 0
@@ -99,7 +95,7 @@ def test_suurballe_tree_init(suurballes_directed_graph, suurballe_source):
 
 def test_suurballe(
     suurballes_directed_graph,
-    suurballe_source,
+    root,
     expected_children_after_suurballe,
     expected_tentative_distance,
     expected_edges_incident_to_vertex,
@@ -108,9 +104,7 @@ def test_suurballe(
     expected_process_cause,
 ) -> None:
     """Test Suurballe's algorithm on the input graph from the 1984 paper"""
-    T = suurballe_shortest_vertex_disjoint_paths(
-        suurballes_directed_graph, suurballe_source
-    )
+    T = suurballe_shortest_vertex_disjoint_paths(suurballes_directed_graph, root)
     assert T.children == expected_children_after_suurballe
     assert T.tentative_distance == expected_tentative_distance
     assert T.edges_incident_to_vertex == expected_edges_incident_to_vertex
@@ -119,11 +113,9 @@ def test_suurballe(
     assert expected_process_cause == T.process_cause
 
 
-def test_edge_disjoint_path_cost(suurballes_directed_graph, suurballe_source):
+def test_edge_disjoint_path_cost(suurballes_directed_graph, root):
     """Test the cost of the disjoint paths is correct"""
-    T = suurballe_shortest_vertex_disjoint_paths(
-        suurballes_directed_graph, suurballe_source
-    )
+    T = suurballe_shortest_vertex_disjoint_paths(suurballes_directed_graph, root)
     for vertex in T:
         disjoint_cost = edge_disjoint_path_cost(T, vertex)
         if T.labeled[vertex]:
@@ -137,17 +129,13 @@ def test_edge_disjoint_path_cost(suurballes_directed_graph, suurballe_source):
 
 def test_extract_suurballe_edge_disjoint_paths(
     suurballes_directed_graph,
-    suurballe_source,
+    root,
     expected_disjoint_paths,
 ):
     """Test paths are extracted from the tree"""
-    tree = suurballe_shortest_vertex_disjoint_paths(
-        suurballes_directed_graph, suurballe_source
-    )
+    tree = suurballe_shortest_vertex_disjoint_paths(suurballes_directed_graph, root)
     for u in tree:
-        left_path, right_path = extract_suurballe_edge_disjoint_paths(
-            tree, suurballe_source, u
-        )
+        left_path, right_path = extract_suurballe_edge_disjoint_paths(tree, root, u)
         assert left_path == expected_disjoint_paths[u][0]
         assert right_path == expected_disjoint_paths[u][1]
 
@@ -155,10 +143,10 @@ def test_extract_suurballe_edge_disjoint_paths(
 def test_suurballe_on_tspwplib(tspwplib_graph):
     """Test Suurballe's works on tspwplib instances"""
     asymmetric_graph = asymmetric_from_undirected(tspwplib_graph)
-    suurballe_source = list(asymmetric_graph.nodes())[0]
-    distance_from_source = nx.shortest_path_length(asymmetric_graph, suurballe_source)
+    root = list(asymmetric_graph.nodes())[0]
+    distance_from_source = nx.shortest_path_length(asymmetric_graph, root)
     tree = suurballe_shortest_vertex_disjoint_paths(
-        asymmetric_graph, suurballe_source, weight="cost"
+        asymmetric_graph, root, weight="cost"
     )
     for vertex in tree:
         assert 2 * distance_from_source[vertex] <= edge_disjoint_path_cost(tree, vertex)

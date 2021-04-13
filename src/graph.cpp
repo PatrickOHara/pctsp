@@ -89,16 +89,6 @@ PCTSPcostMap costMapFromPyDict(py::dict &cost_dict, PCTSPgraph &graph,
     return cost_map;
 }
 
-bool graph_from_edge_list(py::list &edge_list, py::dict &prize_dict,
-                          py::dict &cost_dict) {
-    VertexIdMap vertex_id_map;
-    PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
-    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
-    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
-    BOOST_ASSERT(boost::num_edges(graph) == py::len(edge_list));
-    return true;
-}
-
 py::list getPyEdgeList(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
                        std::list<PCTSPedge> &edge_list) {
     py::list py_list;
@@ -112,26 +102,4 @@ py::list getPyEdgeList(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
         py_list.append(py_edge);
     }
     return py_list;
-}
-
-// void in_the_library(PyObject *obj)
-// {
-//     std::cout << "  PyList_Check(): " << PyList_Check(obj) << std::endl <<
-//     std::flush; std::cout << "Our &PyDict_Type: " << &PyList_Type <<
-//     std::endl << std::flush; std::cout << "        Its type: " <<
-//     obj->ob_type << std::endl << std::flush; py::list d =
-//     py::extract<py::list>(obj)(); // <= exception potentially raised here
-// }
-
-// void graph_from_edge_list(py::list &py_list) {
-//     std::cout << "Hello, world!" << endl;
-//     // in_the_library(&py_list);
-//     // py::list my_list = py::extract<py::list>(py_list);
-//     std::cout << "length: " << py::len(py_list) << endl;
-// }
-
-BOOST_PYTHON_MODULE(libgraph) {
-    using namespace py;
-    Py_Initialize();
-    def("graph_from_edge_list", graph_from_edge_list);
 }

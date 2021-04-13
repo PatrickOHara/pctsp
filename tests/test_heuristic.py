@@ -62,7 +62,7 @@
 #     assert total_prize(tspwplib_graph_tool.vp.prize, tour) >= quota
 
 
-# def test_suurballes_heuristic(suurballes_undirected_graph, suurballe_source):
+# def test_suurballes_heuristic(suurballes_undirected_graph, root):
 #     """Test Suurballe's heuristic"""
 #     # setup params
 #     quota = 5
@@ -77,7 +77,7 @@
 #         + suurballes_undirected_graph.number_of_nodes()
 #     )
 #     tree = suurballe_shortest_vertex_disjoint_paths(
-#         asymmetric_graph, split_head(biggest_vertex, suurballe_source), weight="cost"
+#         asymmetric_graph, split_head(biggest_vertex, root), weight="cost"
 #     )
 #     cost_map = vertex_disjoint_cost_map(tree, biggest_vertex)
 #     vertex_disjoint_paths_map = undirected_vertex_disjoint_paths_map(

@@ -39,8 +39,8 @@ def disconnected_graph() -> nx.Graph:
 
 
 @pytest.fixture(scope="function")
-def suurballe_source() -> List[int]:
-    """Start vertex"""
+def root() -> int:
+    """Root vertex"""
     return 0
 
 

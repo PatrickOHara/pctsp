@@ -8,12 +8,15 @@
 # set(SCIP_HINTS "$ENV{SCIP_DIR}/build $ENV{SCIP_DIR}/src")
 message("hints: " ${SCIP_HINTS})
 find_path(SCIP_INCLUDE scip/scip.h
-          PATHS /usr/local
-          HINTS ENV SCIP_DIR)
+          HINTS ENV CMAKE_SYSTEM_PREFIX_ROOT
+          HINTS ENV SCIP_ROOT
+          PATH_SUFFIXES include)
   
 find_library(SCIP_LIBRARIES
           NAMES libscip scip
-          PATHS /usr/local
+          HINTS ENV CMAKE_SYSTEM_PREFIX_ROOT
+          HINTS ENV SCIP_ROOT
+          PATH_SUFFIXES lib
 )
 
 find_file(SCIP_CONFIG_LOC scip/config.h
