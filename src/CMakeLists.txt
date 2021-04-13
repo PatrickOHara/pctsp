@@ -16,20 +16,10 @@ target_link_libraries(${TARGET} PRIVATE
     ${SCIP_LIBRARIES}
 )
 
-# set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER "algorithms.hh constraint.hh exception.hh graph.hh heuristic.hh knapsack.hh preprocessing.hh pyutils.hh subtour_elimination.hh valid_inequality.hh walk.hh")
-set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/algorithms.hh
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/constraint.hh 
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/exception.hh
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/graph.hh
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/heuristic.hh
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/knapsack.hh
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/preprocessing.hh
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/pyutils.hh
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/subtour_elimination.hh
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/valid_inequality.hh
-    ${PCTSP_INCLUDE_DIRS}/${TARGET}/walk.hh
-)
+file(GLOB_RECURSE PCTSP_HEADER_FILES "${PCTSP_INCLUDE_DIRS}/${TARGET}/*.hh")
+message("Header files: " ${PCTSP_HEADER_FILES})
+set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER "${PCTSP_HEADER_FILES}")
+
 
 if (DEFINED ENV{CMAKE_INSTALL_PREFIX})
     set(PCTSP_LIB_INSTALL_PREFIX $ENV{CMAKE_INSTALL_PREFIX})

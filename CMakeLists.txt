@@ -69,4 +69,4 @@ message("PYTHON_MODULE_EXTENSION: " ${PYTHON_MODULE_EXTENSION})
 
 add_subdirectory(src)
 add_subdirectory(pctsp)
-# add_subdirectory(tests)
+add_subdirectory(tests)

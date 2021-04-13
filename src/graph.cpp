@@ -103,3 +103,22 @@ py::list getPyEdgeList(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
     }
     return py_list;
 }
+
+py::list getPyVertexList(VertexIdMap &vertex_id_map, std::list<PCTSPvertex> &vertex_list) {
+    py::list py_list;
+    for (auto it = vertex_list.begin(); it != vertex_list.end(); it++) {
+        PCTSPvertex vertex = *it;
+        int py_vertex = getPyVertex(vertex_id_map, vertex);
+        py_list.append(py_vertex);
+    }
+    return py_list;
+}
+
+std::list<PCTSPvertex> getBoostVertexList(VertexIdMap &vertex_id_map, py::list &py_list) {
+    std::list<PCTSPvertex> vertex_list;
+    for (int i = 0; i < py::len(py_list); i++) {
+        int py_vertex = py::extract<int>(py_list[i]);
+        vertex_list.push_back(getBoostVertex(vertex_id_map, py_vertex));
+    }
+    return vertex_list;
+}

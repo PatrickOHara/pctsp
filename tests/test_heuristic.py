@@ -2,15 +2,18 @@
 
 # import networkx as nx
 # from tspwplib import total_prize, total_cost_graph_tool
+from pctsp import extend
+
 # from pctsp import collapse, extend, extend_until_prize_feasible
-# from tspwplib import (
-#     asymmetric_from_undirected,
-#     biggest_vertex_id_from_graph,
-#     edge_list_from_walk,
-#     split_head,
-#     total_cost,
-#     total_prize,
-# )
+from tspwplib import (
+    asymmetric_from_undirected,
+    biggest_vertex_id_from_graph,
+    edge_list_from_walk,
+    split_head,
+    total_cost,
+    total_prize,
+)
+
 # from pctsp import suurballe_shortest_vertex_disjoint_paths
 # from pctsp import suurballes_heuristic
 # from pctsp import (
@@ -29,16 +32,18 @@
 #     assert new_tour[0] == new_tour[len(new_tour) - 1] == root_vertex
 
 
-# def test_extend(suurballes_undirected_graph):
-#     """Test if a tour is extended"""
-#     tour = [0, 1, 3, 6, 7, 2, 0]
-#     for vertex in tour:
-#         assert suurballes_undirected_graph.vertex(vertex)
+def test_extend(suurballes_undirected_graph):
+    """Test if a tour is extended"""
+    tour = [0, 1, 3, 6, 7, 2, 0]
+    for vertex in tour:
+        assert suurballes_undirected_graph.has_node(vertex)
+    for edge in edge_list_from_walk(tour):
+        assert suurballes_undirected_graph.has_edge(edge[0], edge[1])
 
-#     extended_tour = extend(suurballes_undirected_graph, tour)
-#     assert 4 not in extended_tour
-#     assert 5 in extended_tour
-#     assert len(extended_tour) == len(tour) + 1
+    extended_tour = extend(suurballes_undirected_graph, tour)
+    assert 4 not in extended_tour
+    assert 5 in extended_tour
+    assert len(extended_tour) == len(tour) + 1
 
 
 # def test_extend_until_prize_feasible(suurballes_undirected_graph):
