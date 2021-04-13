@@ -113,7 +113,7 @@ Vertex find_vertex_with_biggest_gain(Graph &graph, std::list<Vertex> &tour,
         if (vertices_in_tour.count(vertex) == 0) {
             UnitaryGainOfVertex gain = unitary_gain_of_vertex(
                 graph, tour, cost_map, prize_map, vertex);
-            gain_map.insert_or_assign(vertex, gain);
+            gain_map[vertex] = gain;
             if (gain.gain_of_vertex > biggest_gain) {
                 biggest_gain_vertex = vertex;
                 biggest_gain = gain.gain_of_vertex;
@@ -206,7 +206,7 @@ void extend_until_prize_feasible(Graph &g, std::list<Vertex> &tour,
     bool insert_a_vertex = true;
     while (prize < quota && insert_a_vertex) {
         try {
-            Vertex biggest_gain_vertex = find_vertex_with_biggest_gain(
+            auto biggest_gain_vertex = find_vertex_with_biggest_gain(
                 g, tour, cost_map, prize_map, gain_map, vertices_in_tour);
             if (insert_a_vertex) {
                 insert_biggest_gain_vertex_into_tour(tour, biggest_gain_vertex,
@@ -270,7 +270,7 @@ getSubPathOverTour(std::list<Vertex> &tour, int index_of_first_vertex,
     // build a path from the first vertex in the path
     // when the prize of the path is feasible, break the loop
     int length_of_path = 1;
-    for (; length_of_path < length_of_tour - 1 & sub_path.prize_of_path < quota;
+    for (; (length_of_path < length_of_tour - 1) & (sub_path.prize_of_path < quota);
          length_of_path++) {
         cout << ". Started building path";
         if (path_iterator == tour.end()) {
@@ -315,7 +315,7 @@ std::list<Vertex> collapse(Graph &graph, std::list<Vertex> &tour,
         // create a path from the current position of the iterator
         int index_of_first_vertex =
             indexOfReverseIterator(tour, first_vertex_iterator);
-        SubPathOverTour sub_path_over_tour = getSubPathOverTour(
+        auto sub_path_over_tour = getSubPathOverTour(
             tour, index_of_first_vertex, prize_map, quota, root_vertex);
 
         // look for collapse vertices from the predecessor of the feasibility

@@ -42,7 +42,7 @@ PCTSPcostMap costMapFromPyDict(py::dict &cost_dict, PCTSPgraph &graph,
                                VertexIdMap &vertex_id_map);
 py::list getPyEdgeList(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
                        std::list<PCTSPedge> &edge_list);
-py::list getPyVertexList(VertexIdMap &vertex_id_map, std::list<PCTSPvertex> &vertex_list);
-std::list<PCTSPvertex> getBoostVertexList(VertexIdMap &vertex_id_map, py::list &py_list);
+py::list getPyVertexList(VertexIdMap &vertex_id_map, std::list<int> &vertex_list);
+std::list<int> getBoostVertexList(VertexIdMap &vertex_id_map, py::list &py_list);
 
 #endif

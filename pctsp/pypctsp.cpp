@@ -44,15 +44,37 @@ bool graph_from_edge_list(py::list& edge_list, py::dict& prize_dict,
 
 // heuristic bindings
 
-py::list extend_bind(py::list& edge_list, py::list& py_tour,
-    py::dict& cost_dict, py::dict& prize_dict) {
-    std::list<int> tour = pyListToStdList<int>(py_tour);
+py::list collapse_bind(py::list& edge_list, py::list& py_tour,
+    py::dict& cost_dict, py::dict& prize_dict, int quota, int py_root) {
     VertexIdMap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
+    auto tour = getBoostVertexList(vertex_id_map, py_tour);
+    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
+    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
+    int root_vertex = getBoostVertex(vertex_id_map, py_root);
+    auto new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
+    return getPyVertexList(vertex_id_map, new_tour);
+}
+
+py::list extend_bind(py::list& edge_list, py::list& py_tour,
+    py::dict& cost_dict, py::dict& prize_dict) {
+    VertexIdMap vertex_id_map;
+    PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
+    auto tour = getBoostVertexList(vertex_id_map, py_tour);
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
     PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     extend(graph, tour, cost_map, prize_map);
-    return stdListToPyList<int>(tour);
+    return getPyVertexList(vertex_id_map, tour);
+}
+
+py::list extend_until_prize_feasible_bind(py::list& edge_list, py::list& py_tour, py::dict& cost_dict, py::dict& prize_dict, int quota) {
+    VertexIdMap vertex_id_map;
+    PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
+    auto tour = getBoostVertexList(vertex_id_map, py_tour);
+    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
+    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
+    extend_until_prize_feasible(graph, tour, cost_map, prize_map, quota);
+    return getPyVertexList(vertex_id_map, tour);
 }
 
 BOOST_PYTHON_MODULE(libpypctsp) {
@@ -63,7 +85,11 @@ BOOST_PYTHON_MODULE(libpypctsp) {
     def("graph_from_edge_list", graph_from_edge_list);
 
     // heuristics
+    def("collapse_bind", collapse_bind);
     def("extend_bind", extend_bind);
+    def("extend_until_prize_feasible_bind", extend_until_prize_feasible_bind);
+    def("unitary_gain", unitary_gain);
+
 
     // algorithms
     def("pctsp_branch_and_cut_bind", pctsp_branch_and_cut_bind);

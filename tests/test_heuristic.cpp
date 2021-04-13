@@ -185,7 +185,8 @@ TEST_F(SuurballeGraphFixture, testCollapse) {
     std::list<int> new_tour =
         collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
     EXPECT_EQ(total_cost(graph, new_tour, cost_map), 16);
-    EXPECT_GE(total_prize(graph, new_tour, prize_map), quota);
+    EXPECT_GE(total_prize_of_tour(graph, new_tour, prize_map), quota);
+    EXPECT_GT(new_tour.size(), quota);
 
     // ensure the first vertex of the tour is the root vertex
     auto first_root_it =

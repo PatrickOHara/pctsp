@@ -104,7 +104,7 @@ TEST(TestGraph, testGetPyEdgeList) {
 }
 
 TEST(TestGraph, testGetPyVertexList) {
-    std::list<PCTSPvertex> vertex_list = {0, 1, 2};
+    std::list<int> vertex_list = {0, 1, 2};
     VertexIdMap vertex_id_map;
     vertex_id_map.insert(position(0, 7));
     vertex_id_map.insert(position(1, 3));
@@ -124,7 +124,7 @@ TEST(TestGraph, testGetBoostVertexList) {
     vertex_id_map.insert(position(0, 7));
     vertex_id_map.insert(position(1, 3));
     vertex_id_map.insert(position(2, 5));
-    std::list<PCTSPvertex> vertex_list = getBoostVertexList(vertex_id_map, py_list);
+    std::list<int> vertex_list = getBoostVertexList(vertex_id_map, py_list);
     auto it = vertex_list.begin();
     EXPECT_EQ(*(it++), 0);
     EXPECT_EQ(*(it++), 1);
