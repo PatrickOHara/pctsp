@@ -58,7 +58,12 @@ def test_extend_until_prize_feasible(suurballes_undirected_graph):
         suurballes_undirected_graph, tour, quota
     )
     assert 7 in extended_tour
-    assert total_prize(suurballes_undirected_graph.vp.prize, extended_tour) >= quota
+    assert (
+        total_prize(
+            nx.get_node_attributes(suurballes_undirected_graph, "prize"), extended_tour
+        )
+        >= quota
+    )
 
 
 # def test_random_tour_complete_graph(tspwplib_graph_tool):
