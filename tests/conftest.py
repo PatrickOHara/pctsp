@@ -23,7 +23,7 @@ def tspwplib_graph(
     """Test Suurballe's works on tspwplib instances"""
     filepath = build_path_to_oplib_instance(oplib_root, generation, graph_name)
     problem = ProfitsProblem.load(filepath)
-    graph = problem.get_graph()
+    graph = problem.get_graph(normalize=True)
     return graph
 
 

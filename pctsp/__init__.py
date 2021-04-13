@@ -7,8 +7,23 @@ from .heuristic import (
     collapse,
     extend,
     extend_until_prize_feasible,
-    tour_from_vertex_disjoint_paths,
+    random_tour_complete_graph,
+    random_tour_from_disjoint_paths_map,
     suurballes_heuristic,
+    tour_from_vertex_disjoint_paths,
+)
+
+# pylint: disable=import-error
+
+from .libpypctsp import graph_from_edge_list, unitary_gain
+
+# pylint: enable=import-error
+
+from .preprocessing import (
+    remove_leaves,
+    remove_components_disconnected_from_vertex,
+    undirected_vertex_disjoint_paths_map,
+    vertex_disjoint_cost_map,
 )
 from .suurballe import (
     adjust_edge_cost,
@@ -23,13 +38,6 @@ from .suurballe import (
     SuurballeTree,
 )
 
-from .libpypctsp import graph_from_edge_list, unitary_gain
-from .preprocessing import (
-    remove_leaves,
-    remove_components_disconnected_from_vertex,
-    undirected_vertex_disjoint_paths_map,
-    vertex_disjoint_cost_map,
-)
 
 __all__ = [
     "adjust_edge_cost",
@@ -45,6 +53,8 @@ __all__ = [
     "pctsp_branch_and_cut",
     "preorder",
     "postorder",
+    "random_tour_complete_graph",
+    "random_tour_from_disjoint_paths_map",
     "remove_leaves",
     "remove_components_disconnected_from_vertex",
     "suurballes_heuristic",

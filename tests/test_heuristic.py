@@ -9,12 +9,14 @@ from tspwplib import (
     total_cost,
     total_cost_networkx,
     total_prize,
+    VertexFunctionName,
 )
 from pctsp import (
     suurballe_shortest_vertex_disjoint_paths,
     collapse,
     extend,
     extend_until_prize_feasible,
+    random_tour_complete_graph,
     undirected_vertex_disjoint_paths_map,
     vertex_disjoint_cost_map,
     suurballes_heuristic,
@@ -66,12 +68,13 @@ def test_extend_until_prize_feasible(suurballes_undirected_graph):
     )
 
 
-# def test_random_tour_complete_graph(tspwplib_graph_tool):
-#     """Test random tours on complete graphs"""
-#     prize = total_prize(tspwplib_graph_tool.vp.prize, tspwplib_graph_tool.vertices())
-#     quota = int(float(prize) * 0.5)
-#     tour = random_tour_complete_graph(tspwplib_graph_tool, 0, quota)
-#     assert total_prize(tspwplib_graph_tool.vp.prize, tour) >= quota
+def test_random_tour_complete_graph(tspwplib_graph, root):
+    """Test random tours on complete graphs"""
+    prize_dict = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
+    prize = total_prize(prize_dict, tspwplib_graph.nodes())
+    quota = int(float(prize) * 0.5)
+    tour = random_tour_complete_graph(tspwplib_graph, root, quota)
+    assert total_prize(prize_dict, tour) >= quota
 
 
 def test_suurballes_heuristic(suurballes_undirected_graph, root):
