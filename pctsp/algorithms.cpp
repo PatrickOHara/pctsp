@@ -26,7 +26,7 @@ py::list pctsp_branch_and_cut_bind(py::list &py_edge_list, py::dict &prize_dict,
     return getPyEdgeList(graph, vertex_id_map, edge_list);
 }
 
-BOOST_PYTHON_MODULE(libpctsp) {
+BOOST_PYTHON_MODULE(libalgorithms) {
     using namespace py;
     def("pctsp_branch_and_cut_bind", pctsp_branch_and_cut_bind);
 }

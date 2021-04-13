@@ -14,6 +14,7 @@ find_package(SCIP REQUIRED)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(PCTSP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(PCTSP_LIBRARIES "")
+set(MACOSX_RPATH TRUE)
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -undefined dynamic_lookup")
 
 message("Python3_INCLUDE_DIRS: " ${Python3_INCLUDE_DIRS})
@@ -22,6 +23,8 @@ message("SCIP_INCLUDE_DIRS: " ${SCIP_INCLUDE_DIRS})
 message("SCIP_LIBARIES: " ${SCIP_LIBRARIES})
 message("Boost_INCLUDE_DIR: " ${Boost_INCLUDE_DIRS})
 message("Boost_LIBRARIES: " ${Boost_LIBRARIES})
+message("MACOSX_RPATH: " ${MACOSX_RPATH})
+message("CMAKE_MACOSX_RPATH: " ${CMAKE_MACOSX_RPATH})
 
 # when installing directly in CMake, redirect its intall root to dist dir
 # if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
