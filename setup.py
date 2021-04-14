@@ -1,6 +1,9 @@
 """Setup script for pctsp."""
 
+from dotenv import load_dotenv
 from skbuild import setup
+
+load_dotenv()
 
 setup(
     author="Patrick O'Hara",

@@ -1,3 +1,5 @@
+"""Useful functions for python packages"""
+
 import distutils
 import os
 from pathlib import Path
@@ -7,6 +9,7 @@ from typing import List
 
 
 def is_site_package_candidate(candidate: str) -> bool:
+    """Is the filepath candidate a site package directory?"""
     if not candidate:  # candidate is empty string or none
         return False
     candidate_path = Path(candidate)
@@ -14,6 +17,7 @@ def is_site_package_candidate(candidate: str) -> bool:
 
 
 def site_packages_candidate_list() -> List[str]:
+    """List of site package candidates"""
     candidate_list = []
     try:
         for candidate in site.getsitepackages():
@@ -38,25 +42,18 @@ def site_packages_candidate_list() -> List[str]:
 
 
 def get_prefered_site_package() -> str:
+    """Get the first site package in the candidate list"""
     candidate_list = site_packages_candidate_list()
     if len(candidate_list) == 0:
         raise FileNotFoundError("No suitable site package directories were found")
     return candidate_list[0]
 
 
-def get_relative_site_package(candidate: str, relative_to: str = sys.prefix) -> str:
-    return os.path.relpath(candidate, relative_to)
+def get_relative_site_package(candidate: str, relative: str = sys.prefix) -> str:
+    """Get the relative filepath for the site package directory"""
+    return os.path.relpath(candidate, relative)
 
 
-def get_relative_prefered_site_package(relative_to: str = sys.prefix) -> str:
-    return get_relative_site_package(
-        get_prefered_site_package(), relative_to=relative_to
-    )
-
-
-if __name__ == "__main__":
-    try:
-        relative_to = sys.argv[1]
-    except IndexError:
-        relative_to = sys.prefix
-    print(get_relative_prefered_site_package(relative_to))
+def get_relative_prefered_site_package(relative: str = sys.prefix) -> str:
+    """Get the relative filepath for the preferred relative site package"""
+    return get_relative_site_package(get_prefered_site_package(), relative=relative)

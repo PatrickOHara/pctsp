@@ -12,6 +12,7 @@ set(CMAKE_SYSTEM_PREFIX_PATH $ENV{CMAKE_SYSTEM_PREFIX_PATH})
 message("CMAKE_SYSTEM_PREFIX_PATH: " ${CMAKE_SYSTEM_PREFIX_PATH})
 message("Python_ROOT_DIR: " ${Python_ROOT_DIR})
 message("Python3_ROOT_DIR: " ${Python3_ROOT_DIR})
+message("SCIP_ROOT: " $ENV{SCIP_ROOT})
 
 # dependencies
 find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development REQUIRED)
