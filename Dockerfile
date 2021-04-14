@@ -1,4 +1,4 @@
-from patrickohara/scip:latest
+FROM patrickohara/scip:latest
 
 # Copy the source code to the image
 COPY . /app/pctsp

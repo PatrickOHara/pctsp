@@ -1,8 +1,9 @@
 """Tests for exact algorithms for PCTSP"""
 
-import networkx as nx
+# import networkx as nx
 from pctsp import pctsp_branch_and_cut
-from tspwplib import edge_list_from_walk, total_prize, total_cost_networkx
+
+# from tspwplib import edge_list_from_walk, total_prize, total_cost_networkx
 
 
 def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root):

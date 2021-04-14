@@ -25,6 +25,7 @@ from .preprocessing import (
     undirected_vertex_disjoint_paths_map,
     vertex_disjoint_cost_map,
 )
+from .pyutils import get_relative_prefered_site_package
 from .suurballe import (
     adjust_edge_cost,
     adjust_edge_cost_for_graph,
@@ -49,6 +50,7 @@ __all__ = [
     "extend",
     "extract_suurballe_edge_disjoint_paths",
     "find_parents_in_shortest_path_tree",
+    "get_relative_prefered_site_package",
     "is_ancestor",
     "pctsp_branch_and_cut",
     "preorder",
