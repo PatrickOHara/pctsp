@@ -10,7 +10,6 @@ setup(
         "tspwplib>=0.5.7",
     ],
     name="pctsp",
-    setup_requires=["setuptools-scm"],
     packages=["pctsp"],
     python_requires=">=3.6",
     use_scm_version=True,

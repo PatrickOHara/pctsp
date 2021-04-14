@@ -9,10 +9,11 @@ pip install .
 Alternatively if you only need the c++ code, you can use cmake:
 
 ```bash
+pip install cmake ninja
 mkdir build
 cd build
-cmake ..
-cmake --build .
+cmake -GNinja ..    # strongly recommended to use ninja
+cmake --build .     # build everything
 cmake --install .   # optional install
 ```
 

@@ -13,12 +13,12 @@ jobs:
     - name: Build dependencies
       run: |
         python3 -m pip install --upgrade pip
-        pip3 install scikit-build
+        pip3 install scikit-build ninja
     - name: Build
       run: |
         mkdir build
         cd build
-        cmake ..
+        cmake -GNinja ..
         cmake --build .
     - name: Test
       run: ./build/tests/test_pctsp

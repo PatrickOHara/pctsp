@@ -19,7 +19,7 @@ find_package(Boost 1.71.0 REQUIRED COMPONENTS python graph REQUIRED)
 find_package(SCIP REQUIRED)
 
 # find the python sitelibs
-set(FindSitePkgCommand "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+set(FindSitePkgCommand "import site; print(site.getsitepackages()[0])")
 execute_process ( COMMAND ${Python3_EXECUTABLE} -c "${FindSitePkgCommand}"
     OUTPUT_VARIABLE Python3_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
 
