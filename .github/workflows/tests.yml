@@ -1,0 +1,42 @@
+name: Python package
+
+on: [push]
+
+jobs:
+
+  test-cpp:
+    runs-on: ubuntu-latest
+    container: patrickohara/scip:latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build .
+    - name: Test
+      run: ./build/tests/test_pctsp
+
+  test-python:
+    runs-on: ubuntu-latest
+    container: patrickohara/scip:latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install development dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip3 install -r requirements.txt
+    - name: Install pctsp
+      run: pip3 install .
+    - name: Test pctsp
+      run: pytest tests
+    - name: Lint
+      run: |
+        pylint pctsp/*
+        pylint setup.py
+        pylint tests/*
+        mypy pctsp
+        black --check */

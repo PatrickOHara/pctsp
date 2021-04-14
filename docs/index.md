@@ -1,3 +1,3 @@
-# template
+# pctsp
 
-Homepage for the template project.
+Homepage for the pctsp project.

@@ -40,3 +40,6 @@ WORKDIR ${SCIP_DIR}/build
 RUN cmake .. -DSOPLEX_DIR=${SOPLEX_DIR}/build
 RUN cmake --build .
 RUN make install
+
+# install location of SCIP
+ENV SCIP_ROOT /usr/local

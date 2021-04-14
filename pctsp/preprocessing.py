@@ -1,7 +1,7 @@
 """Preprocessing of undirected input graphs"""
+from typing import Mapping
 
 import networkx as nx
-from typing import Mapping
 from tspwplib import (
     get_original_from_split_vertex,
     get_original_path_from_split_path,

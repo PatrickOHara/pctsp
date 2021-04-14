@@ -36,7 +36,7 @@ Adding and updating existing documentation is highly encouraged.
 You can build the docker file as follows:
 
 ```bash
-docker build -t template:latest .
+docker build .
 ```
 
 ## Linting

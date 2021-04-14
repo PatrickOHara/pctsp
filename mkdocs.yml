@@ -1,8 +1,18 @@
-site_name: "template"
+site_name: "pctsp"
 
 theme:
     name: "material"
 
+markdown_extensions:
+    - markdown_include.include:
+        base_path: docs
+
 plugins:
     - search
-    - mkdocstrings
+    - mkdocstrings: 
+        handlers:
+            python:
+                setup_commands:
+                    - import sys
+                    - from unittest.mock import MagicMock as mock
+                    - sys.modules["pctsp.libpypctsp"] = mock()
