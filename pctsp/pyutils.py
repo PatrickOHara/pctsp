@@ -1,6 +1,6 @@
 """Useful functions for python packages"""
 
-import distutils
+import distutils.sysconfig
 import os
 from pathlib import Path
 import site
