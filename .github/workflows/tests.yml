@@ -10,6 +10,10 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+    - name: Build dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip3 install scikit-build
     - name: Build
       run: |
         mkdir build
