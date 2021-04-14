@@ -9,13 +9,13 @@
 message("hints: " ${SCIP_HINTS})
 find_path(SCIP_INCLUDE scip/scip.h
           HINTS ENV CMAKE_SYSTEM_PREFIX_ROOT
-          HINTS ENV SCIP_ROOT
+          HINTS SCIP_ROOT
           PATH_SUFFIXES include)
-  
+
 find_library(SCIP_LIBRARIES
           NAMES libscip scip
           HINTS ENV CMAKE_SYSTEM_PREFIX_ROOT
-          HINTS ENV SCIP_ROOT
+          HINTS SCIP_ROOT
           PATH_SUFFIXES lib
 )
 

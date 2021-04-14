@@ -1,8 +1,11 @@
+"""Test a boost graph is loaded in cpp given a python edge list"""
+
 import networkx as nx
 from pctsp import graph_from_edge_list
 
 
 def test_graph_from_edge_list(suurballes_undirected_graph):
+    """Test edge list creates a graph"""
     cost_map = nx.get_edge_attributes(suurballes_undirected_graph, "cost")
     prize_map = nx.get_node_attributes(suurballes_undirected_graph, "prize")
     edge_list = list(suurballes_undirected_graph.edges())

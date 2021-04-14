@@ -1,6 +1,9 @@
 """Setup script for pctsp."""
 
+from dotenv import load_dotenv
 from skbuild import setup
+
+load_dotenv()
 
 setup(
     author="Patrick O'Hara",
@@ -10,7 +13,6 @@ setup(
         "tspwplib>=0.5.7",
     ],
     name="pctsp",
-    setup_requires=["setuptools-scm"],
     packages=["pctsp"],
     python_requires=">=3.6",
     use_scm_version=True,

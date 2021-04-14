@@ -1,9 +1,4 @@
-# template
-A template for a project &amp; paper with python code.
-
-## Setup
-
-Find a replace `template` with the name of your project, including the name of the python package.
+# pctsp
 
 ## Installation
 
