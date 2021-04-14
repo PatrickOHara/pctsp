@@ -1,0 +1,16 @@
+name: tspwp
+channels:
+  - conda-forge
+  - http://conda.anaconda.org/gurobi
+  - scipopt
+  - defaults
+dependencies:
+  - boost>=1.72.0
+  - gurobi>=9.1.1
+  - python>=3.8.3
+  - cmake>=3.17.1
+  - scip>=7.0.0
+  - pyscipopt>=3.0.0
+  - libscip>=7.0.0
+  - pip:
+    - -r file:requirements.txt
