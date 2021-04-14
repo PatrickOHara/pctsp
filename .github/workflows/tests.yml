@@ -40,7 +40,6 @@ jobs:
     - name: Lint
       run: |
         pylint pctsp/*
-        pylint setup.py
         pylint tests/*
         mypy pctsp
         black --check */
