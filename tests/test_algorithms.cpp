@@ -8,7 +8,7 @@
 TEST_F(SuurballeGraphFixture, testPCTSPaddEdgeVariables) {
     PCTSPgraph graph = get_suurballe_graph();
     auto cost_map = get(&PCTSPedgeProperties::cost, graph);
-    SCIP *scip_model = NULL;
+    SCIP* scip_model = NULL;
     SCIPcreate(&scip_model);
     SCIPincludeDefaultPlugins(scip_model);
     SCIPcreateProbBasic(scip_model, "test-add-edge-variables");
@@ -16,7 +16,7 @@ TEST_F(SuurballeGraphFixture, testPCTSPaddEdgeVariables) {
     EXPECT_TRUE(scip_model != NULL);
 
     // declare edge to variable name map
-    std::map<PCTSPedge, SCIP_VAR *> variable_map;
+    std::map<PCTSPedge, SCIP_VAR*> variable_map;
 
     SCIP_RETCODE add_vars_code =
         PCTSPaddEdgeVariables(scip_model, graph, cost_map, variable_map);
@@ -31,12 +31,12 @@ TEST_F(SuurballeGraphFixture, testPCTSPwithoutSECs) {
     auto cost_map = get(&PCTSPedgeProperties::cost, graph);
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);
 
-    std::map<PCTSPedge, SCIP_VAR *> variable_map;
+    std::map<PCTSPedge, SCIP_VAR*> variable_map;
     std::map<PCTSPedge, int> weight_map;
     putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
 
     // initialise and create the model without subtour elimiation constraints
-    SCIP *scip_model = NULL;
+    SCIP* scip_model = NULL;
     SCIPcreate(&scip_model);
     SCIPincludeDefaultPlugins(scip_model);
     SCIPcreateProbBasic(scip_model, "test-pctsp-without-secs");
@@ -44,9 +44,8 @@ TEST_F(SuurballeGraphFixture, testPCTSPwithoutSECs) {
     // add variables and constraints
     SCIP_RETCODE code =
         PCTSPmodelWithoutSECs(scip_model, graph, cost_map, weight_map, quota,
-                              root_vertex, variable_map);
+            root_vertex, variable_map);
     EXPECT_EQ(code, SCIP_OKAY);
-    cout << "Done adding SECs" << endl;
 }
 
 TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
@@ -57,9 +56,11 @@ TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
     auto cost_map = get(&PCTSPedgeProperties::cost, graph);
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);
 
+    // create a file to write the logs to
+    FILE* log_file = NULL;
     std::list<PCTSPedge> edge_list;
     SCIP_RETCODE code = PCTSPbranchAndCut(graph, edge_list, cost_map, prize_map,
-                                          quota, root_vertex);
+        quota, root_vertex, log_file, false);
     EXPECT_EQ(SCIP_OKAY, code);
     EXPECT_GT(edge_list.size(), 0); // check the list is not empty
 
@@ -88,7 +89,7 @@ TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
     EXPECT_EQ(vertex_count[root_vertex], 2);
 
     // every other vertex should be counted zero or two times
-    for (auto const &[vertex, n] : vertex_count) {
+    for (auto const& [vertex, n] : vertex_count) {
         EXPECT_TRUE(n == 0 || n == 2);
     }
 }

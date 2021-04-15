@@ -8,7 +8,7 @@
 
 py::list pctsp_branch_and_cut_bind(py::list& py_edge_list, py::dict& prize_dict,
     py::dict& cost_dict, int quota,
-    int py_root_vertex) {
+    int py_root_vertex, py::str& py_log_filepath) {
 
     VertexIdMap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(py_edge_list, vertex_id_map);
@@ -21,10 +21,13 @@ py::list pctsp_branch_and_cut_bind(py::list& py_edge_list, py::dict& prize_dict,
         addSelfLoopsToGraph(graph);
         assignZeroCostToSelfLoops(graph, cost_map);
     }
+    // get the log file
+    char const* log_filepath = py::extract<char const*>(py_log_filepath);
+    FILE* log_file = fopen(log_filepath, "w");
     // run branch and cut algorithm - returns a list of edges in solution
     std::list<PCTSPedge> edge_list;
     PCTSPbranchAndCut(graph, edge_list, cost_map, prize_map, quota,
-        root_vertex);
+        root_vertex, log_file);
 
     // convert list of edges to a python list of python tuples
     return getPyEdgeList(graph, vertex_id_map, edge_list);

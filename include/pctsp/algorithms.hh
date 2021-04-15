@@ -5,30 +5,31 @@
 #include <iostream>
 
 #include "constraint.hh"
+#include "logger.hh"
 #include "preprocessing.hh"
 using namespace boost;
 using namespace scip;
 using namespace std;
 
 template <typename Edge>
-const char *
-getVariableNameFromEdge(std::map<Edge, SCIP_VAR *> &edge_variable_map,
-                        Edge edge) {
-    SCIP_VAR *variable = edge_variable_map[edge];
-    const char *variable_name = SCIPvarGetName(variable);
+const char*
+getVariableNameFromEdge(std::map<Edge, SCIP_VAR*>& edge_variable_map,
+    Edge edge) {
+    SCIP_VAR* variable = edge_variable_map[edge];
+    const char* variable_name = SCIPvarGetName(variable);
     return variable_name;
 }
 
 /** Add edge variables to the PCTSP SCIP model */
 template <typename Graph, typename CostMap, typename VariableMap>
-SCIP_RETCODE PCTSPaddEdgeVariables(SCIP *mip, Graph &graph, CostMap &cost_map,
-                                   VariableMap &variable_map) {
+SCIP_RETCODE PCTSPaddEdgeVariables(SCIP* mip, Graph& graph, CostMap& cost_map,
+    VariableMap& variable_map) {
     for (auto edge : make_iterator_range(edges(graph))) {
-        SCIP_VAR *edge_variable;
+        SCIP_VAR* edge_variable;
         int cost_of_edge = cost_map[edge];
         SCIP_CALL(SCIPcreateVar(mip, &edge_variable, NULL, 0.0, 1.0,
-                                cost_of_edge, SCIP_VARTYPE_BINARY, TRUE, FALSE,
-                                NULL, NULL, NULL, NULL, NULL));
+            cost_of_edge, SCIP_VARTYPE_BINARY, TRUE, FALSE,
+            NULL, NULL, NULL, NULL, NULL));
 
         SCIP_CALL(SCIPaddVar(mip, edge_variable));
         variable_map[edge] = edge_variable;
@@ -46,9 +47,9 @@ SCIP_RETCODE PCTSPaddEdgeVariables(SCIP *mip, Graph &graph, CostMap &cost_map,
  */
 template <typename Graph, typename Vertex, typename CostMap, typename WeightMap>
 SCIP_RETCODE PCTSPmodelWithoutSECs(
-    SCIP *mip, Graph &graph, CostMap &cost_map, WeightMap &weight_map,
+    SCIP* mip, Graph& graph, CostMap& cost_map, WeightMap& weight_map,
     int quota, Vertex root_vertex,
-    std::map<typename Graph::edge_descriptor, SCIP_VAR *> &variable_map) {
+    std::map<typename Graph::edge_descriptor, SCIP_VAR*>& variable_map) {
     // from the graph, create the variables on edges and nodes
     SCIP_CALL(PCTSPaddEdgeVariables(mip, graph, cost_map, variable_map));
     int nvars = SCIPgetNVars(mip);
@@ -64,7 +65,7 @@ SCIP_RETCODE PCTSPmodelWithoutSECs(
     auto root_self_loop = edge(root_vd, root_vd, graph);
     if (root_self_loop.second == false) {
         throw EdgeNotFoundException(std::to_string(root_vd),
-                                    std::to_string(root_vd));
+            std::to_string(root_vd));
     }
     SCIP_CALL(
         PCTSPaddRootVertexConstraint(mip, variable_map, root_self_loop.first));
@@ -78,13 +79,13 @@ SCIP_RETCODE PCTSPmodelWithoutSECs(
 
 template <typename Edge>
 SCIP_RETCODE
-PCTSPgetEdgeListFromSolution(SCIP *mip, SCIP_SOL *sol,
-                             std::map<Edge, SCIP_VAR *> &edge_variable_map,
-                             std::list<Edge> &edge_list) {
+PCTSPgetEdgeListFromSolution(SCIP* mip, SCIP_SOL* sol,
+    std::map<Edge, SCIP_VAR*>& edge_variable_map,
+    std::list<Edge>& edge_list) {
     // TODO iterate over edge variable map
     // get edges where the value of the variable are equal to one
 
-    for (auto const &[edge, variable] : edge_variable_map) {
+    for (auto const& [edge, variable] : edge_variable_map) {
         double var_value = SCIPgetSolVal(mip, sol, variable);
         if (var_value == 1) {
             edge_list.push_back(edge);
@@ -96,19 +97,19 @@ PCTSPgetEdgeListFromSolution(SCIP *mip, SCIP_SOL *sol,
 /** Solve the Prize Collecting TSP problem using a branch and cut algorithm
  */
 template <typename Graph, typename Vertex, typename Edge, typename CostMap,
-          typename PrizeMap>
-SCIP_RETCODE PCTSPbranchAndCut(Graph &graph, std::list<Edge> &optimal_edge_list,
-                               CostMap &cost_map, PrizeMap &prize_map,
-                               int quota, Vertex root_vertex) {
+    typename PrizeMap>
+    SCIP_RETCODE PCTSPbranchAndCut(Graph& graph, std::list<Edge>& optimal_edge_list,
+        CostMap& cost_map, PrizeMap& prize_map,
+        int quota, Vertex root_vertex, FILE* pctsp_file = NULL, bool print_scip = true) {
 
     // initialise empty model
-    SCIP *mip = NULL;
+    SCIP* mip = NULL;
     SCIP_CALL(SCIPcreate(&mip));
     SCIP_CALL(SCIPincludeDefaultPlugins(mip));
     SCIP_CALL(SCIPcreateProbBasic(mip, "pctsp"));
 
     // datastructures needed for the MIP solver
-    std::map<Edge, SCIP_VAR *> variable_map;
+    std::map<Edge, SCIP_VAR*> variable_map;
     std::map<Edge, int> weight_map;
 
     // move prizes of vertices onto the weight of an edge
@@ -116,7 +117,7 @@ SCIP_RETCODE PCTSPbranchAndCut(Graph &graph, std::list<Edge> &optimal_edge_list,
 
     // add variables and constraints to SCIP model
     SCIP_CALL(PCTSPmodelWithoutSECs(mip, graph, cost_map, weight_map, quota,
-                                    root_vertex, variable_map));
+        root_vertex, variable_map));
     int nvars = SCIPgetNVars(mip);
 
     // TODO add the subtour elimination constraints as cutting planes
@@ -128,25 +129,26 @@ SCIP_RETCODE PCTSPbranchAndCut(Graph &graph, std::list<Edge> &optimal_edge_list,
     // TODO adjust parameters for the branching strategy
 
     // print the original LP
-    SCIP_CALL(SCIPprintOrigProblem(mip, NULL, NULL, true));
+    if (print_scip)
+        SCIP_CALL(SCIPprintOrigProblem(mip, pctsp_file, NULL, true));
 
     // Solve the model
     SCIP_CALL(SCIPsolve(mip));
 
     // Get the solution
-    SCIP_SOL *sol = SCIPgetBestSol(mip);
-    SCIP_CALL(SCIPprintBestSol(mip, NULL, TRUE));
+    SCIP_SOL* sol = SCIPgetBestSol(mip);
+    if (print_scip)
+        SCIP_CALL(SCIPprintBestSol(mip, pctsp_file, TRUE));
     SCIP_CALL(PCTSPgetEdgeListFromSolution(mip, sol, variable_map,
-                                           optimal_edge_list));
+        optimal_edge_list));
 
     // Release memory
-    SCIP_VAR **variables = SCIPgetVars(mip);
+    SCIP_VAR** variables = SCIPgetVars(mip);
     for (int i = 0; i < nvars; ++i) {
-        // SCIP_CALL(SCIPprintVar(mip, variables[i], NULL));
         SCIP_CALL(SCIPreleaseVar(mip, &variables[i]));
     }
     int ncons = SCIPgetNConss(mip);
-    SCIP_CONS **conss = SCIPgetConss(mip);
+    SCIP_CONS** conss = SCIPgetConss(mip);
     for (int i = 0; i < ncons; i++) {
         SCIP_CALL(SCIPreleaseCons(mip, &conss[i]));
     }

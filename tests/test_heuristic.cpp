@@ -221,11 +221,6 @@ TEST_P(CompleteGraphParameterizedFixture, testCollapse) {
         quota = 5;
         std::list<int> new_tour =
             collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
-        std::cout << "new tour is ";
-
-        for (auto v : new_tour)
-            std::cout << v;
-        std::cout << endl;
         EXPECT_EQ(total_prize_of_tour(graph, new_tour, prize_map), 5);
         EXPECT_EQ(total_cost(graph, new_tour, cost_map), 9);
     }
