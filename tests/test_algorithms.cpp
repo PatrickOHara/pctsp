@@ -57,10 +57,9 @@ TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);
 
     // create a file to write the logs to
-    FILE* log_file = NULL;
     std::list<PCTSPedge> edge_list;
     SCIP_RETCODE code = PCTSPbranchAndCut(graph, edge_list, cost_map, prize_map,
-        quota, root_vertex, log_file, false);
+        quota, root_vertex, NULL, false);
     EXPECT_EQ(SCIP_OKAY, code);
     EXPECT_GT(edge_list.size(), 0); // check the list is not empty
 

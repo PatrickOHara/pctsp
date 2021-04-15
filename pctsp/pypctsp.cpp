@@ -22,12 +22,11 @@ py::list pctsp_branch_and_cut_bind(py::list& py_edge_list, py::dict& prize_dict,
         assignZeroCostToSelfLoops(graph, cost_map);
     }
     // get the log file
-    char const* log_filepath = py::extract<char const*>(py_log_filepath);
-    FILE* log_file = fopen(log_filepath, "w");
+    const char* log_filepath = py::extract<char const*>(py_log_filepath);
     // run branch and cut algorithm - returns a list of edges in solution
     std::list<PCTSPedge> edge_list;
     PCTSPbranchAndCut(graph, edge_list, cost_map, prize_map, quota,
-        root_vertex, log_file);
+        root_vertex, log_filepath);
 
     // convert list of edges to a python list of python tuples
     return getPyEdgeList(graph, vertex_id_map, edge_list);
@@ -48,7 +47,8 @@ bool graph_from_edge_list(py::list& edge_list, py::dict& prize_dict,
 // heuristic bindings
 
 py::list collapse_bind(py::list& edge_list, py::list& py_tour,
-    py::dict& cost_dict, py::dict& prize_dict, int quota, int py_root) {
+    py::dict& cost_dict, py::dict& prize_dict, int quota, int py_root, int py_log_level = PyLoggingLevels::INFO) {
+    PCTSPinitLogging(getBoostLevelFromPyLevel(py_log_level));
     VertexIdMap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
     auto tour = getBoostVertexList(vertex_id_map, py_tour);

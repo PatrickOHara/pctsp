@@ -3,6 +3,7 @@
 /** Exact algorithms for PCTSP */
 
 #include <iostream>
+#include "scip/message_default.h"
 
 #include "constraint.hh"
 #include "logger.hh"
@@ -100,13 +101,16 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
     typename PrizeMap>
     SCIP_RETCODE PCTSPbranchAndCut(Graph& graph, std::list<Edge>& optimal_edge_list,
         CostMap& cost_map, PrizeMap& prize_map,
-        int quota, Vertex root_vertex, FILE* pctsp_file = NULL, bool print_scip = true) {
+        int quota, Vertex root_vertex, const char* log_filepath = NULL, bool print_scip = true) {
 
     // initialise empty model
     SCIP* mip = NULL;
     SCIP_CALL(SCIPcreate(&mip));
     SCIP_CALL(SCIPincludeDefaultPlugins(mip));
     SCIP_CALL(SCIPcreateProbBasic(mip, "pctsp"));
+    SCIP_MESSAGEHDLR* handler;
+    SCIP_CALL(SCIPcreateMessagehdlrDefault(&handler, false, log_filepath, print_scip));
+    SCIP_CALL(SCIPsetMessagehdlr(mip, handler));
 
     // datastructures needed for the MIP solver
     std::map<Edge, SCIP_VAR*> variable_map;
@@ -128,17 +132,16 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
 
     // TODO adjust parameters for the branching strategy
 
-    // print the original LP
-    if (print_scip)
-        SCIP_CALL(SCIPprintOrigProblem(mip, pctsp_file, NULL, true));
-
     // Solve the model
     SCIP_CALL(SCIPsolve(mip));
 
     // Get the solution
     SCIP_SOL* sol = SCIPgetBestSol(mip);
-    if (print_scip)
-        SCIP_CALL(SCIPprintBestSol(mip, pctsp_file, TRUE));
+    if (print_scip) {
+        FILE* log_file = fopen(log_filepath, "w");
+        SCIP_CALL(SCIPprintOrigProblem(mip, log_file, NULL, true));
+        SCIP_CALL(SCIPprintBestSol(mip, log_file, true));
+    }
     SCIP_CALL(PCTSPgetEdgeListFromSolution(mip, sol, variable_map,
         optimal_edge_list));
 
