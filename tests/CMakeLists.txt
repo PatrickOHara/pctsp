@@ -13,8 +13,6 @@ if(result)
   message(FATAL_ERROR "Build step for googletest failed: ${result}")
 endif()
 
-
-
 # Prevent overriding the parent project's compiler/linker
 # settings on Windows
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -31,22 +29,17 @@ add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
 enable_testing()
 
 # name of module to test - should only need to change this
-# set(TARGET_TO_TEST "heuristic" "pctsp" "preprocessing")
 file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false fixtures.cpp fixtures.hh test_*.cpp)
-# file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false "fixtures.cpp" "test_preprocessing.cpp" "test_knapsack.cpp" "test_graph.cpp" "test_pctsp.cpp")
 set(TARGET "test_pctsp")
 
 # add any test files here
 add_executable(${TARGET} ${TEST_SOURCES})
 
 target_compile_options(${TARGET} PRIVATE -std=c++17)
-# if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )
-#     set_target_properties(${TARGET} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup" )
-# endif()
 
 # link libraries and include files
 target_link_libraries(${TARGET} PRIVATE
-    ${Python3_LIBRARIES}
+    ${Python3_LIBRARIES}        # link at compile time for building tests
     ${Boost_LIBRARIES}
     gtest
     gmock
