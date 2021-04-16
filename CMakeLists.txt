@@ -31,8 +31,6 @@ message("SCIP_INCLUDE_DIRS: " ${SCIP_INCLUDE_DIRS})
 message("SCIP_LIBARIES: " ${SCIP_LIBRARIES})
 message("Boost_INCLUDE_DIR: " ${Boost_INCLUDE_DIRS})
 message("Boost_LIBRARIES: " ${Boost_LIBRARIES})
-message("MACOSX_RPATH: " ${MACOSX_RPATH})
-message("CMAKE_MACOSX_RPATH: " ${CMAKE_MACOSX_RPATH})
 
 set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
 # depends upon scikit-build being installed
@@ -41,7 +39,7 @@ message("cmake module path: " ${CMAKE_MODULE_PATH})
 
 
 if (NOT Python_ROOT_DIR)
-  message(WARNING "Python_ROOT_DIR is not set. gtest may use the wrong python version")
+  message(WARNING "Python_ROOT_DIR is not set. PythonExtension may use the wrong python version")
 endif()
 find_package(PythonExtensions REQUIRED)
 
@@ -49,14 +47,6 @@ set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(PCTSP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(PCTSP_LIBRARIES "")
 set(MACOSX_RPATH TRUE)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -undefined dynamic_lookup")
-
-
-
-# when installing directly in CMake, redirect its intall root to dist dir
-# if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-#     set (CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/dist" CACHE PATH "default install path" FORCE )
-# endif()
 
 # get the suffix for python extension module and store in PYTHON_MODULE_EXTENSION
 execute_process (COMMAND "${Python3_EXECUTABLE}" -c "from distutils import sysconfig;print(sysconfig.get_config_var('EXT_SUFFIX'))"
@@ -65,8 +55,6 @@ OUTPUT_VARIABLE PYTHON_MODULE_EXTENSION
 ERROR_QUIET
 OUTPUT_STRIP_TRAILING_WHITESPACE)
 message("PYTHON_MODULE_EXTENSION: " ${PYTHON_MODULE_EXTENSION})
-
-# set(BUILD_SHARED_LIBS TRUE)
 
 add_subdirectory(src)
 add_subdirectory(pctsp)

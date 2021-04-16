@@ -22,7 +22,6 @@ def pctsp_branch_and_cut(
     Returns:
         A collapsed, prize-feasible tour that has at most the same cost as the input tour
     """
-    # pylint: disable=protected-access
     cost_dict = nx.get_edge_attributes(graph, EdgeFunctionName.cost.value)
     prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
     edges = list(graph.edges())
