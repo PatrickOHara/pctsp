@@ -22,7 +22,10 @@ py::list pctsp_branch_and_cut_bind(py::list& py_edge_list, py::dict& prize_dict,
         assignZeroCostToSelfLoops(graph, cost_map);
     }
     // get the log file
-    const char* log_filepath = py::extract<char const*>(py_log_filepath);
+    const char* log_filepath = NULL;
+    if (py::len(py_log_filepath) > 0) {
+        log_filepath = py::extract<char const*>(py_log_filepath);
+    }
     // run branch and cut algorithm - returns a list of edges in solution
     std::list<PCTSPedge> edge_list;
     PCTSPbranchAndCut(graph, edge_list, cost_map, prize_map, quota,
