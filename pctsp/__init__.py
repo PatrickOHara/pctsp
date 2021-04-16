@@ -18,7 +18,6 @@ from .heuristic import (
 from .libpypctsp import graph_from_edge_list, unitary_gain
 
 # pylint: enable=import-error
-
 from .preprocessing import (
     remove_leaves,
     remove_components_disconnected_from_vertex,
