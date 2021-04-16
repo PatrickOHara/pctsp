@@ -1,5 +1,6 @@
 """Fixtures for algorithms"""
 
+from pathlib import Path
 import sys
 from typing import Dict, List, Set, Tuple
 import networkx as nx
@@ -239,3 +240,15 @@ def tree() -> nx.DiGraph:
     G.add_edge(2, 7)
     assert nx.is_tree(G)
     return G
+
+
+@pytest.fixture(scope="function")
+def logger_dir(tmp_path_factory) -> Path:
+    """Temp logging directory"""
+    return tmp_path_factory.mktemp(".logger_dir")
+
+
+@pytest.fixture(scope="function")
+def logger_path(logger_dir: Path) -> Path:
+    """Temp logging file"""
+    return logger_dir / "pctsp_log.txt"

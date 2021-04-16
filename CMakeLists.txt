@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16.0)
 project(pctsp_project)
 
+set(CMAKE_CXX_STANDARD 17)
+
 # list of modules to find
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules;")
 
@@ -16,7 +18,7 @@ message("SCIP_ROOT: " $ENV{SCIP_ROOT})
 
 # dependencies
 find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development REQUIRED)
-find_package(Boost 1.71.0 REQUIRED COMPONENTS python graph REQUIRED)
+find_package(Boost 1.71.0 REQUIRED COMPONENTS python graph log log_setup thread filesystem system REQUIRED)
 find_package(SCIP REQUIRED)
 
 # find the python sitelibs

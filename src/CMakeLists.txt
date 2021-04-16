@@ -1,6 +1,6 @@
 
 set(TARGET "pctsp")
-add_library(${TARGET} SHARED "algorithms.cpp" "graph.cpp" "heuristic.cpp" "knapsack.cpp" "preprocessing.cpp")
+add_library(${TARGET} SHARED "algorithms.cpp" "graph.cpp" "heuristic.cpp" "knapsack.cpp" "logger.cpp" "preprocessing.cpp")
 
 # setting for Mac OS X - dynamically link python
 if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )

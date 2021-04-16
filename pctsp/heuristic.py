@@ -1,5 +1,6 @@
 """Heuristics for the Prize-Collecting TSP"""
 
+import logging
 import random
 import sys
 from typing import Mapping
@@ -25,7 +26,11 @@ from .libpypctsp import (
 
 
 def collapse(
-    graph: nx.Graph, tour: VertexList, quota: int, root_vertex: Vertex
+    graph: nx.Graph,
+    tour: VertexList,
+    quota: int,
+    root_vertex: Vertex,
+    logging_level: int = logging.INFO,
 ) -> VertexList:
     """Collapse the tour by finding shortcuts
 
@@ -34,6 +39,7 @@ def collapse(
         tour: Tour that has the first and last vertex the same
         quota: The minimum prize the tour must collect
         root_vertex: The tour must start and end at the root vertex
+        logging_level: Verbosity of logging.
 
     Returns:
         A collapsed, prize-feasible tour that has at most the same cost as the input tour
@@ -48,6 +54,7 @@ def collapse(
         prize_dict,
         quota,
         root_vertex,
+        logging_level,
     )
     return collapsed_tour
 
