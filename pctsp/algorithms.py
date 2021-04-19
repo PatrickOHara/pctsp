@@ -1,5 +1,6 @@
 """Exact algorithms for the Prize collecting TSP with a branch and cut solver."""
 
+import logging
 from pathlib import Path
 from typing import Optional
 import networkx as nx
@@ -12,7 +13,11 @@ from .libpypctsp import pctsp_branch_and_cut_bind
 
 
 def pctsp_branch_and_cut(
-    graph: nx.Graph, quota: int, root_vertex: Vertex, log_file: Optional[Path] = None
+    graph: nx.Graph,
+    quota: int,
+    root_vertex: Vertex,
+    log_file: Optional[Path] = None,
+    logging_level: int = logging.INFO,
 ) -> EdgeList:
     """Branch and cut algorithm for the prize collecting travelling salesman problem
 
@@ -20,9 +25,11 @@ def pctsp_branch_and_cut(
         graph: Undirected input graph with edge costs and vertex prizes
         quota: The minimum prize the tour must collect
         root_vertex: The tour must start and end at the root vertex
+        log_file: Optional path to store the logs of the algorithm
+        logging_level: How verbose should the logging be, e.g. logging.DEBUG?
 
     Returns:
-        A collapsed, prize-feasible tour that has at most the same cost as the input tour
+        Edge list of the optimal tour
     """
     cost_dict = nx.get_edge_attributes(graph, EdgeFunctionName.cost.value)
     prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
@@ -38,5 +45,6 @@ def pctsp_branch_and_cut(
         quota,
         root_vertex,
         str_log_file,
+        logging_level,
     )
     return optimal_edges

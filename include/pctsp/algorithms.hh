@@ -112,8 +112,10 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
     SCIP_CALL(SCIPcreateMessagehdlrDefault(&handler, false, log_filepath, print_scip));
     SCIP_CALL(SCIPsetMessagehdlr(mip, handler));
 
+    BOOST_LOG_TRIVIAL(info) << "Created SCIP program. Adding constraints and variables.";
+
     // datastructures needed for the MIP solver
-    std::map<Edge, SCIP_VAR*> variable_map;
+    std::map<Edge, SCIP_VAR*> edge_variable_map;
     std::map<Edge, int> weight_map;
 
     // move prizes of vertices onto the weight of an edge
@@ -121,7 +123,7 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
 
     // add variables and constraints to SCIP model
     SCIP_CALL(PCTSPmodelWithoutSECs(mip, graph, cost_map, weight_map, quota,
-        root_vertex, variable_map));
+        root_vertex, edge_variable_map));
     int nvars = SCIPgetNVars(mip);
 
     // TODO add the subtour elimination constraints as cutting planes
@@ -132,35 +134,27 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
 
     // TODO adjust parameters for the branching strategy
 
+    BOOST_LOG_TRIVIAL(info) << "Added contraints and variables. Solving model.";
     // Solve the model
     SCIP_CALL(SCIPsolve(mip));
-
+    BOOST_LOG_TRIVIAL(info) << "Model solved. Getting edge list of best solution.";
     // Get the solution
     SCIP_SOL* sol = SCIPgetBestSol(mip);
+    PCTSPgetEdgeListFromSolution(mip, sol, edge_variable_map, optimal_edge_list);
     if (print_scip) {
+        BOOST_LOG_TRIVIAL(debug) << "Saving SCIP logs to: " << log_filepath;
         FILE* log_file = fopen(log_filepath, "w");
         SCIP_CALL(SCIPprintOrigProblem(mip, log_file, NULL, true));
         SCIP_CALL(SCIPprintBestSol(mip, log_file, true));
     }
-    SCIP_CALL(PCTSPgetEdgeListFromSolution(mip, sol, variable_map,
-        optimal_edge_list));
 
-    // Release memory
-    SCIP_VAR** variables = SCIPgetVars(mip);
-    for (int i = 0; i < nvars; ++i) {
-        SCIP_CALL(SCIPreleaseVar(mip, &variables[i]));
-    }
-    int ncons = SCIPgetNConss(mip);
-    SCIP_CONS** conss = SCIPgetConss(mip);
-    for (int i = 0; i < ncons; i++) {
-        SCIP_CALL(SCIPreleaseCons(mip, &conss[i]));
-    }
-    SCIP_RETCODE free_code = SCIPfree(&mip);
-    if (free_code != SCIP_OKAY) {
-        SCIPprintError(free_code);
-        SCIPdebugMessage("Freeing SCIP model returned error code");
-    }
+    BOOST_LOG_TRIVIAL(info) << "Releasing SCIP model.";
+    BOOST_LOG_TRIVIAL(debug) << "Releasing constraint handler.";
+    SCIP_CALL(SCIPmessagehdlrRelease(&handler));
 
+    BOOST_LOG_TRIVIAL(debug) << "Releasing the model itself.";
+    SCIP_CALL(SCIPfree(&mip));
+    BOOST_LOG_TRIVIAL(debug) << "Done releasing model. Returning status SCIP_OKAY.";
     // from the variables, obtain and optimal tour
     return SCIP_OKAY;
 }
