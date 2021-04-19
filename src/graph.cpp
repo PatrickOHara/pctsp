@@ -4,8 +4,8 @@
 
 using namespace std;
 
-int findOrInsertVertex(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
-                       int py_vertex, int &vertex_id) {
+int findOrInsertVertex(PCTSPgraph& graph, VertexIdMap& vertex_id_map,
+    int py_vertex, int& vertex_id) {
     int graph_vertex;
     auto it = vertex_id_map.right.find(py_vertex);
     if (it == vertex_id_map.right.end()) {
@@ -13,14 +13,15 @@ int findOrInsertVertex(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
         graph_vertex = vertex_id;
         boost::add_vertex(graph);
         vertex_id++;
-    } else {
+    }
+    else {
         graph_vertex = (*it).second;
     }
     return graph_vertex;
 }
 
-PCTSPgraph graphFromPyEdgeList(py::list &edge_list,
-                               VertexIdMap &vertex_id_map) {
+PCTSPgraph graphFromPyEdgeList(py::list& edge_list,
+    VertexIdMap& vertex_id_map) {
     PCTSPgraph graph;
     int vertex_id = 0;
     auto length = py::len(edge_list);
@@ -40,17 +41,17 @@ PCTSPgraph graphFromPyEdgeList(py::list &edge_list,
     return graph;
 }
 
-int getPyVertex(VertexIdMap &vertex_id_map, int vertex) {
+int getPyVertex(VertexIdMap& vertex_id_map, int vertex) {
     auto it = vertex_id_map.left.find(vertex);
     return (*it).second;
 }
-int getBoostVertex(VertexIdMap &vertex_id_map, int py_vertex) {
+int getBoostVertex(VertexIdMap& vertex_id_map, int py_vertex) {
     auto it = vertex_id_map.right.find(py_vertex);
     return (*it).second;
 }
 
-PCTSPprizeMap prizeMapFromPyDict(py::dict &prize_dict,
-                                 VertexIdMap &vertex_id_map) {
+PCTSPprizeMap prizeMapFromPyDict(py::dict& prize_dict,
+    VertexIdMap& vertex_id_map) {
     PCTSPprizeMap prize_map;
     py::list prize_list = prize_dict.items();
     int n = py::len(prize_list);
@@ -64,8 +65,8 @@ PCTSPprizeMap prizeMapFromPyDict(py::dict &prize_dict,
     return prize_map;
 }
 
-PCTSPcostMap costMapFromPyDict(py::dict &cost_dict, PCTSPgraph &graph,
-                               VertexIdMap &vertex_id_map) {
+PCTSPcostMap costMapFromPyDict(py::dict& cost_dict, PCTSPgraph& graph,
+    VertexIdMap& vertex_id_map) {
     PCTSPcostMap cost_map;
     py::list cost_list = cost_dict.items();
     int n = py::len(cost_list);
@@ -82,15 +83,15 @@ PCTSPcostMap costMapFromPyDict(py::dict &cost_dict, PCTSPgraph &graph,
 
         if (boost_edge.second == false) {
             throw EdgeNotFoundException(std::to_string(boost_source),
-                                        std::to_string(boost_target));
+                std::to_string(boost_target));
         }
         cost_map[boost_edge.first] = cost;
     }
     return cost_map;
 }
 
-py::list getPyEdgeList(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
-                       std::list<PCTSPedge> &edge_list) {
+py::list getPyEdgeList(PCTSPgraph& graph, VertexIdMap& vertex_id_map,
+    std::list<PCTSPedge>& edge_list) {
     py::list py_list;
     for (auto it = edge_list.begin(); it != edge_list.end(); ++it) {
         PCTSPedge edge = *it;
@@ -104,7 +105,7 @@ py::list getPyEdgeList(PCTSPgraph &graph, VertexIdMap &vertex_id_map,
     return py_list;
 }
 
-py::list getPyVertexList(VertexIdMap &vertex_id_map, std::list<int> &vertex_list) {
+py::list getPyVertexList(VertexIdMap& vertex_id_map, std::list<int>& vertex_list) {
     py::list py_list;
     for (auto it = vertex_list.begin(); it != vertex_list.end(); it++) {
         int vertex = *it;
@@ -114,7 +115,7 @@ py::list getPyVertexList(VertexIdMap &vertex_id_map, std::list<int> &vertex_list
     return py_list;
 }
 
-std::list<int> getBoostVertexList(VertexIdMap &vertex_id_map, py::list &py_list) {
+std::list<int> getBoostVertexList(VertexIdMap& vertex_id_map, py::list& py_list) {
     std::list<int> vertex_list;
     for (int i = 0; i < py::len(py_list); i++) {
         int py_vertex = py::extract<int>(py_list[i]);

@@ -8,8 +8,9 @@
 
 py::list pctsp_branch_and_cut_bind(py::list& py_edge_list, py::dict& prize_dict,
     py::dict& cost_dict, int quota,
-    int py_root_vertex, py::str& py_log_filepath) {
+    int py_root_vertex, py::str& py_log_filepath, int py_log_level = PyLoggingLevels::INFO) {
 
+    PCTSPinitLogging(getBoostLevelFromPyLevel(py_log_level));
     VertexIdMap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(py_edge_list, vertex_id_map);
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
