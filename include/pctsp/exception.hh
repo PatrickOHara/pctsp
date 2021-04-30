@@ -25,4 +25,20 @@ public:
     const char* what() const throw() { return message.c_str(); }
 };
 
+class NoSelfLoopFoundException : EdgeNotFoundException {
+public:
+    NoSelfLoopFoundException(const std::string& vertex_str)
+        : EdgeNotFoundException(vertex_str, vertex_str) {}
+};
+
+class VertexInWrongSetException : public std::exception {
+    std::string message;
+
+public:
+    VertexInWrongSetException(const std::string& vertex_str) : message(std::string("Vertex was found in the wrong set: ") + vertex_str) {}
+
+    const char* what() const throw() { return message.c_str(); }
+
+};
+
 #endif
