@@ -113,5 +113,5 @@ TEST_F(SuurballeGraphFixture, testAddSubtourEliminationConstraint) {
     PCTSPvertex target_vertex = 2;
     SCIP_RETCODE sec_code = addSubtourEliminationConstraint(mip, graph, vertex_set, variable_map, root_vertex, target_vertex);
     EXPECT_EQ(sec_code, SCIP_OKAY);
-
+    SCIPsolve(mip);
 }

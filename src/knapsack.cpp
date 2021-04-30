@@ -15,7 +15,7 @@ SCIP_RETCODE knapsack(std::vector<int>& costs, std::vector<int>& weights,
     SCIP_CALL(SCIPcreateProbBasic(scip_model, "knapsack"));
 
     SCIP_MESSAGEHDLR* handler;
-    SCIPcreateMessagehdlrDefault(&handler, false, "knapsack-test.txt", true);
+    SCIPcreateMessagehdlrDefault(&handler, false, NULL, true);
     SCIP_CALL(SCIPsetMessagehdlr(scip_model, handler));
     // SCIP_CALL(SCIPmessagehdlrSetLogfile(SCIPgetMessagehdlr(scip_model), "knapsack-test.txt"));
 
