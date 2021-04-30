@@ -12,7 +12,7 @@ std::vector<typename boost::graph_traits<UndirectedGraph>::edge_descriptor> getE
         // get edges where the endpoints lie in different cut sets
         auto source = boost::source(edge, graph);
         auto target = boost::target(edge, graph);
-        if (parity_map[source] != parity_map[target]) {
+        if (boost::get(parity_map, source) != boost::get(parity_map, target)) {
             edges.push_back(edge);
         }
     }

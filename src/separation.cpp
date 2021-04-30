@@ -22,14 +22,25 @@ std::vector<PCTSPvertex> getSolutionVertices(SCIP* mip, PCTSPgraph& graph, SCIP_
     }
     return solution_vertices;
 }
-std::vector<PCTSPedge> getSolutionEdges(SCIP* mip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map) {
+std::vector<PCTSPedge> getSolutionEdges(SCIP* mip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map, bool add_self_loops) {
     std::vector<PCTSPedge> solution_edges;
+    for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
+        auto source = boost::source(edge, graph);
+        auto target = boost::target(edge, graph);
+        if (((source == target) & (add_self_loops)) || (source != target)) {
+            auto var = edge_variable_map[edge];
+            auto value = SCIPgetSolVal(mip, sol, var);
+            if ((source != target) & (value > 0)) {
+                solution_edges.push_back(edge);
+            }
+        }
+    }
     return solution_edges;
 }
 
-PCTSPgraph getSolutionGraph(SCIP* mip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map) {
-    auto solution_edges = getSolutionEdges(mip, graph, sol, edge_variable_map);
-    auto solution_vertices = getSolutionVertices(mip, graph, sol, edge_variable_map);
+PCTSPgraph getSolutionGraph(SCIP* mip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map, bool self_loops) {
+    auto solution_edges = getSolutionEdges(mip, graph, sol, edge_variable_map, self_loops);
+    // auto solution_vertices = getSolutionVertices(mip, graph, sol, edge_variable_map);
 
     PCTSPgraph solution_graph;
     for (auto const& edge : solution_edges) {
