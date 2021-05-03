@@ -1,4 +1,5 @@
 
+#include "pctsp/separation.hh"
 #include "pctsp/subtour_elimination.hh"
 #include "pctsp/exception.hh"
 #include <objscip/objscip.h>
@@ -91,4 +92,75 @@ void insertEdgeVertexVariables(VarVector& edge_variables,
     std::advance(coef_it, edge_variables.size());
     std::fill(var_coefs.begin(), coef_it, 1);
     std::fill(coef_it, var_coefs.end(), -1);
+}
+
+SCIP_RETCODE PCTSPcreateConsSubtour(
+    SCIP* mip,
+    SCIP_CONS** cons,
+    std::string& name,
+    PCTSPgraph& graph,
+    PCTSPvertex& root_vertex,
+    SCIP_Bool             initial,            /**< should the LP relaxation of constraint be in the initial LP? */
+    SCIP_Bool             separate,           /**< should the constraint be separated during LP processing? */
+    SCIP_Bool             enforce,            /**< should the constraint be enforced during node processing? */
+    SCIP_Bool             check,              /**< should the constraint be checked for feasibility? */
+    SCIP_Bool             propagate,          /**< should the constraint be propagated during node processing? */
+    SCIP_Bool             local,              /**< is constraint only valid locally? */
+    SCIP_Bool             modifiable,         /**< is constraint modifiable (subject to column generation)? */
+    SCIP_Bool             dynamic,            /**< is constraint dynamic? */
+    SCIP_Bool             removable           /**< should the constraint be removed from the LP due to aging or cleanup? */
+) {
+    SCIP_CONSHDLR* conshdlr;
+    // PCTSPsubtourEliminationData* consdata;
+    SCIP_CONSDATA* consdata;
+
+    /* find the subtour constraint handler */
+    conshdlr = SCIPfindConshdlr(mip, "subtour");
+    if (conshdlr == NULL)
+    {
+        SCIPerrorMessage("subtour constraint handler not found\n");
+        return SCIP_PLUGINNOTFOUND;
+    }
+
+    /* create constraint */
+    SCIP_CALL(SCIPcreateCons(mip, cons, name.c_str(), conshdlr, consdata, initial, separate, enforce, check, propagate,
+        local, modifiable, dynamic, removable, FALSE));
+
+    return SCIP_OKAY;
+}
+
+SCIP_DECL_CONSCHECK(PCTSPconshdlrSubtour::scip_check)
+{
+    assert(result != NULL);
+    *result = SCIP_FEASIBLE;
+
+    for (int i = 0; i < nconss; ++i)
+    {
+        SCIP_CONSDATA* consdata;
+        PCTSPgraph* graph;
+        SCIP_Bool found;
+
+        assert(conss != NULL);
+        assert(conss[i] != NULL);
+        consdata = SCIPconsGetData(conss[i]);
+        assert(consdata != NULL);
+        graph = consdata->graph;
+        auto edge_variable_map = consdata->edge_variable_map;
+        assert(graph != NULL);
+
+        // if a subtour is found, the solution must be infeasible
+        auto support_graph = getSolutionGraph(scip, *graph, sol, *edge_variable_map);
+        bool is_simple_cycle = isGraphSimpleCycle(support_graph);
+        if (!is_simple_cycle)
+        {
+            *result = SCIP_INFEASIBLE;
+            if (printreason)
+            {
+                SCIP_CALL(SCIPprintCons(scip, conss[i], NULL));
+                SCIPinfoMessage(scip, NULL, "violation: graph has a subtour\n");
+            }
+        }
+    }
+
+    return SCIP_OKAY;
 }

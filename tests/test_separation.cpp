@@ -5,6 +5,29 @@
 #include <objscip/objscipdefplugins.h>
 
 
+TEST(TestSeparation, testIsGraphSimpleCycle) {
+    PCTSPgraph cycle_graph;
+    boost::add_edge(0, 1, cycle_graph);
+    boost::add_edge(1, 2, cycle_graph);
+    boost::add_edge(2, 3, cycle_graph);
+    boost::add_edge(0, 3, cycle_graph);
+    EXPECT_TRUE(isGraphSimpleCycle(cycle_graph));
+
+    PCTSPgraph disjoint_graph;
+    boost::add_edge(0, 1, disjoint_graph);
+    boost::add_edge(1, 2, disjoint_graph);
+    boost::add_edge(2, 3, disjoint_graph);
+    boost::add_edge(0, 3, disjoint_graph);
+    EXPECT_FALSE(isGraphSimpleCycle(disjoint_graph));
+
+    PCTSPgraph path_graph;
+    boost::add_edge(0, 1, path_graph);
+    boost::add_edge(1, 2, path_graph);
+    boost::add_edge(2, 3, path_graph);
+    boost::add_edge(3, 4, path_graph);
+    EXPECT_FALSE(isGraphSimpleCycle(path_graph));
+}
+
 TEST(TestSeparation, testGetSolutionGraph) {
     PCTSPgraph graph;
     boost::add_edge(0, 1, graph);

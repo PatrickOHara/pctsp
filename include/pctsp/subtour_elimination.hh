@@ -37,4 +37,62 @@ void insertEdgeVertexVariables(VarVector& edge_variables,
 
 std::vector<PCTSPedge> getInducedEdges(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
 
+struct SCIP_ConsData {
+    PCTSPvertex* root_vertex;
+    PCTSPgraph* graph;
+    PCTSPedgeVariableMap* edge_variable_map;
+
+};
+
+class PCTSPconshdlrSubtour : public scip::ObjConshdlr
+{
+public:
+    /** default constructor */
+    PCTSPconshdlrSubtour(
+        SCIP* mip
+    )
+        : ObjConshdlr(mip, "subtour", "PCTSP subtour elimination constraints",
+            1000000, -2000000, -2000000, 1, -1, 1, 0,
+            FALSE, FALSE, TRUE, SCIP_PROPTIMING_BEFORELP, SCIP_PRESOLTIMING_FAST)
+    {
+    }
+
+    virtual SCIP_DECL_CONSCHECK(scip_check);
+    virtual SCIP_DECL_CONSENFOPS(scip_enfops);
+    virtual SCIP_DECL_CONSENFOLP(scip_enfolp);
+    virtual SCIP_DECL_CONSTRANS(scip_trans);
+    virtual SCIP_DECL_CONSLOCK(scip_lock);
+
+};
+
+/** Create a subtour elimination constraint
+ *
+ * This function mimics the SCIPcreateConsSubtour function in the TSP example
+ * of the SCIP solver.
+ */
+SCIP_RETCODE PCTSPcreateConsSubtour(
+    SCIP* mip,
+    SCIP_CONS** cons,
+    std::string& name,
+    PCTSPgraph& graph,
+    PCTSPvertex& root_vertex,
+    SCIP_Bool             initial,            /**< should the LP relaxation of constraint be in the initial LP? */
+    SCIP_Bool             separate,           /**< should the constraint be separated during LP processing? */
+    SCIP_Bool             enforce,            /**< should the constraint be enforced during node processing? */
+    SCIP_Bool             check,              /**< should the constraint be checked for feasibility? */
+    SCIP_Bool             propagate,          /**< should the constraint be propagated during node processing? */
+    SCIP_Bool             local,              /**< is constraint only valid locally? */
+    SCIP_Bool             modifiable,         /**< is constraint modifiable (subject to column generation)? */
+    SCIP_Bool             dynamic,            /**< is constraint dynamic? */
+    SCIP_Bool             removable           /**< should the constraint be removed from the LP due to aging or cleanup? */
+);
+
+SCIP_RETCODE PCTSPcreateBasicConsSubtour(
+    SCIP* mip,
+    SCIP_CONS** cons,
+    std::string& name,
+    PCTSPgraph& graph,
+    PCTSPvertex& root_vertex
+);
+
 #endif
