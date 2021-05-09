@@ -111,29 +111,30 @@ TEST_F(SuurballeGraphFixture, testAddSubtourEliminationConstraint) {
     // add subtour elimination constraint to the vertex set
     std::vector<PCTSPvertex> vertex_set{ 1, 2, 3, 4 };
     PCTSPvertex target_vertex = 2;
-    SCIP_RETCODE sec_code = addSubtourEliminationConstraint(mip, graph, vertex_set, variable_map, root_vertex, target_vertex);
-    EXPECT_EQ(sec_code, SCIP_OKAY);
-    auto cons_array = SCIPgetConss(mip);
-    // find the subtour elimination constraint by searching for its name
-    for (int i = 0; i < SCIPgetNConss(mip); i++) {
-        auto cons = cons_array[i];
-        if (std::string(SCIPconsGetName(cons)).substr(0, 4) == "sec-") {
-            // the expected num variables = num edges + num vertices - 1
-            auto nvars = SCIPgetNVarsLinear(mip, cons);
-            int nedges = getInducedEdges(graph, vertex_set).size();
-            EXPECT_EQ(nvars, nedges + vertex_set.size() - 1);
-        }
-    }
-    SCIPsolve(mip);
+    // SCIP_RETCODE sec_code = addSubtourEliminationConstraint(mip, graph, vertex_set, variable_map, root_vertex, target_vertex);
+    // EXPECT_EQ(sec_code, SCIP_OKAY);
+    // auto cons_array = SCIPgetConss(mip);
+    // // find the subtour elimination constraint by searching for its name
+    // for (int i = 0; i < SCIPgetNConss(mip); i++) {
+    //     auto cons = cons_array[i];
+    //     if (std::string(SCIPconsGetName(cons)).substr(0, 4) == "sec-") {
+    //         // the expected num variables = num edges + num vertices - 1
+    //         auto nvars = SCIPgetNVarsLinear(mip, cons);
+    //         int nedges = getInducedEdges(graph, vertex_set).size();
+    //         EXPECT_EQ(nvars, nedges + vertex_set.size() - 1);
+    //     }
+    // }
+    // SCIPsolve(mip);
 }
 
 TEST_F(SuurballeGraphFixture, testPCTSPcreateBasicConsSubtour) {
     PCTSPgraph graph = get_suurballe_graph();
     addSelfLoopsToGraph(graph);
-    int quota = 6;
+    int quota = 7;
     PCTSPvertex root_vertex = 0;
     auto cost_map = get(&PCTSPedgeProperties::cost, graph);
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);
+    assignZeroCostToSelfLoops(graph, cost_map);
 
     std::map<PCTSPedge, SCIP_VAR*> variable_map;
     std::map<PCTSPedge, int> weight_map;
@@ -144,10 +145,14 @@ TEST_F(SuurballeGraphFixture, testPCTSPcreateBasicConsSubtour) {
     SCIPcreate(&mip);
     SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip), TRUE);
     SCIPincludeDefaultPlugins(mip);
-    SCIPcreateProbBasic(mip, "test-pctsp-without-secs");
+    SCIPcreateProbBasic(mip, "test-pctsp-with-secs");
 
     // add variables and constraints
-    SCIP_RETCODE code =
-        PCTSPmodelWithoutSECs(mip, graph, cost_map, weight_map, quota,
-            root_vertex, variable_map);
+    PCTSPmodelWithoutSECs(mip, graph, cost_map, weight_map, quota,
+        root_vertex, variable_map);
+    SCIPprintOrigProblem(mip, NULL, NULL, false);
+
+    SCIP_RETCODE code = SCIPsolve(mip);
+    auto sol = SCIPgetBestSol(mip);
+    SCIPprintSol(mip, sol, NULL, false);
 }

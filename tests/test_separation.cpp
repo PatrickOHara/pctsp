@@ -11,21 +11,26 @@ TEST(TestSeparation, testIsGraphSimpleCycle) {
     boost::add_edge(1, 2, cycle_graph);
     boost::add_edge(2, 3, cycle_graph);
     boost::add_edge(0, 3, cycle_graph);
-    EXPECT_TRUE(isGraphSimpleCycle(cycle_graph));
+    std::vector< int > cycle_component(boost::num_vertices(cycle_graph));
+    EXPECT_TRUE(isGraphSimpleCycle(cycle_graph, cycle_component));
 
     PCTSPgraph disjoint_graph;
     boost::add_edge(0, 1, disjoint_graph);
     boost::add_edge(1, 2, disjoint_graph);
-    boost::add_edge(2, 3, disjoint_graph);
-    boost::add_edge(0, 3, disjoint_graph);
-    EXPECT_FALSE(isGraphSimpleCycle(disjoint_graph));
+    boost::add_edge(0, 2, disjoint_graph);
+    boost::add_edge(3, 4, disjoint_graph);
+    boost::add_edge(4, 5, disjoint_graph);
+    boost::add_edge(3, 5, disjoint_graph);
+    std::vector<int> disjoint_component(boost::num_vertices(disjoint_graph));
+    EXPECT_FALSE(isGraphSimpleCycle(disjoint_graph, disjoint_component));
 
     PCTSPgraph path_graph;
     boost::add_edge(0, 1, path_graph);
     boost::add_edge(1, 2, path_graph);
     boost::add_edge(2, 3, path_graph);
     boost::add_edge(3, 4, path_graph);
-    EXPECT_FALSE(isGraphSimpleCycle(path_graph));
+    std::vector<int> path_component(boost::num_vertices(path_graph));
+    EXPECT_FALSE(isGraphSimpleCycle(path_graph, path_component));
 }
 
 TEST(TestSeparation, testGetSolutionGraph) {

@@ -11,11 +11,10 @@ PCTSPgraph getSolutionGraph(SCIP* mip, PCTSPgraph& graph, SCIP_SOL* sol, std::ma
 
 /** Returns true if the graph is a simple cycle */
 template <class UndirectedGraph>
-bool isGraphSimpleCycle(UndirectedGraph& support_graph) {
+bool isGraphSimpleCycle(UndirectedGraph& support_graph, std::vector<int>& component_vector) {
     if (boost::num_vertices(support_graph) == 0) return false;
     if (boost::num_edges(support_graph) == 0) return false;
-    std::vector< int > component(boost::num_vertices(support_graph));
-    int n_components = boost::connected_components(support_graph, &component[0]);
+    int n_components = boost::connected_components(support_graph, &component_vector[0]);
     if (n_components != 1) return false;    // a simple cycle must be connected
 
     for (auto vertex : boost::make_iterator_range(boost::vertices(support_graph))) {

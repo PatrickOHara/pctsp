@@ -23,11 +23,22 @@ typedef typename std::vector<SCIP_VAR*> VarVector;
 
 SCIP_RETCODE addSubtourEliminationConstraint(
     SCIP* mip,
+    SCIP_CONSHDLR* conshdlr,
     PCTSPgraph& graph,
     std::vector<PCTSPvertex>& vertex_set,
     PCTSPedgeVariableMap& edge_variable_map,
     PCTSPvertex& root_vertex,
-    PCTSPvertex& target_vertex);
+    PCTSPvertex& target_vertex,
+    SCIP_SOL* sol,                /**< primal solution that should be separated */
+    SCIP_RESULT* result              /**< pointer to store the result of the separation call */
+);
+
+SCIP_RETCODE PCTSPseparateSubtour(
+    SCIP* scip,                 /**< SCIP data structure */
+    SCIP_CONSHDLR* conshdlr,    /**< the constraint handler itself */
+    SCIP_SOL* sol,              /**< primal solution that should be separated */
+    SCIP_RESULT* result         /**< pointer to store the result of the separation call */
+);
 
 void insertEdgeVertexVariables(VarVector& edge_variables,
     VarVector& vertex_variables,
@@ -37,7 +48,7 @@ void insertEdgeVertexVariables(VarVector& edge_variables,
 
 std::vector<PCTSPedge> getInducedEdges(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
 
-struct SCIP_ConsData {
+struct SCIP_ConshdlrData {
     PCTSPvertex* root_vertex;
     PCTSPgraph* graph;
     PCTSPedgeVariableMap* edge_variable_map;
@@ -57,12 +68,13 @@ public:
     {
     }
 
-    virtual SCIP_DECL_CONSCHECK(scip_check);
-    virtual SCIP_DECL_CONSENFOPS(scip_enfops);
-    virtual SCIP_DECL_CONSENFOLP(scip_enfolp);
-    virtual SCIP_DECL_CONSTRANS(scip_trans);
-    virtual SCIP_DECL_CONSLOCK(scip_lock);
-
+    SCIP_DECL_CONSCHECK(scip_check);
+    SCIP_DECL_CONSENFOPS(scip_enfops);
+    SCIP_DECL_CONSENFOLP(scip_enfolp);
+    SCIP_DECL_CONSTRANS(scip_trans);
+    SCIP_DECL_CONSLOCK(scip_lock);
+    SCIP_DECL_CONSSEPALP(scip_sepalp);
+    SCIP_DECL_CONSSEPASOL(scip_sepasol);
 };
 
 /** Create a subtour elimination constraint
