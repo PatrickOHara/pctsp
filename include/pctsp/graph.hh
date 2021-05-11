@@ -42,9 +42,23 @@ PCTSPprizeMap prizeMapFromPyDict(py::dict& prize_dict,
     VertexIdMap& vertex_id_map);
 PCTSPcostMap costMapFromPyDict(py::dict& cost_dict, PCTSPgraph& graph,
     VertexIdMap& vertex_id_map);
-py::list getPyEdgeList(PCTSPgraph& graph, VertexIdMap& vertex_id_map,
-    std::list<PCTSPedge>& edge_list);
 py::list getPyVertexList(VertexIdMap& vertex_id_map, std::list<int>& vertex_list);
 std::list<int> getBoostVertexList(VertexIdMap& vertex_id_map, py::list& py_list);
+
+template <typename EdgeContainer>
+py::list getPyEdgeList(PCTSPgraph& graph, VertexIdMap& vertex_id_map,
+    EdgeContainer& edge_list) {
+    py::list py_list;
+    for (auto it = edge_list.begin(); it != edge_list.end(); ++it) {
+        PCTSPedge edge = *it;
+        int source = boost::source(edge, graph);
+        int target = boost::target(edge, graph);
+        int py_source = getPyVertex(vertex_id_map, source);
+        int py_target = getPyVertex(vertex_id_map, target);
+        py::tuple py_edge = py::make_tuple(py_source, py_target);
+        py_list.append(py_edge);
+    }
+    return py_list;
+}
 
 #endif

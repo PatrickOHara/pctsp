@@ -2,12 +2,9 @@
 #define __PCTSP_SEPARATION__
 
 #include "graph.hh"
+#include "solution.hh"
 #include <boost/graph/connected_components.hpp>
 #include <objscip/objscip.h>
-
-std::vector<PCTSPvertex> getSolutionVertices(SCIP* mip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map);
-std::vector<PCTSPedge> getSolutionEdges(SCIP* mip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map, bool add_self_loops = false);
-PCTSPgraph getSolutionGraph(SCIP* mip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map, bool add_self_loops = false);
 
 /** Returns true if the graph is a simple cycle */
 template <class UndirectedGraph>

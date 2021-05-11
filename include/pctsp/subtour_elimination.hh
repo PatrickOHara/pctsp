@@ -1,6 +1,7 @@
 #ifndef __PCTSP_SUBTOUR_ELIMINATION__
 #define __PCTSP_SUBTOUR_ELIMINATION__
 
+#include "solution.hh"
 #include "graph.hh"
 #include <objscip/objscip.h>
 

@@ -127,13 +127,13 @@ TEST_F(SuurballeGraphFixture, testAddSubtourEliminationConstraint) {
     // SCIPsolve(mip);
 }
 
-TEST_F(SuurballeGraphFixture, testPCTSPcreateBasicConsSubtour) {
-    PCTSPgraph graph = get_suurballe_graph();
+TEST_P(GraphFixture, testPCTSPcreateBasicConsSubtour) {
+    PCTSPgraph graph = getGraph();
     addSelfLoopsToGraph(graph);
-    int quota = 7;
+    int quota = getQuota();
     PCTSPvertex root_vertex = 0;
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
+    auto cost_map = getCostMap(graph);
+    auto prize_map = getPrizeMap(graph);
     assignZeroCostToSelfLoops(graph, cost_map);
 
     std::map<PCTSPedge, SCIP_VAR*> variable_map;
@@ -155,4 +155,30 @@ TEST_F(SuurballeGraphFixture, testPCTSPcreateBasicConsSubtour) {
     SCIP_RETCODE code = SCIPsolve(mip);
     auto sol = SCIPgetBestSol(mip);
     SCIPprintSol(mip, sol, NULL, false);
+
+    auto solution_edges = getSolutionEdges(mip, graph, sol, variable_map);
+    for (auto const& edge : solution_edges) {
+        cout << boost::source(edge, graph) << " - " << boost::target(edge, graph) << endl;
+    }
+
+    auto first_edge = boost::edge(2, 5, graph).first;
+    auto second_edge = boost::edge(1, 4, graph).first;
+    auto first_it = std::find(solution_edges.begin(), solution_edges.end(), first_edge);
+    auto second_it = std::find(solution_edges.begin(), solution_edges.end(), second_edge);
+    switch (GetParam()) {
+    case GraphType::GRID8: {
+        EXPECT_NE(first_it, solution_edges.end());
+        EXPECT_NE(second_it, solution_edges.end());
+        break;
+    }
+    case GraphType::SUURBALLE: EXPECT_EQ(*second_it, second_edge); break;
+    default: EXPECT_TRUE(true); break;
+    }
 }
+
+
+INSTANTIATE_TEST_SUITE_P(
+    TestSubtourElimination,
+    GraphFixture,
+    ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE)
+);

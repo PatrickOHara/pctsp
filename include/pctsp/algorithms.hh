@@ -7,6 +7,7 @@
 
 #include "constraint.hh"
 #include "logger.hh"
+#include "solution.hh"
 #include "preprocessing.hh"
 using namespace boost;
 using namespace scip;
@@ -78,28 +79,11 @@ SCIP_RETCODE PCTSPmodelWithoutSECs(
     return SCIP_OKAY;
 }
 
-template <typename Edge>
-SCIP_RETCODE
-PCTSPgetEdgeListFromSolution(SCIP* mip, SCIP_SOL* sol,
-    std::map<Edge, SCIP_VAR*>& edge_variable_map,
-    std::list<Edge>& edge_list) {
-    // TODO iterate over edge variable map
-    // get edges where the value of the variable are equal to one
-
-    for (auto const& [edge, variable] : edge_variable_map) {
-        double var_value = SCIPgetSolVal(mip, sol, variable);
-        if (var_value == 1) {
-            edge_list.push_back(edge);
-        }
-    }
-    return SCIP_OKAY;
-}
-
 /** Solve the Prize Collecting TSP problem using a branch and cut algorithm
  */
 template <typename Graph, typename Vertex, typename Edge, typename CostMap,
     typename PrizeMap>
-    SCIP_RETCODE PCTSPbranchAndCut(Graph& graph, std::list<Edge>& optimal_edge_list,
+    SCIP_RETCODE PCTSPbranchAndCut(Graph& graph, std::vector<Edge>& solution_edges,
         CostMap& cost_map, PrizeMap& prize_map,
         int quota, Vertex root_vertex, const char* log_filepath = NULL, bool print_scip = true) {
 
@@ -140,7 +124,7 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
     BOOST_LOG_TRIVIAL(info) << "Model solved. Getting edge list of best solution.";
     // Get the solution
     SCIP_SOL* sol = SCIPgetBestSol(mip);
-    PCTSPgetEdgeListFromSolution(mip, sol, edge_variable_map, optimal_edge_list);
+    solution_edges = getSolutionEdges(mip, graph, sol, edge_variable_map);
     if (print_scip) {
         BOOST_LOG_TRIVIAL(debug) << "Saving SCIP logs to: " << log_filepath;
         FILE* log_file = fopen(log_filepath, "w");

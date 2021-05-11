@@ -28,12 +28,12 @@ py::list pctsp_branch_and_cut_bind(py::list& py_edge_list, py::dict& prize_dict,
         log_filepath = py::extract<char const*>(py_log_filepath);
     }
     // run branch and cut algorithm - returns a list of edges in solution
-    std::list<PCTSPedge> edge_list;
-    PCTSPbranchAndCut(graph, edge_list, cost_map, prize_map, quota,
+    std::vector<PCTSPedge> solution_edges;
+    PCTSPbranchAndCut(graph, solution_edges, cost_map, prize_map, quota,
         root_vertex, log_filepath);
 
     // convert list of edges to a python list of python tuples
-    return getPyEdgeList(graph, vertex_id_map, edge_list);
+    return getPyEdgeList(graph, vertex_id_map, solution_edges);
 }
 
 // graph bindings
