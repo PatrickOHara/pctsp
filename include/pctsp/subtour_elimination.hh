@@ -49,11 +49,39 @@ void insertEdgeVertexVariables(VarVector& edge_variables,
 
 std::vector<PCTSPedge> getInducedEdges(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
 
-struct SCIP_ConshdlrData {
-    PCTSPvertex* root_vertex;
-    PCTSPgraph* graph;
-    PCTSPedgeVariableMap* edge_variable_map;
+/** SCIP user problem data for PCTSP */
+class ProbDataPCTSP : public scip::ObjProbData
+{
+    int* quota_;
+    PCTSPgraph* graph_;
+    PCTSPvertex* root_vertex_;
+    PCTSPedgeVariableMap* edge_variable_map_;
+public:
+    /** default constructor */
+    ProbDataPCTSP(
+        PCTSPgraph& graph,
+        PCTSPvertex& root_vertex,
+        PCTSPedgeVariableMap& edge_variable_map,
+        int quota
+    )
+    {
+        graph_ = &graph;
+        root_vertex_ = &root_vertex;
+        edge_variable_map_ = &edge_variable_map;
+        quota_ = &quota;
+    };
 
+    /** Get the input graph */
+    PCTSPgraph* getInputGraph();
+
+    /** Get the quota */
+    int* getQuota();
+
+    /** Get the root vertex */
+    PCTSPvertex* getRootVertex();
+
+    /** Get the mapping from edges to variables */
+    PCTSPedgeVariableMap* getEdgeVariableMap();
 };
 
 class PCTSPconshdlrSubtour : public scip::ObjConshdlr
@@ -74,6 +102,7 @@ public:
     SCIP_DECL_CONSENFOLP(scip_enfolp);
     SCIP_DECL_CONSTRANS(scip_trans);
     SCIP_DECL_CONSLOCK(scip_lock);
+    SCIP_DECL_CONSPRINT(scip_print);
     SCIP_DECL_CONSSEPALP(scip_sepalp);
     SCIP_DECL_CONSSEPASOL(scip_sepasol);
 };

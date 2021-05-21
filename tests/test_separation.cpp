@@ -1,6 +1,7 @@
 
 #include "pctsp/preprocessing.hh"
 #include "pctsp/separation.hh"
+#include "pctsp/solution.hh"
 #include <gtest/gtest.h>
 #include <objscip/objscipdefplugins.h>
 

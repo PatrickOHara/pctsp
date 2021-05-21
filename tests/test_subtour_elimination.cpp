@@ -145,11 +145,18 @@ TEST_P(GraphFixture, testPCTSPcreateBasicConsSubtour) {
     SCIPcreate(&mip);
     SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip), TRUE);
     SCIPincludeDefaultPlugins(mip);
-    SCIPcreateProbBasic(mip, "test-pctsp-with-secs");
+    SCIPcreateObjProb(mip, "test-pctsp-with-secs", new ProbDataPCTSP(graph, root_vertex, variable_map, quota), true);
 
     // add variables and constraints
     PCTSPmodelWithoutSECs(mip, graph, cost_map, weight_map, quota,
         root_vertex, variable_map);
+
+    // create and add subtour elimination constraint
+    SCIP_CONS* cons;
+    std::string cons_name("subtour-constraint");
+    PCTSPcreateBasicConsSubtour(mip, &cons, cons_name, graph, root_vertex);
+    SCIPaddCons(mip, cons);
+    SCIPreleaseCons(mip, &cons);
     SCIPprintOrigProblem(mip, NULL, NULL, false);
 
     SCIP_RETCODE code = SCIPsolve(mip);

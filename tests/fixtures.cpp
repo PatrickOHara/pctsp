@@ -90,7 +90,7 @@ PCTSPcostMap GraphFixture::getCostMap(PCTSPgraph& graph) {
         for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
             auto source = boost::source(edge, graph);
             auto target = boost::target(edge, graph);
-            if (((source == 1) & (target == 4)) | ((source == 2) & (target == 5)))
+            if (((source == 1) & (target == 4)) | ((source == 3) & (target == 5)))
                 cost_map[edge] = 5;     // make two heavy edges in the middle
             else
                 cost_map[edge] = 1;
