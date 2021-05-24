@@ -14,9 +14,10 @@ std::vector<PCTSPedge> getSolutionEdges(
     std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map,
     bool add_self_loops = false
 );
-PCTSPgraph getSolutionGraph(
+void getSolutionGraph(
     SCIP* mip,
     PCTSPgraph& graph,
+    PCTSPgraph& solution_graph,
     SCIP_SOL* sol,
     std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map,
     bool add_self_loops = false

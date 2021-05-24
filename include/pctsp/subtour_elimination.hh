@@ -59,16 +59,16 @@ class ProbDataPCTSP : public scip::ObjProbData
 public:
     /** default constructor */
     ProbDataPCTSP(
-        PCTSPgraph& graph,
-        PCTSPvertex& root_vertex,
-        PCTSPedgeVariableMap& edge_variable_map,
-        int quota
+        PCTSPgraph* graph,
+        PCTSPvertex* root_vertex,
+        PCTSPedgeVariableMap* edge_variable_map,
+        int* quota
     )
     {
-        graph_ = &graph;
-        root_vertex_ = &root_vertex;
-        edge_variable_map_ = &edge_variable_map;
-        quota_ = &quota;
+        graph_ = graph;
+        root_vertex_ = root_vertex;
+        edge_variable_map_ = edge_variable_map;
+        quota_ = quota;
     };
 
     /** Get the input graph */

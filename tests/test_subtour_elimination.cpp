@@ -127,7 +127,40 @@ TEST_F(SuurballeGraphFixture, testAddSubtourEliminationConstraint) {
     // SCIPsolve(mip);
 }
 
-TEST_P(GraphFixture, testPCTSPcreateBasicConsSubtour) {
+TEST(TestSubtourElimination, testProbDataPCTSP) {
+    PCTSPgraph graph;
+    SCIP* mip = NULL;
+    SCIPcreate(&mip);
+    boost::add_edge(0, 1, graph);
+    SCIP_VAR* var;
+    PCTSPedgeVariableMap edge_variable_map;
+    int quota = 2;
+    auto root_vertex = boost::vertex(0, graph);
+    auto probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota);
+    SCIPcreateObjProb(
+        mip,
+        "test-prob-data",
+        probdata,
+        true
+    );
+    SCIPcreateVarBasic(mip, &var, "var0", 0, 1, 1, SCIP_VARTYPE_BINARY);
+    auto edge = boost::edge(0, 1, graph).first;
+    edge_variable_map[edge] = var;
+
+    // now check the when we get the prob data from the function call that the data is the same
+    ProbDataPCTSP* loaddata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(mip));
+    auto loaded_edge = boost::edge(0, 1, *loaddata->getInputGraph()).first;
+    auto loaded_var = (*loaddata->getEdgeVariableMap())[loaded_edge];
+    EXPECT_EQ(loaded_edge, edge);
+    EXPECT_EQ(loaded_var, var);
+    // EXPECT_EQ(*loaded_var, *var);
+    EXPECT_EQ(SCIPvarGetName(var), SCIPvarGetName(loaded_var));
+}
+
+typedef GraphFixture SubtourGraphFixture;
+
+TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
+    PCTSPinitLogging(logging::trivial::debug);
     PCTSPgraph graph = getGraph();
     addSelfLoopsToGraph(graph);
     int quota = getQuota();
@@ -145,11 +178,18 @@ TEST_P(GraphFixture, testPCTSPcreateBasicConsSubtour) {
     SCIPcreate(&mip);
     SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip), TRUE);
     SCIPincludeDefaultPlugins(mip);
-    SCIPcreateObjProb(mip, "test-pctsp-with-secs", new ProbDataPCTSP(graph, root_vertex, variable_map, quota), true);
+    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &variable_map, &quota);
+    SCIPcreateObjProb(
+        mip,
+        "test-pctsp-with-secs",
+        probdata,
+        true
+    );
 
     // add variables and constraints
     PCTSPmodelWithoutSECs(mip, graph, cost_map, weight_map, quota,
         root_vertex, variable_map);
+    EXPECT_EQ(probdata->getEdgeVariableMap()->size(), variable_map.size());
 
     // create and add subtour elimination constraint
     SCIP_CONS* cons;
@@ -160,6 +200,7 @@ TEST_P(GraphFixture, testPCTSPcreateBasicConsSubtour) {
     SCIPprintOrigProblem(mip, NULL, NULL, false);
 
     SCIP_RETCODE code = SCIPsolve(mip);
+    SCIPprintTransProblem(mip, NULL, NULL, false);
     auto sol = SCIPgetBestSol(mip);
     SCIPprintSol(mip, sol, NULL, false);
 
@@ -183,9 +224,8 @@ TEST_P(GraphFixture, testPCTSPcreateBasicConsSubtour) {
     }
 }
 
-
 INSTANTIATE_TEST_SUITE_P(
     TestSubtourElimination,
-    GraphFixture,
+    SubtourGraphFixture,
     ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE)
 );

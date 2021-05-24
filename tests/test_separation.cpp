@@ -84,7 +84,8 @@ TEST(TestSeparation, testGetSolutionGraph) {
     EXPECT_EQ(objective, 2);
 
     addSelfLoopsToGraph(graph);
-    auto solution_graph = getSolutionGraph(mip, graph, sol, edge_variable_map);
+    PCTSPgraph solution_graph;
+    getSolutionGraph(mip, graph, solution_graph, sol, edge_variable_map);
 
     EXPECT_EQ(boost::num_edges(solution_graph), objective);
     for (auto const& edge : solution_edges) {
