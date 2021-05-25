@@ -88,6 +88,7 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     SCIP_CALL(SCIPaddVarsToRow(mip, row, nvars, vars, vals));
     SCIP_Bool infeasible;
     SCIP_CALL(SCIPaddRow(mip, row, false, &infeasible));
+    SCIPprintRow(mip, row, NULL);
     // if (infeasible)
     //     *result = SCIP_CUTOFF;
     // else
@@ -247,20 +248,24 @@ SCIP_DECL_CONSPRINT(PCTSPconshdlrSubtour::scip_print) {
     SCIP_Bool success = false;
     int nvars = 0;
     SCIPgetConsNVars(scip, cons, &nvars, &success);
-    SCIP_VAR* vars[nvars];
-    SCIPgetConsVars(scip, cons, vars, nvars, &success);
-    SCIP_ROW* row = SCIPconsGetRow(scip, cons);
-
-    std::string message = std::to_string(SCIPconsGetLhs(scip, cons, &success));
-    message += " <= ";
-    for (int i = 0; i < nvars; i++) {
-        message += SCIPvarGetName(vars[i]);
-        message += " + ";
+    if (nvars == 0) {
+        SCIPinfoMessage(scip, file, "No variables found for SEC");
     }
-    message += " <= ";
-    message += std::to_string(SCIPconsGetRhs(scip, cons, &success));
-    message += "\n";
-    SCIPinfoMessage(scip, file, message.c_str());
+    else {
+        SCIP_VAR* vars[nvars];
+        SCIPgetConsVars(scip, cons, vars, nvars, &success);
+        std::string message = std::to_string(SCIPconsGetLhs(scip, cons, &success));
+        message += " <= ";
+        for (int i = 0; i < nvars; i++) {
+            message += SCIPvarGetName(vars[i]);
+            message += " + ";
+        }
+        message += " <= ";
+        message += std::to_string(SCIPconsGetRhs(scip, cons, &success));
+        message += "\n";
+        SCIPinfoMessage(scip, file, message.c_str());
+
+    }
     return SCIP_OKAY;
 }
 
