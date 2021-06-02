@@ -9,10 +9,11 @@
 #include <objscip/objscipdefplugins.h>
 
 std::vector<PCTSPedge> getInducedEdges(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices) {
+    // assumes the graph is undirected!
     std::vector<PCTSPedge> edges;
-    for (auto const& u : vertices) {
-        for (auto const& v : vertices) {
-            auto potential_edge = boost::edge(u, v, graph);
+    for (int i = 0; i < vertices.size(); i++) {
+        for (int j = i + 1; j < vertices.size(); j++) {
+            auto potential_edge = boost::edge(vertices[i], vertices[j], graph);
             if (potential_edge.second) {
                 edges.push_back(potential_edge.first);
             }
@@ -79,20 +80,51 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     insertEdgeVertexVariables(edge_variables, vertex_variables, all_variables, var_coefs);
 
     // create the subtour elimination constraint
-    SCIP_VAR** vars = &all_variables[0];
-    double* vals = &var_coefs[0];
+    // SCIP_VAR** vars = &all_variables[0];
+    // double* vals = &var_coefs[0];
+    double* vals = var_coefs.data();
+    SCIP_VAR** vars = all_variables.data();
+    for (int i = 0; i < nvars; i++)
+        BOOST_LOG_TRIVIAL(debug) << i << ": " << vals[i] << SCIPvarGetName(vars[i]);
     double lhs = -SCIPinfinity(mip);
     double rhs = 0;
+    // double lhs = 0;
+    // double rhs = 7;
+
+    // SCIP_CONS* cons;
+    // SCIPcreateConsBasicLinear(mip, &cons, cons_name.c_str(), nvars, vars, vals, lhs, rhs);
+    // SCIPcreateConsLinear(mip, &cons, cons_name.c_str(), nvars, vars, vals, lhs, rhs, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE);
+    // SCIPprintCons(mip, cons, NULL);
+    // SCIPaddCons(mip, cons);
+    // SCIPprintCons(mip, cons, NULL);
+    // cout << "Num vars = " << SCIPgetNVarsLinear(mip, cons) << endl;
+
     SCIP_ROW* row;
     SCIP_CALL(SCIPcreateEmptyRowConshdlr(mip, &row, conshdlr, cons_name.c_str(), lhs, rhs, false, false, true));
-    SCIP_CALL(SCIPaddVarsToRow(mip, row, nvars, vars, vals));
-    SCIP_Bool infeasible;
-    SCIP_CALL(SCIPaddRow(mip, row, false, &infeasible));
+    // SCIP_CALL(SCIPcreateRowConshdlr(mip, &row, conshdlr, cons_name.c_str(), lhs, rhs, false, false, true));
     SCIPprintRow(mip, row, NULL);
-    // if (infeasible)
-    //     *result = SCIP_CUTOFF;
-    // else
-    *result = SCIP_SEPARATED;
+    // SCIP_CALL(SCIPaddVarsToRow(mip, row, nvars, vars, vals));
+    SCIP_CALL(SCIPcacheRowExtensions(mip, row));
+    for (int i = 0; i < nvars; i++) {
+        SCIPaddVarToRow(mip, row, vars[i], vals[i]);
+        SCIPprintRow(mip, row, NULL);
+    }
+    SCIP_CALL(SCIPflushRowExtensions(mip, row));
+
+    cout << SCIProwGetVals(row) << endl;
+
+    if (SCIPisCutEfficacious(mip, sol, row)) {
+        SCIP_Bool infeasible;
+        SCIPprintRow(mip, row, NULL);
+        SCIP_CALL(SCIPaddRow(mip, row, false, &infeasible));
+        SCIPprintRow(mip, row, NULL);
+        if (infeasible)
+            *result = SCIP_CUTOFF;
+        else
+            *result = SCIP_SEPARATED;
+    }
+    SCIP_CALL(SCIPreleaseRow(mip, &row));
+
     return SCIP_OKAY;
 }
 
@@ -340,5 +372,6 @@ SCIP_RETCODE PCTSPseparateSubtour(
             ));
         }
     }
+    BOOST_LOG_TRIVIAL(debug) << "Result is " << *result;
     return SCIP_OKAY;
 }

@@ -8,6 +8,8 @@
 // ToDo remove debugging code
 #include <iostream>
 
+#define SCIP_DEBUG
+
 TEST_F(SuurballeGraphFixture, testGetEdgesFromCut) {
     PCTSPgraph graph = get_suurballe_graph();
     auto cost_map = get(&PCTSPedgeProperties::cost, graph);
