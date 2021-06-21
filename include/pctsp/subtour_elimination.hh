@@ -37,6 +37,9 @@ SCIP_RETCODE addSubtourEliminationConstraint(
 SCIP_RETCODE PCTSPseparateSubtour(
     SCIP* scip,                 /**< SCIP data structure */
     SCIP_CONSHDLR* conshdlr,    /**< the constraint handler itself */
+    SCIP_CONS** conss,              /**< array of constraints to process */
+    int nconss,             /**< number of constraints to process */
+    int nusefulconss,       /**< number of useful (non-obsolete) constraints to process */
     SCIP_SOL* sol,              /**< primal solution that should be separated */
     SCIP_RESULT* result         /**< pointer to store the result of the separation call */
 );

@@ -22,6 +22,47 @@ std::vector<PCTSPedge> getInducedEdges(PCTSPgraph& graph, std::vector<PCTSPverte
     return edges;
 }
 
+
+/* Get the number of variables that are fixed or aggregated.
+ * You should pass the transformed variables via the array.
+ */
+int numFixedOrAggVars(SCIP_VAR** vars, int nvars) {
+    int count = 0;
+    for (int i = 0; i < nvars; i++) {
+        auto var = vars[i];
+        switch (SCIPvarGetStatus(var)) {
+        case SCIP_Varstatus::SCIP_VARSTATUS_FIXED:
+        case SCIP_Varstatus::SCIP_VARSTATUS_AGGREGATED: {
+            count += 1;
+            break;
+        }
+        default: break;
+        }
+    }
+    return count;
+}
+
+bool isSolSimpleCycle(SCIP* scip, SCIP_SOL* sol, SCIP_RESULT* result) {
+    ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
+    auto& graph = *probdata->getInputGraph();
+    auto& edge_variable_map = *probdata->getEdgeVariableMap();
+
+    PCTSPgraph solution_graph;
+    getSolutionGraph(scip, graph, solution_graph, sol, edge_variable_map);
+    BOOST_LOG_TRIVIAL(debug) << "Solution graph has " << boost::num_vertices(solution_graph) << " vertices and " << boost::num_edges(solution_graph) << " edges.";
+
+    // if a subtour is found, the solution must be infeasible
+    std::vector< int > component(boost::num_vertices(solution_graph));
+    return isGraphSimpleCycle(solution_graph, component);
+    // if (!is_simple_cycle) {
+    //     BOOST_LOG_TRIVIAL(info) << "Violation: support graph is not a simple cycle. Return Infeasible.";
+    //     *result = SCIP_INFEASIBLE;
+    // }
+    // else
+    //     BOOST_LOG_TRIVIAL(info) << "Solution is a simple cycle. No subtour violations found.";
+    // return SCIP_OKAY;
+}
+
 SCIP_RETCODE addSubtourEliminationConstraint(
     SCIP* mip,
     SCIP_CONSHDLR* conshdlr,
@@ -91,13 +132,33 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     // double lhs = 0;
     // double rhs = 7;
 
-    // SCIP_CONS* cons;
-    // SCIPcreateConsBasicLinear(mip, &cons, cons_name.c_str(), nvars, vars, vals, lhs, rhs);
-    // SCIPcreateConsLinear(mip, &cons, cons_name.c_str(), nvars, vars, vals, lhs, rhs, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE);
-    // SCIPprintCons(mip, cons, NULL);
-    // SCIPaddCons(mip, cons);
-    // SCIPprintCons(mip, cons, NULL);
+    SCIP_CONS* cons;
+
+    SCIP_CALL(SCIPcreateConsBasicLinear(mip, &cons, cons_name.c_str(), nvars, vars, vals, lhs, rhs));
+    SCIP_VAR* transvars[nvars];
+    auto node = SCIPgetCurrentNode(mip);
+    auto ncols = SCIPgetNLPCols(mip);
+    auto cols = SCIPgetLPCols(mip);
+    cout << "Num cols = " << ncols << ". Num vars = " << SCIPgetNVars(mip) << endl;
+    for (int i = 0; i < ncols; i++) {
+        auto var = SCIPcolGetVar(cols[i]);
+        auto var_name = SCIPvarGetName(var);
+        cout << var_name << " - ";
+    }
+    cout << endl;
+
+    for (int i = 0; i < nvars; i++) {
+        SCIP_VAR* transvar;
+        SCIP_CALL(SCIPgetTransformedVar(mip, vars[i], &transvar));
+        transvars[i] = transvar;
+        cout << SCIPvarGetName(transvar) << " is in LP? " << SCIPvarIsInLP(transvar) << endl;
+    }
+    // SCIP_CALL(SCIPcreateConsLinear(mip, &cons, cons_name.c_str(), nvars, transvars, vals, lhs, rhs, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE));
+    // SCIP_CALL(SCIPprintCons(mip, cons, NULL));
+    // SCIP_CALL(SCIPaddCons(mip, cons));
+    // SCIP_CALL(SCIPprintCons(mip, cons, NULL));
     // cout << "Num vars = " << SCIPgetNVarsLinear(mip, cons) << endl;
+    // SCIP_CALL(SCIPreleaseCons(mip, &cons));
 
     SCIP_ROW* row;
     SCIP_CALL(SCIPcreateEmptyRowConshdlr(mip, &row, conshdlr, cons_name.c_str(), lhs, rhs, false, false, true));
@@ -105,8 +166,23 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     SCIPprintRow(mip, row, NULL);
     // SCIP_CALL(SCIPaddVarsToRow(mip, row, nvars, vars, vals));
     SCIP_CALL(SCIPcacheRowExtensions(mip, row));
+    // SCIP_CALL(SCIPaddVarsToRow(mip, row, nvars, transvars, vals));
+
     for (int i = 0; i < nvars; i++) {
-        SCIPaddVarToRow(mip, row, vars[i], vals[i]);
+        // cout << SCIPvarGetName(transvars[i]) << " : " << vals[i] << endl;
+        auto transvar = transvars[i];
+        auto name = SCIPvarGetName(transvar);
+        switch (SCIPvarGetStatus(transvar)) {
+        case SCIP_Varstatus::SCIP_VARSTATUS_FIXED: {
+            cout << "Transformed variable " << name << " is fixed!!!" << endl;
+            break;
+        }
+        default: {
+            cout << "Transformed var status of " << name << ": " << SCIPvarGetStatus(transvars[i]) << endl;
+            break;
+        }
+        }
+        SCIPaddVarToRow(mip, row, transvar, vals[i]);
         SCIPprintRow(mip, row, NULL);
     }
     SCIP_CALL(SCIPflushRowExtensions(mip, row));
@@ -200,7 +276,7 @@ SCIP_RETCODE PCTSPcreateBasicConsSubtour(
         FALSE,
         FALSE,
         FALSE,
-        FALSE    // ToDo: later we may be able to remove this due to cleanup
+        TRUE    // ToDo: later we may be able to remove this due to cleanup
     ));
     return SCIP_OKAY;
 }
@@ -223,37 +299,37 @@ PCTSPedgeVariableMap* ProbDataPCTSP::getEdgeVariableMap() {
 
 SCIP_DECL_CONSCHECK(PCTSPconshdlrSubtour::scip_check)
 {
-    BOOST_LOG_TRIVIAL(debug) << "Checking for subtours.";
-    assert(result != NULL);
+    auto nvars = SCIPgetNVars(scip);
+    SCIP_VAR* transvars[nvars];
+    SCIPgetTransformedVars(scip, nvars, SCIPgetVars(scip), transvars);
+    auto nfixed = numFixedOrAggVars(transvars, nvars);
+    BOOST_LOG_TRIVIAL(debug) << "scip_check: Checking for subtours. " << nfixed << " fixed/agg vars out of " << nvars;
     *result = SCIP_FEASIBLE;
-
-    assert(sol != NULL);
-    ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
-    auto& graph = *probdata->getInputGraph();
-    auto& edge_variable_map = *probdata->getEdgeVariableMap();
-
-    PCTSPgraph solution_graph;
-    getSolutionGraph(scip, graph, solution_graph, sol, edge_variable_map);
-    BOOST_LOG_TRIVIAL(debug) << "Solution graph has " << boost::num_vertices(solution_graph) << " vertices and " << boost::num_edges(solution_graph) << " edges.";
-
-    // if a subtour is found, the solution must be infeasible
-    std::vector< int > component(boost::num_vertices(solution_graph));
-    bool is_simple_cycle = isGraphSimpleCycle(solution_graph, component);
-    if (!is_simple_cycle) {
-        BOOST_LOG_TRIVIAL(info) << "Violation: support graph is not a simple cycle. Return Infeasible.";
+    if (isSolSimpleCycle(scip, sol, result))
+        BOOST_LOG_TRIVIAL(info) << "Solution is a simple cycle. No subtour violations found.";
+    else {
+        BOOST_LOG_TRIVIAL(debug) << "Violation: support graph is not a simple cycle. Return Infeasible.";
         *result = SCIP_INFEASIBLE;
     }
-    else
-        BOOST_LOG_TRIVIAL(info) << "Solution is a simple cycle. No subtour violations found.";
     return SCIP_OKAY;
 }
 
 SCIP_DECL_CONSENFOPS(PCTSPconshdlrSubtour::scip_enfops) {
     BOOST_LOG_TRIVIAL(debug) << "SCIP enfops method";
+    if (isSolSimpleCycle(scip, NULL, result))
+        *result = SCIP_FEASIBLE;
+    else
+        *result = SCIP_INFEASIBLE;
     return SCIP_OKAY;
 }
+
 SCIP_DECL_CONSENFOLP(PCTSPconshdlrSubtour::scip_enfolp) {
     BOOST_LOG_TRIVIAL(debug) << "SCIP enfolp method";
+    if (isSolSimpleCycle(scip, NULL, result))
+        *result = SCIP_FEASIBLE;
+    else
+        // *result = SCIP_CONSADDED;
+        *result = SCIP_INFEASIBLE;
     return SCIP_OKAY;
 }
 
@@ -303,19 +379,22 @@ SCIP_DECL_CONSPRINT(PCTSPconshdlrSubtour::scip_print) {
 
 SCIP_DECL_CONSSEPALP(PCTSPconshdlrSubtour::scip_sepalp) {
     BOOST_LOG_TRIVIAL(debug) << "scip_sepalp";
-    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, NULL, result));
+    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result));
     return SCIP_OKAY;
 }
 
 SCIP_DECL_CONSSEPASOL(PCTSPconshdlrSubtour::scip_sepasol) {
     BOOST_LOG_TRIVIAL(debug) << "scip_sepsol";
-    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, sol, result));
+    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, sol, result));
     return SCIP_OKAY;
 }
 
 SCIP_RETCODE PCTSPseparateSubtour(
     SCIP* scip,               /**< SCIP data structure */
     SCIP_CONSHDLR* conshdlr,           /**< the constraint handler itself */
+    SCIP_CONS** conss,              /**< array of constraints to process */
+    int nconss,             /**< number of constraints to process */
+    int nusefulconss,       /**< number of useful (non-obsolete) constraints to process */
     SCIP_SOL* sol,                /**< primal solution that should be separated */
     SCIP_RESULT* result              /**< pointer to store the result of the separation call */
 ) {
@@ -324,52 +403,54 @@ SCIP_RETCODE PCTSPseparateSubtour(
     ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
     auto& graph = *(probdata->getInputGraph());
     auto& edge_variable_map = *(probdata->getEdgeVariableMap());
-    PCTSPgraph solution_graph;
-    getSolutionGraph(scip, graph, solution_graph, sol, edge_variable_map);
     auto& root_vertex = *(probdata->getRootVertex());
+    for (int c = 0; c < nusefulconss && *result != SCIP_CUTOFF; ++c) {
+        PCTSPgraph solution_graph;
+        getSolutionGraph(scip, graph, solution_graph, sol, edge_variable_map);
 
-    // get the connected components of the support graph
-    BOOST_LOG_TRIVIAL(debug) << "Finding connected components of the solution graph.";
-    std::vector< int > component(boost::num_vertices(solution_graph));
-    int n_components = boost::connected_components(solution_graph, &component[0]);
-    if (n_components == 1) return SCIP_OKAY;
-    std::vector<std::vector<PCTSPvertex>> component_sets;
-    for (int i = 0; i < n_components; i++)
-        component_sets.push_back(std::vector<PCTSPvertex>());
-    auto index = boost::get(vertex_index, solution_graph);
-    int root_component = -1;
-    for (auto vertex : boost::make_iterator_range(boost::vertices(solution_graph))) {
-        int component_id = component[index[vertex]];
-        component_sets[component_id].push_back(vertex);
-        if (vertex == root_vertex)
-            root_component = component_id;
-    }
-    assert(root_component >= 0);
-    // for each vertex in a connected component C that does not contain the root
-    // add a subtour elimination constraint over the vertex and C
-    for (auto vertex : boost::make_iterator_range(boost::vertices(solution_graph))) {
-        int component_id = component[index[vertex]];
-        if (component_id != root_component) {
-            BOOST_LOG_TRIVIAL(debug) << "Add subtour elimination constraint to connected component " << component_id << " for vertex " << vertex;
-            std::vector<PCTSPvertex> support_vertex_set = component_sets[component_id];
-            std::vector<PCTSPvertex> vertex_set(support_vertex_set.size());
-            int i = 0;
-            for (auto const& solution_vertex : support_vertex_set) {
-                vertex_set[i] = boost::vertex(solution_vertex, graph);
-                i++;
+        // get the connected components of the support graph
+        BOOST_LOG_TRIVIAL(debug) << "Finding connected components of the solution graph.";
+        std::vector< int > component(boost::num_vertices(solution_graph));
+        int n_components = boost::connected_components(solution_graph, &component[0]);
+        if (n_components == 1) return SCIP_OKAY;
+        std::vector<std::vector<PCTSPvertex>> component_sets;
+        for (int i = 0; i < n_components; i++)
+            component_sets.push_back(std::vector<PCTSPvertex>());
+        auto index = boost::get(vertex_index, solution_graph);
+        int root_component = -1;
+        for (auto vertex : boost::make_iterator_range(boost::vertices(solution_graph))) {
+            int component_id = component[index[vertex]];
+            component_sets[component_id].push_back(vertex);
+            if (vertex == root_vertex)
+                root_component = component_id;
+        }
+        assert(root_component >= 0);
+        // for each vertex in a connected component C that does not contain the root
+        // add a subtour elimination constraint over the vertex and C
+        for (auto vertex : boost::make_iterator_range(boost::vertices(solution_graph))) {
+            int component_id = component[index[vertex]];
+            if (component_id != root_component) {
+                BOOST_LOG_TRIVIAL(debug) << "Add subtour elimination constraint to connected component " << component_id << " for vertex " << vertex;
+                std::vector<PCTSPvertex> support_vertex_set = component_sets[component_id];
+                std::vector<PCTSPvertex> vertex_set(support_vertex_set.size());
+                int i = 0;
+                for (auto const& solution_vertex : support_vertex_set) {
+                    vertex_set[i] = boost::vertex(solution_vertex, graph);
+                    i++;
+                }
+                auto target_vertex = boost::vertex(vertex, graph);
+                SCIP_CALL(addSubtourEliminationConstraint(
+                    scip,
+                    conshdlr,
+                    graph,
+                    vertex_set,
+                    edge_variable_map,
+                    root_vertex,
+                    target_vertex,
+                    sol,
+                    result
+                ));
             }
-            auto target_vertex = boost::vertex(vertex, graph);
-            SCIP_CALL(addSubtourEliminationConstraint(
-                scip,
-                conshdlr,
-                graph,
-                vertex_set,
-                edge_variable_map,
-                root_vertex,
-                target_vertex,
-                sol,
-                result
-            ));
         }
     }
     BOOST_LOG_TRIVIAL(debug) << "Result is " << *result;

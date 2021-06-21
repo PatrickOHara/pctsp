@@ -187,6 +187,7 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
         probdata,
         true
     );
+    SCIPsetIntParam(mip, "presolving/maxrounds", 0);
 
     // add variables and constraints
     PCTSPmodelWithoutSECs(mip, graph, cost_map, weight_map, quota,
@@ -201,8 +202,8 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     SCIPreleaseCons(mip, &cons);
     SCIPprintOrigProblem(mip, NULL, NULL, false);
 
-    SCIP_RETCODE code = SCIPsolve(mip);
-    SCIPprintTransProblem(mip, NULL, NULL, false);
+    SCIPsolve(mip);
+    // SCIPprintTransProblem(mip, NULL, NULL, false);
     auto sol = SCIPgetBestSol(mip);
     SCIPprintSol(mip, sol, NULL, false);
 
