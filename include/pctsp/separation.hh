@@ -20,4 +20,9 @@ bool isGraphSimpleCycle(UndirectedGraph& support_graph, std::vector<int>& compon
     return true;
 }
 
+/**
+ * Removes isolated vertices from the graph
+ */
+void removeIsolatedVertices(PCTSPgraph& graph);
+
 #endif

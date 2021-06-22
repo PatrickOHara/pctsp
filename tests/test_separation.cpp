@@ -94,3 +94,23 @@ TEST(TestSeparation, testGetSolutionGraph) {
         EXPECT_TRUE(boost::edge(source, target, solution_graph).second);
     }
 }
+
+TEST(TestSeparation, testRemoveIsolatedVertices) {
+    PCTSPgraph graph;
+    for (int i = 0; i < 5; i++) {
+        boost::add_edge(i, i + 1, graph);
+    }
+    boost::add_vertex(graph);
+    boost::add_vertex(graph);
+    int n_vertices = boost::num_vertices(graph);
+
+    std::vector< int > component(n_vertices);
+    int n_components = boost::connected_components(graph, &component[0]);
+    EXPECT_EQ(n_components, 3);
+
+    removeIsolatedVertices(graph);
+    EXPECT_EQ(n_vertices - 2, boost::num_vertices(graph));
+    std::vector<int> one_component(boost::num_vertices(graph));
+    n_components = boost::connected_components(graph, &one_component[0]);
+    EXPECT_EQ(n_components, 1);
+}

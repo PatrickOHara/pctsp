@@ -370,18 +370,17 @@ SCIP_RETCODE PCTSPseparateSubtour(
     SCIP_SOL* sol,                /**< primal solution that should be separated */
     SCIP_RESULT* result              /**< pointer to store the result of the separation call */
 ) {
+    BOOST_LOG_TRIVIAL(info) << "At node " << SCIPnodeGetNumber(SCIPgetCurrentNode(scip));
     *result = SCIP_DIDNOTFIND;
     // load the constraint handler data
     ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
     auto& graph = *(probdata->getInputGraph());
     auto& edge_variable_map = *(probdata->getEdgeVariableMap());
     auto& root_vertex = *(probdata->getRootVertex());
-    // for (int c = 0; c < nusefulconss && *result != SCIP_CUTOFF; ++c) {
     PCTSPgraph solution_graph;
     getSolutionGraph(scip, graph, solution_graph, sol, edge_variable_map);
 
     // get the connected components of the support graph
-    BOOST_LOG_TRIVIAL(debug) << "Finding connected components of the solution graph.";
     std::vector< int > component(boost::num_vertices(solution_graph));
     int n_components = boost::connected_components(solution_graph, &component[0]);
     if (n_components == 1) return SCIP_OKAY;
@@ -403,7 +402,6 @@ SCIP_RETCODE PCTSPseparateSubtour(
         int component_id = component[index[vertex]];
         std::vector<PCTSPvertex> support_vertex_set = component_sets[component_id];
         if (component_id != root_component && support_vertex_set.size() >= 3) {
-            BOOST_LOG_TRIVIAL(debug) << "Add subtour elimination constraint to connected component " << component_id << " for vertex " << vertex;
             std::vector<PCTSPvertex> vertex_set(support_vertex_set.size());
             int i = 0;
             // get the vertex objects from the original graph
@@ -426,6 +424,5 @@ SCIP_RETCODE PCTSPseparateSubtour(
         }
 
     }
-    BOOST_LOG_TRIVIAL(debug) << "Result is " << *result;
     return SCIP_OKAY;
 }

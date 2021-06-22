@@ -219,6 +219,10 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     case GraphType::SUURBALLE: EXPECT_EQ(*second_it, second_edge); break;
     default: EXPECT_TRUE(true); break;
     }
+    std::string edge_message = "Edges in solution: ";
+    for (auto const& edge : solution_edges)
+        edge_message += std::to_string(boost::source(edge, graph)) + "-" + std::to_string(boost::target(edge, graph)) + " ";
+    BOOST_LOG_TRIVIAL(debug) << edge_message;
 }
 
 INSTANTIATE_TEST_SUITE_P(
