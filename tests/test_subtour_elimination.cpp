@@ -155,7 +155,6 @@ TEST(TestSubtourElimination, testProbDataPCTSP) {
     auto loaded_var = (*loaddata->getEdgeVariableMap())[loaded_edge];
     EXPECT_EQ(loaded_edge, edge);
     EXPECT_EQ(loaded_var, var);
-    // EXPECT_EQ(*loaded_var, *var);
     EXPECT_EQ(SCIPvarGetName(var), SCIPvarGetName(loaded_var));
 }
 
@@ -203,16 +202,11 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     SCIPprintOrigProblem(mip, NULL, NULL, false);
 
     SCIPsolve(mip);
-    // SCIPprintTransProblem(mip, NULL, NULL, false);
     auto sol = SCIPgetBestSol(mip);
     SCIPprintSol(mip, sol, NULL, false);
 
     auto solution_edges = getSolutionEdges(mip, graph, sol, variable_map);
-    for (auto const& edge : solution_edges) {
-        cout << boost::source(edge, graph) << " - " << boost::target(edge, graph) << endl;
-    }
-
-    auto first_edge = boost::edge(2, 5, graph).first;
+    auto first_edge = boost::edge(3, 5, graph).first;
     auto second_edge = boost::edge(1, 4, graph).first;
     auto first_it = std::find(solution_edges.begin(), solution_edges.end(), first_edge);
     auto second_it = std::find(solution_edges.begin(), solution_edges.end(), second_edge);
