@@ -1,16 +1,6 @@
 #include "pctsp/separation.hh"
 #include <iostream>
 
-PCTSPgraph removeIsolatedVertices(PCTSPgraph& graph) {
-    PCTSPgraph new_graph;
-    for (auto const& edge : boost::make_iterator_range(boost::edges(graph))) {
-        auto source = boost::source(edge, graph);
-        auto target = boost::target(edge, graph);
-        boost::add_edge(source, target, new_graph);
-    }
-    return new_graph;
-}
-
 bool isGraphSimpleCycle(PCTSPgraph& graph, std::vector<int>& component_vector) {
     if (boost::num_vertices(graph) == 0) return false;
     if (boost::num_edges(graph) == 0) return false;

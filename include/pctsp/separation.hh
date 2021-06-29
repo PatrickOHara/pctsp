@@ -13,9 +13,4 @@ bool isGraphSimpleCycle(PCTSPgraph& graph, std::vector<int>& component_vector);
 
 std::vector<PCTSPedge> getEdgeVectorOfGraph(PCTSPgraph& graph);
 
-/**
- * Removes isolated vertices from the graph
- */
-PCTSPgraph removeIsolatedVertices(PCTSPgraph& graph);
-
 #endif

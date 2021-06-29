@@ -4,6 +4,8 @@
 #include "pctsp/separation.hh"
 #include "pctsp/solution.hh"
 #include <gtest/gtest.h>
+#include <objscip/objscip.h>
+#include <scip/message_default.h>
 #include <objscip/objscipdefplugins.h>
 
 
@@ -50,6 +52,10 @@ TEST(TestSeparation, testGetSolutionGraph) {
     SCIPincludeDefaultPlugins(mip);
     SCIPcreateProbBasic(mip, "separation");
     SCIPsetObjsense(mip, SCIP_OBJSENSE_MAXIMIZE);
+    SCIP_MESSAGEHDLR* handler;
+    SCIPcreateMessagehdlrDefault(&handler, false, ".logs/test-get-solution-graph.txt", true);
+    SCIPsetMessagehdlr(mip, handler);
+
 
     std::map<boost::graph_traits<PCTSPgraph>::edge_descriptor, SCIP_VAR*> edge_variable_map;
     for (PCTSPedge edge : boost::make_iterator_range(boost::edges(graph))) {
@@ -94,26 +100,6 @@ TEST(TestSeparation, testGetSolutionGraph) {
         auto target = boost::target(edge, graph);
         EXPECT_TRUE(boost::edge(source, target, solution_graph).second);
     }
-}
-
-TEST(TestSeparation, testRemoveIsolatedVertices) {
-    PCTSPgraph graph;
-    for (int i = 0; i < 5; i++) {
-        boost::add_edge(i, i + 1, graph);
-    }
-    boost::add_vertex(graph);
-    boost::add_vertex(graph);
-    int n_vertices = boost::num_vertices(graph);
-
-    std::vector< int > component(n_vertices);
-    int n_components = boost::connected_components(graph, &component[0]);
-    EXPECT_EQ(n_components, 3);
-
-    auto new_graph = removeIsolatedVertices(graph);
-    EXPECT_EQ(n_vertices - 2, boost::num_vertices(new_graph));
-    std::vector<int> one_component(boost::num_vertices(new_graph));
-    int new_n_components = boost::connected_components(new_graph, &one_component[0]);
-    EXPECT_EQ(new_n_components, 1);
 }
 
 TEST(TestSeparation, testIsSimpleCycle) {

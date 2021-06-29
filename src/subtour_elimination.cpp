@@ -133,13 +133,6 @@ SCIP_RETCODE addSubtourEliminationConstraint(
         transvars[i] = transvar;
     }
 
-    // ToDo: remove constraint code once we don't need it
-    // SCIP_CALL(SCIPcreateConsBasicLinear(mip, &cons, cons_name.c_str(), nvars, vars, vals, lhs, rhs));
-    // SCIP_CALL(SCIPcreateConsLinear(mip, &cons, cons_name.c_str(), nvars, transvars, vals, lhs, rhs, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE));
-    // SCIP_CALL(SCIPaddCons(mip, cons));
-    // SCIP_CALL(SCIPprintCons(mip, cons, NULL));
-    // SCIP_CALL(SCIPreleaseCons(mip, &cons));
-
     SCIP_ROW* row;
     SCIP_CALL(SCIPcreateEmptyRowConshdlr(mip, &row, conshdlr, cons_name.c_str(), lhs, rhs, false, false, true));
     SCIP_CALL(SCIPcacheRowExtensions(mip, row));
@@ -198,7 +191,6 @@ SCIP_RETCODE PCTSPcreateConsSubtour(
     SCIP_Bool             removable           /**< should the constraint be removed from the LP due to aging or cleanup? */
 ) {
     SCIP_CONSHDLR* conshdlr;
-    // PCTSPsubtourEliminationData* consdata;
     SCIP_CONSDATA* consdata;
 
     /* find the subtour constraint handler */

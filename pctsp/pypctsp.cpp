@@ -16,6 +16,7 @@ py::list pctsp_branch_and_cut_bind(py::list& py_edge_list, py::dict& prize_dict,
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
     PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     int root_vertex = getBoostVertex(vertex_id_map, py_root_vertex);
+    PCTSPvertex root = (PCTSPvertex)root_vertex;
 
     // add self loops to graph - we assume the input graph is simple
     if (hasSelfLoopsOnAllVertices(graph) == false) {
@@ -30,7 +31,7 @@ py::list pctsp_branch_and_cut_bind(py::list& py_edge_list, py::dict& prize_dict,
     // run branch and cut algorithm - returns a list of edges in solution
     std::vector<PCTSPedge> solution_edges;
     PCTSPbranchAndCut(graph, solution_edges, cost_map, prize_map, quota,
-        root_vertex, log_filepath);
+        root, log_filepath);
 
     // convert list of edges to a python list of python tuples
     return getPyEdgeList(graph, vertex_id_map, solution_edges);

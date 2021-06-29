@@ -8,6 +8,7 @@
 #include "constraint.hh"
 #include "logger.hh"
 #include "solution.hh"
+#include "subtour_elimination.hh"
 #include "preprocessing.hh"
 using namespace boost;
 using namespace scip;
@@ -91,16 +92,27 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
     SCIP* mip = NULL;
     SCIP_CALL(SCIPcreate(&mip));
     SCIP_CALL(SCIPincludeDefaultPlugins(mip));
-    SCIP_CALL(SCIPcreateProbBasic(mip, "pctsp"));
+
+    // datastructures needed for the MIP solver
+    std::map<Edge, SCIP_VAR*> edge_variable_map;
+    std::map<Edge, int> weight_map;
+    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota);
+    SCIPcreateObjProb(
+        mip,
+        "test-pctsp-with-secs",
+        probdata,
+        true
+    );
+
+    // add custom cutting plane handlers
+    SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip), TRUE);
+
+    // add custom message handler
     SCIP_MESSAGEHDLR* handler;
     SCIP_CALL(SCIPcreateMessagehdlrDefault(&handler, false, log_filepath, print_scip));
     SCIP_CALL(SCIPsetMessagehdlr(mip, handler));
 
     BOOST_LOG_TRIVIAL(info) << "Created SCIP program. Adding constraints and variables.";
-
-    // datastructures needed for the MIP solver
-    std::map<Edge, SCIP_VAR*> edge_variable_map;
-    std::map<Edge, int> weight_map;
 
     // move prizes of vertices onto the weight of an edge
     putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
@@ -110,7 +122,15 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
         root_vertex, edge_variable_map));
     int nvars = SCIPgetNVars(mip);
 
+    // turn off presolving
+    SCIPsetIntParam(mip, "presolving/maxrounds", 0);
+
     // TODO add the subtour elimination constraints as cutting planes
+    SCIP_CONS* cons;
+    std::string cons_name("subtour-constraint");
+    PCTSPcreateBasicConsSubtour(mip, &cons, cons_name, graph, root_vertex);
+    SCIPaddCons(mip, cons);
+    SCIPreleaseCons(mip, &cons);
 
     // TODO add the cost cover inequalities as cutting planes
 
