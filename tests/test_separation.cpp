@@ -1,4 +1,5 @@
 
+#include <iostream>
 #include "pctsp/preprocessing.hh"
 #include "pctsp/separation.hh"
 #include "pctsp/solution.hh"
@@ -108,9 +109,33 @@ TEST(TestSeparation, testRemoveIsolatedVertices) {
     int n_components = boost::connected_components(graph, &component[0]);
     EXPECT_EQ(n_components, 3);
 
-    removeIsolatedVertices(graph);
-    EXPECT_EQ(n_vertices - 2, boost::num_vertices(graph));
-    std::vector<int> one_component(boost::num_vertices(graph));
-    n_components = boost::connected_components(graph, &one_component[0]);
-    EXPECT_EQ(n_components, 1);
+    auto new_graph = removeIsolatedVertices(graph);
+    EXPECT_EQ(n_vertices - 2, boost::num_vertices(new_graph));
+    std::vector<int> one_component(boost::num_vertices(new_graph));
+    int new_n_components = boost::connected_components(new_graph, &one_component[0]);
+    EXPECT_EQ(new_n_components, 1);
+}
+
+TEST(TestSeparation, testIsSimpleCycle) {
+    PCTSPgraph graph1;
+    for (int i = 0; i < 5; i++) {
+        boost::add_edge(i, i + 1, graph1);
+    }
+    auto edge_vector1 = getEdgeVectorOfGraph(graph1);
+    EXPECT_FALSE(isSimpleCycle(graph1, edge_vector1));
+
+    boost::add_edge(0, boost::num_vertices(graph1) - 1, graph1);
+    std::vector<int> cv(boost::num_vertices(graph1));
+    EXPECT_TRUE(isGraphSimpleCycle(graph1, cv));
+    auto edge_vector2 = getEdgeVectorOfGraph(graph1);
+    EXPECT_TRUE(isSimpleCycle(graph1, edge_vector2));
+
+    auto edge23 = boost::edge(2, 3, graph1).first;
+    auto edge05 = boost::edge(0, 5, graph1).first;
+    boost::remove_edge(edge23, graph1);
+    boost::remove_edge(edge05, graph1);
+    boost::add_edge(0, 2, graph1);
+    boost::add_edge(3, 5, graph1);
+    auto edge_vector3 = getEdgeVectorOfGraph(graph1);
+    EXPECT_FALSE(isSimpleCycle(graph1, edge_vector3));
 }

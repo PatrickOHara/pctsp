@@ -1,5 +1,6 @@
 #include <iostream>
 #include "pctsp/exception.hh"
+#include "pctsp/logger.hh"
 #include "pctsp/solution.hh"
 
 using namespace std;
@@ -29,12 +30,11 @@ std::vector<PCTSPedge> getSolutionEdges(SCIP* mip, PCTSPgraph& graph, SCIP_SOL* 
         // for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
         auto source = boost::source(edge, graph);
         auto target = boost::target(edge, graph);
-        // if (((source == target) & (add_self_loops)) || (source != target)) {
         if (source != target) {
-            // auto var = edge_variable_map[edge];
             auto value = SCIPgetSolVal(mip, sol, var);
-            if (value > 0)
+            if (!(SCIPisZero(mip, value)) && (value > 0)) {
                 solution_edges.push_back(edge);
+            }
         }
     }
     return solution_edges;
@@ -54,7 +54,26 @@ void getSolutionGraph(
     for (auto const& edge : solution_edges) {
         auto source = boost::source(edge, graph);
         auto target = boost::target(edge, graph);
+        BOOST_LOG_TRIVIAL(debug) << "Adding " << source << "-" << target;
         if (source != target)
             boost::add_edge(source, target, solution_graph);
+    }
+}
+
+void logSolutionEdges(
+    SCIP* mip,
+    PCTSPgraph& graph,
+    SCIP_SOL* sol,
+    PCTSPedgeVariableMap& edge_variable_map
+) {
+    for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
+        auto var = edge_variable_map[edge];
+        auto value = SCIPgetSolVal(mip, sol, var);
+        if (!(SCIPisZero(mip, value)) && (value > 0)) {
+            auto source = boost::source(edge, graph);
+            auto target = boost::target(edge, graph);
+            auto name = SCIPvarGetName(var);
+            BOOST_LOG_TRIVIAL(debug) << "Edge " << source << "-" << target << " has value " << value;
+        }
     }
 }

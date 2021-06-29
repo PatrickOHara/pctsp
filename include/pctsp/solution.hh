@@ -23,5 +23,12 @@ void getSolutionGraph(
     bool add_self_loops = false
 );
 
+void logSolutionEdges(
+    SCIP* mip,
+    PCTSPgraph& graph,
+    SCIP_SOL* sol,
+    PCTSPedgeVariableMap& edge_variable_map
+);
+
 
 #endif

@@ -46,21 +46,9 @@ bool isSolSimpleCycle(SCIP* scip, SCIP_SOL* sol, SCIP_RESULT* result) {
     ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
     auto& graph = *probdata->getInputGraph();
     auto& edge_variable_map = *probdata->getEdgeVariableMap();
-
-    PCTSPgraph solution_graph;
-    getSolutionGraph(scip, graph, solution_graph, sol, edge_variable_map);
-    BOOST_LOG_TRIVIAL(debug) << "Solution graph has " << boost::num_vertices(solution_graph) << " vertices and " << boost::num_edges(solution_graph) << " edges.";
-
-    // if a subtour is found, the solution must be infeasible
-    std::vector< int > component(boost::num_vertices(solution_graph));
-    return isGraphSimpleCycle(solution_graph, component);
-    // if (!is_simple_cycle) {
-    //     BOOST_LOG_TRIVIAL(info) << "Violation: support graph is not a simple cycle. Return Infeasible.";
-    //     *result = SCIP_INFEASIBLE;
-    // }
-    // else
-    //     BOOST_LOG_TRIVIAL(info) << "Solution is a simple cycle. No subtour violations found.";
-    // return SCIP_OKAY;
+    auto solution_edges = getSolutionEdges(scip, graph, sol, edge_variable_map);
+    logSolutionEdges(scip, graph, sol, edge_variable_map);
+    return isSimpleCycle(graph, solution_edges);
 }
 
 SCIP_RETCODE addSubtourEliminationConstraint(
@@ -287,21 +275,26 @@ SCIP_DECL_CONSCHECK(PCTSPconshdlrSubtour::scip_check)
 }
 
 SCIP_DECL_CONSENFOPS(PCTSPconshdlrSubtour::scip_enfops) {
-    BOOST_LOG_TRIVIAL(debug) << "SCIP enfops method";
-    if (isSolSimpleCycle(scip, NULL, result))
+    if (isSolSimpleCycle(scip, NULL, result)) {
+        BOOST_LOG_TRIVIAL(debug) << "SCIP enfops: solution is simple cycle";
         *result = SCIP_FEASIBLE;
-    else
+    }
+    else {
+        BOOST_LOG_TRIVIAL(debug) << "SCIP enfops: solution is not simple cycle";
         *result = SCIP_INFEASIBLE;
+    }
     return SCIP_OKAY;
 }
 
 SCIP_DECL_CONSENFOLP(PCTSPconshdlrSubtour::scip_enfolp) {
-    BOOST_LOG_TRIVIAL(debug) << "SCIP enfolp method";
-    if (isSolSimpleCycle(scip, NULL, result))
+    if (isSolSimpleCycle(scip, NULL, result)) {
+        BOOST_LOG_TRIVIAL(debug) << "SCIP enfolp: LP is simple cycle";
         *result = SCIP_FEASIBLE;
-    else
-        // *result = SCIP_CONSADDED;
+    }
+    else {
+        BOOST_LOG_TRIVIAL(debug) << "SCIP enfolp: LP is not simple cycle";
         *result = SCIP_INFEASIBLE;
+    }
     return SCIP_OKAY;
 }
 
@@ -370,7 +363,6 @@ SCIP_RETCODE PCTSPseparateSubtour(
     SCIP_SOL* sol,                /**< primal solution that should be separated */
     SCIP_RESULT* result              /**< pointer to store the result of the separation call */
 ) {
-    BOOST_LOG_TRIVIAL(info) << "At node " << SCIPnodeGetNumber(SCIPgetCurrentNode(scip));
     *result = SCIP_DIDNOTFIND;
     // load the constraint handler data
     ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
