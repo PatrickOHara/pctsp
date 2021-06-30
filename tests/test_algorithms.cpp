@@ -52,20 +52,20 @@ TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
     PCTSPgraph graph = get_suurballe_graph();
     addSelfLoopsToGraph(graph);
     int quota = 7;
-    int root_vertex = 0;
+    PCTSPvertex root_vertex = boost::vertex(0, graph);
     auto cost_map = get(&PCTSPedgeProperties::cost, graph);
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);
 
     // create a file to write the logs to
-    std::list<PCTSPedge> edge_list;
-    SCIP_RETCODE code = PCTSPbranchAndCut(graph, edge_list, cost_map, prize_map,
-        quota, root_vertex, NULL, false);
+    std::vector<PCTSPedge> solution_edges;
+    SCIP_RETCODE code = PCTSPbranchAndCut(graph, solution_edges, cost_map, prize_map,
+        quota, root_vertex, ".logs/test-branch-and-cut.txt", true);
     EXPECT_EQ(SCIP_OKAY, code);
-    EXPECT_GT(edge_list.size(), 0); // check the list is not empty
+    EXPECT_GT(solution_edges.size(), 0); // check the list is not empty
 
     // every vertex should be connected to either 2 or 0 edges
     std::map<PCTSPvertex, int> vertex_count;
-    for (auto it = edge_list.begin(); it != edge_list.end(); it++) {
+    for (auto it = solution_edges.begin(); it != solution_edges.end(); it++) {
         PCTSPedge edge = *it;
         PCTSPvertex source = boost::source(edge, graph);
         PCTSPvertex target = boost::target(edge, graph);

@@ -10,15 +10,23 @@
 using namespace boost;
 
 /** Assign zero cost to all edge self loops in the graph. Insert into map. */
-void assignZeroCostToSelfLoops(PCTSPgraph &graph, PCTSPcostMap &cost_map);
+template <typename UndirectedGraph, typename CostMap>
+void assignZeroCostToSelfLoops(UndirectedGraph& graph, CostMap& cost_map) {
+    for (auto vertex : boost::make_iterator_range(vertices(graph))) {
+        auto edge = boost::edge(vertex, vertex, graph);
+        if (edge.second) {
+            cost_map[edge.first] = 0;
+        }
+    }
+}
 
 /** Given a simple graph, add self-loops onto all vertices */
-void addSelfLoopsToGraph(PCTSPgraph &graph);
+void addSelfLoopsToGraph(PCTSPgraph& graph);
 
 /** Returns true if there exists at least one self loops on all vertices.
  * False otherwise.
  */
-template <typename Graph> bool hasSelfLoopsOnAllVertices(Graph &graph) {
+template <typename Graph> bool hasSelfLoopsOnAllVertices(Graph& graph) {
     for (auto vertex : make_iterator_range(vertices(graph))) {
         if (edge(vertex, vertex, graph).second == false) {
             return false;
@@ -28,8 +36,8 @@ template <typename Graph> bool hasSelfLoopsOnAllVertices(Graph &graph) {
 }
 
 template <typename Graph, typename PrizeMap, typename WeightMap>
-void putPrizeOntoEdgeWeights(Graph &graph, PrizeMap &prize_map,
-                             WeightMap &weight_map) {
+void putPrizeOntoEdgeWeights(Graph& graph, PrizeMap& prize_map,
+    WeightMap& weight_map) {
 
     typename graph_traits<Graph>::edge_iterator ei, ei_end;
     for (boost::tie(ei, ei_end) = edges(graph); ei != ei_end; ++ei) {

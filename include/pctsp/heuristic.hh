@@ -222,7 +222,7 @@ void extend_until_prize_feasible(Graph& g, std::list<Vertex>& tour,
         }
         catch (NoGainVertexFoundException e) {
             insert_a_vertex = false;
-            cerr << "Did not extend tour to be above quota" << endl;
+            cerr << "Did not extend tour to be above quota";
         }
     }
 }
@@ -332,7 +332,7 @@ std::list<Vertex> collapse(Graph& graph, std::list<Vertex>& tour,
             << sub_path_over_tour.predecessor_vertex;
         BOOST_LOG_TRIVIAL(debug) << ". Root seen: " << sub_path_over_tour.root_vertex_seen;
         BOOST_LOG_TRIVIAL(debug) << ". Feasible path found: "
-            << sub_path_over_tour.feasible_path_found << endl;
+            << sub_path_over_tour.feasible_path_found;
 
         if (sub_path_over_tour.root_vertex_seen &&
             sub_path_over_tour.feasible_path_found) {
@@ -399,7 +399,7 @@ std::list<Vertex> collapse(Graph& graph, std::list<Vertex>& tour,
                         // update best cost
                         cost_of_best_tour = cost_of_new_tour;
                     }
-                    BOOST_LOG_TRIVIAL(debug) << endl;
+                    BOOST_LOG_TRIVIAL(debug);
                 }
             }
         }
