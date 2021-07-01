@@ -1,6 +1,5 @@
 """Tests for exact algorithms for PCTSP"""
 
-from pctsp import pctsp_branch_and_cut
 from tspwplib import (
     order_edge_list,
     reorder_edge_list_from_root,
@@ -8,6 +7,7 @@ from tspwplib import (
     is_pctsp_yes_instance,
     walk_from_edge_list,
 )
+from pctsp import pctsp_branch_and_cut
 
 
 def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root):
