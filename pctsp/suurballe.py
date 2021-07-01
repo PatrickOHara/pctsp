@@ -91,9 +91,9 @@ class SuurballeTree(nx.DiGraph):
         print("c[u] is", self.transformed_cost[u])
         print("children of u are", self.children[u])
         # print("parent of u is", self.parent[u])
-        print("i[u] is", self.i[u])
+        print("i[u] is", self.edges_incident_to_vertex[u])
         print("l[u] is", self.labeled[u])
-        print("w of u is", self.w[u])
+        print("w of u is", self.distance_from_source[u])
         print("q of u is", self.process_cause[u])
 
 
