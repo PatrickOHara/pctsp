@@ -1,14 +1,11 @@
 """Tests for exact algorithms for PCTSP"""
 
-import networkx as nx
 from pctsp import pctsp_branch_and_cut
 from tspwplib import (
-    edge_list_from_walk,
     order_edge_list,
-    total_prize,
+    reorder_edge_list_from_root,
     total_cost_networkx,
     is_pctsp_yes_instance,
-    vertex_set_from_edge_list,
     walk_from_edge_list,
 )
 
@@ -18,7 +15,7 @@ def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root):
     quota = 6
     edge_list = pctsp_branch_and_cut(suurballes_undirected_graph, quota, root)
     assert len(edge_list) > 0
-    ordered_edges = order_edge_list(edge_list)
+    ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
     optimal_tour = walk_from_edge_list(ordered_edges)
     assert is_pctsp_yes_instance(
         suurballes_undirected_graph, quota, root, ordered_edges
@@ -28,9 +25,10 @@ def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root):
 
 def test_pctsp_on_tspwplib(tspwplib_graph, root):
     """Test the branch and cut algorithm on a small, undirected sparse graph"""
-    quota = 20
+    quota = 30
+    print(tspwplib_graph.number_of_nodes(), tspwplib_graph.number_of_edges())
     edge_list = pctsp_branch_and_cut(tspwplib_graph, quota, root)
-    ordered_edges = order_edge_list(edge_list)
+    ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
     assert len(edge_list) > 0
     optimal_tour = walk_from_edge_list(ordered_edges)
     assert is_pctsp_yes_instance(tspwplib_graph, quota, root, ordered_edges)
