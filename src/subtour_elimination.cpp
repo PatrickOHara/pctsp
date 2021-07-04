@@ -116,8 +116,6 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     insertEdgeVertexVariables(edge_variables, vertex_variables, all_variables, var_coefs);
 
     // create the subtour elimination constraint
-    // SCIP_VAR** vars = &all_variables[0];
-    // double* vals = &var_coefs[0];
     double* vals = var_coefs.data();
     SCIP_VAR** vars = all_variables.data();
     double lhs = -SCIPinfinity(mip);
@@ -358,22 +356,51 @@ SCIP_RETCODE PCTSPseparateSubtour(
     *result = SCIP_DIDNOTFIND;
     // load the constraint handler data
     ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
-    auto& graph = *(probdata->getInputGraph());
+    auto& input_graph = *(probdata->getInputGraph());
     auto& edge_variable_map = *(probdata->getEdgeVariableMap());
     auto& root_vertex = *(probdata->getRootVertex());
-    PCTSPgraph solution_graph;
-    getSolutionGraph(scip, graph, solution_graph, sol, edge_variable_map);
+    PCTSPgraph support_graph;
+    getSolutionGraph(scip, input_graph, support_graph, sol, edge_variable_map);
 
+    bool sec_disjoint_tour = true;
+    int sec_disjoint_tour_freq = 1;
+    bool sec_maxflow_mincut = false;
+    int sec_maxflow_mincut_freq = 0;
+    if (sec_disjoint_tour && sec_maxflow_mincut_freq > 0) {
+        PCTSPseparateDisjointTour(
+            scip, conshdlr, input_graph, support_graph, edge_variable_map, root_vertex, sol, result, sec_disjoint_tour_freq
+        );
+    }
+    else if (sec_maxflow_mincut && sec_maxflow_mincut_freq > 0)
+    {
+        PCTSPseparateMaxflowMincut(
+            scip, conshdlr, input_graph, support_graph, edge_variable_map, root_vertex, sol, result, sec_maxflow_mincut_freq
+        );
+    }
+    return SCIP_OKAY;
+}
+
+SCIP_RETCODE PCTSPseparateDisjointTour(
+    SCIP* scip,
+    SCIP_CONSHDLR* conshdlr,
+    PCTSPgraph& input_graph,
+    PCTSPgraph& support_graph,
+    PCTSPedgeVariableMap& edge_variable_map,
+    PCTSPvertex& root_vertex,
+    SCIP_SOL* sol,
+    SCIP_RESULT* result,
+    int freq
+) {
     // get the connected components of the support graph
-    std::vector< int > component(boost::num_vertices(solution_graph));
-    int n_components = boost::connected_components(solution_graph, &component[0]);
+    std::vector< int > component(boost::num_vertices(support_graph));
+    int n_components = boost::connected_components(support_graph, &component[0]);
     if (n_components == 1) return SCIP_OKAY;
     std::vector<std::vector<PCTSPvertex>> component_sets;
     for (int i = 0; i < n_components; i++)
         component_sets.push_back(std::vector<PCTSPvertex>());
-    auto index = boost::get(vertex_index, solution_graph);
+    auto index = boost::get(vertex_index, support_graph);
     int root_component = -1;
-    for (auto vertex : boost::make_iterator_range(boost::vertices(solution_graph))) {
+    for (auto vertex : boost::make_iterator_range(boost::vertices(support_graph))) {
         int component_id = component[index[vertex]];
         component_sets[component_id].push_back(vertex);
         if (vertex == root_vertex)
@@ -382,7 +409,7 @@ SCIP_RETCODE PCTSPseparateSubtour(
     assert(root_component >= 0);
     // for each vertex in a connected component C that does not contain the root
     // add a subtour elimination constraint over the vertex and C
-    for (auto vertex : boost::make_iterator_range(boost::vertices(solution_graph))) {
+    for (auto vertex : boost::make_iterator_range(boost::vertices(support_graph))) {
         int component_id = component[index[vertex]];
         std::vector<PCTSPvertex> support_vertex_set = component_sets[component_id];
         if (component_id != root_component && support_vertex_set.size() >= 3) {
@@ -390,14 +417,14 @@ SCIP_RETCODE PCTSPseparateSubtour(
             int i = 0;
             // get the vertex objects from the original graph
             for (auto const& solution_vertex : support_vertex_set) {
-                vertex_set[i] = boost::vertex(solution_vertex, graph);
+                vertex_set[i] = boost::vertex(solution_vertex, input_graph);
                 i++;
             }
-            auto target_vertex = boost::vertex(vertex, graph);
+            auto target_vertex = boost::vertex(vertex, input_graph);
             SCIP_CALL(addSubtourEliminationConstraint(
                 scip,
                 conshdlr,
-                graph,
+                input_graph,
                 vertex_set,
                 edge_variable_map,
                 root_vertex,
@@ -407,6 +434,51 @@ SCIP_RETCODE PCTSPseparateSubtour(
             ));
         }
 
+    }
+    return SCIP_OKAY;
+}
+
+SCIP_RETCODE PCTSPseparateMaxflowMincut(
+    SCIP* scip,
+    SCIP_CONSHDLR* conshdlr,
+    PCTSPgraph& input_graph,
+    PCTSPgraph& support_graph,
+    PCTSPedgeVariableMap& edge_variable_map,
+    PCTSPvertex& root_vertex,
+    SCIP_SOL* sol,
+    SCIP_RESULT* result,
+    int freq
+) {
+    // create a capacity map for the edges
+    // the capacity of each edge is the value in the solution given
+
+    // run a max flow / min cut algorithm over the edges
+
+    // we obtain a cut (S_v, V* / S_v)
+    // the set S_v is a possibly violated inequality x(E(S)) <= y(S) - y_v
+
+    // if S_v violates inequality then add it to the LP
+    PCTSPvertex target_vertex;
+    std::vector<PCTSPvertex> support_vertex_set;
+    if (support_vertex_set.size() >= 3) {
+        std::vector<PCTSPvertex> vertex_set(support_vertex_set.size());
+        int i = 0;
+        // get the vertex objects from the original graph
+        for (auto const& solution_vertex : support_vertex_set) {
+            vertex_set[i] = boost::vertex(solution_vertex, input_graph);
+            i++;
+        }
+        SCIP_CALL(addSubtourEliminationConstraint(
+            scip,
+            conshdlr,
+            input_graph,
+            vertex_set,
+            edge_variable_map,
+            root_vertex,
+            target_vertex,
+            sol,
+            result
+        ));
     }
     return SCIP_OKAY;
 }

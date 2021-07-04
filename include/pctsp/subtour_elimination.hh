@@ -44,6 +44,31 @@ SCIP_RETCODE PCTSPseparateSubtour(
     SCIP_RESULT* result         /**< pointer to store the result of the separation call */
 );
 
+
+SCIP_RETCODE PCTSPseparateDisjointTour(
+    SCIP* scip,
+    SCIP_CONSHDLR* conshdlr,
+    PCTSPgraph& input_graph,
+    PCTSPgraph& support_graph,
+    PCTSPedgeVariableMap& edge_variable_map,
+    PCTSPvertex& root_vertex,
+    SCIP_SOL* sol,
+    SCIP_RESULT* result,
+    int freq
+);
+
+SCIP_RETCODE PCTSPseparateMaxflowMincut(
+    SCIP* scip,
+    SCIP_CONSHDLR* conshdlr,
+    PCTSPgraph& input_graph,
+    PCTSPgraph& support_graph,
+    PCTSPedgeVariableMap& edge_variable_map,
+    PCTSPvertex& root_vertex,
+    SCIP_SOL* sol,
+    SCIP_RESULT* result,
+    int freq
+);
+
 void insertEdgeVertexVariables(VarVector& edge_variables,
     VarVector& vertex_variables,
     VarVector& all_variables,
