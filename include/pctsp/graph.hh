@@ -61,4 +61,34 @@ py::list getPyEdgeList(PCTSPgraph& graph, VertexIdMap& vertex_id_map,
     return py_list;
 }
 
+typedef unsigned int StdVertex;
+typedef std::pair<StdVertex, StdVertex> StdEdge;
+typedef std::vector<StdEdge> StdEdgeVector;
+typedef std::vector<StdVertex> StdVertexVector;
+typedef double CapacityType;
+typedef std::vector<CapacityType> CapacityVector;
+typedef std::map<StdEdge, CapacityType> StdCapacityMap;
+typedef boost::property<boost::edge_weight_t, CapacityType> BoostCapacityMap;
+typedef boost::adjacency_list <
+    boost::vecS,
+    boost::vecS,
+    boost::undirectedS,
+    boost::no_property,
+    BoostCapacityMap
+>UndirectedCapacityGraph;
+
+template<typename Graph>
+StdEdgeVector getStdEdgeVectorFromGraph(Graph& graph) {
+    auto edges = getEdgeVectorOfGraph(graph);
+    return getStdEdgeVectorFromEdgeSubset(graph, edges);
+}
+
+std::vector <PCTSPedge> getEdgeVectorOfGraph(PCTSPgraph& graph);
+
+
+StdEdgeVector getStdEdgeVectorFromEdgeSubset(
+    PCTSPgraph& graph,
+    std::vector < PCTSPedge> edge_subset_vector
+);
+
 #endif

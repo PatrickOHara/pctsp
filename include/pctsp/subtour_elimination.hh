@@ -61,7 +61,6 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     SCIP* scip,
     SCIP_CONSHDLR* conshdlr,
     PCTSPgraph& input_graph,
-    PCTSPgraph& support_graph,
     PCTSPedgeVariableMap& edge_variable_map,
     PCTSPvertex& root_vertex,
     SCIP_SOL* sol,

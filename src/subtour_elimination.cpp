@@ -5,6 +5,10 @@
 #include "pctsp/subtour_elimination.hh"
 #include "pctsp/exception.hh"
 #include "pctsp/logger.hh"
+#include <boost/graph/one_bit_color_map.hpp>
+#include <boost/graph/stoer_wagner_min_cut.hpp>
+#include <boost/property_map/property_map.hpp>
+#include <boost/typeof/typeof.hpp>
 #include <objscip/objscip.h>
 #include <objscip/objscipdefplugins.h>
 
@@ -359,14 +363,15 @@ SCIP_RETCODE PCTSPseparateSubtour(
     auto& input_graph = *(probdata->getInputGraph());
     auto& edge_variable_map = *(probdata->getEdgeVariableMap());
     auto& root_vertex = *(probdata->getRootVertex());
-    PCTSPgraph support_graph;
-    getSolutionGraph(scip, input_graph, support_graph, sol, edge_variable_map);
+
 
     bool sec_disjoint_tour = true;
     int sec_disjoint_tour_freq = 1;
     bool sec_maxflow_mincut = false;
     int sec_maxflow_mincut_freq = 0;
     if (sec_disjoint_tour && sec_maxflow_mincut_freq > 0) {
+        PCTSPgraph support_graph;
+        getSolutionGraph(scip, input_graph, support_graph, sol, edge_variable_map);
         PCTSPseparateDisjointTour(
             scip, conshdlr, input_graph, support_graph, edge_variable_map, root_vertex, sol, result, sec_disjoint_tour_freq
         );
@@ -374,7 +379,7 @@ SCIP_RETCODE PCTSPseparateSubtour(
     else if (sec_maxflow_mincut && sec_maxflow_mincut_freq > 0)
     {
         PCTSPseparateMaxflowMincut(
-            scip, conshdlr, input_graph, support_graph, edge_variable_map, root_vertex, sol, result, sec_maxflow_mincut_freq
+            scip, conshdlr, input_graph, edge_variable_map, root_vertex, sol, result, sec_maxflow_mincut_freq
         );
     }
     return SCIP_OKAY;
@@ -442,7 +447,6 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     SCIP* scip,
     SCIP_CONSHDLR* conshdlr,
     PCTSPgraph& input_graph,
-    PCTSPgraph& support_graph,
     PCTSPedgeVariableMap& edge_variable_map,
     PCTSPvertex& root_vertex,
     SCIP_SOL* sol,
@@ -451,8 +455,45 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
 ) {
     // create a capacity map for the edges
     // the capacity of each edge is the value in the solution given
+    auto solution_edges = getSolutionEdges(scip, input_graph, sol, edge_variable_map);
+    CapacityVector capacity_vector = getCapacityVectorFromSol(scip, input_graph, sol, edge_variable_map);
+
+    // create mapping from input vertices to support vertices (they will be renamed)
+    StdEdgeVector edge_vector = getStdEdgeVectorFromEdgeSubset(input_graph, solution_edges);
+    auto lookup = getSupportToInputVertexLookupFromEdges(edge_vector);
+    auto support_root = lookup[root_vertex];
+
+    UndirectedCapacityGraph support_graph;
+    for (int i = 0; i < edge_vector.size(); i++) {
+        auto pair = edge_vector[i];
+        auto cap = capacity_vector[i];
+        boost::add_edge(pair.first, pair.second, cap, support_graph);
+    }
+
+    // define a property map, `parities`, that will store a boolean value for
+    // each vertex. Vertices that have the same parity after
+    // `stoer_wagner_min_cut` runs are on the same side of the min-cut.
+    BOOST_AUTO(parities,
+        boost::make_one_bit_color_map(
+            boost::num_vertices(support_graph), get(boost::vertex_index, support_graph)));
 
     // run a max flow / min cut algorithm over the edges
+    // run the Stoer-Wagner algorithm to obtain the min-cut weight. `parities`
+    // is also filled in.
+    int w = boost::stoer_wagner_min_cut(
+        support_graph, get(boost::edge_weight, support_graph), boost::parity_map(parities));
+
+    // get the component containing the root
+    bool root_component_id = boost::get(parities, support_root);
+    StdVertexVector root_component;
+    StdVertexVector non_root_component; // get the component not containing the root
+    for (auto vertex : boost::make_iterator_range(boost::vertices(support_graph))) {
+        if (boost::get(parities, vertex) == root_component_id)
+            root_component.push_back(vertex);
+        else
+            non_root_component.push_back(vertex);
+    }
+
 
     // we obtain a cut (S_v, V* / S_v)
     // the set S_v is a possibly violated inequality x(E(S)) <= y(S) - y_v
@@ -482,3 +523,4 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     }
     return SCIP_OKAY;
 }
+

@@ -1,4 +1,8 @@
 #include "pctsp/separation.hh"
+#include <boost/graph/one_bit_color_map.hpp>
+#include <boost/graph/stoer_wagner_min_cut.hpp>
+#include <boost/property_map/property_map.hpp>
+#include <boost/typeof/typeof.hpp>
 #include <iostream>
 
 bool isGraphSimpleCycle(PCTSPgraph& graph, std::vector<int>& component_vector) {
@@ -13,15 +17,6 @@ bool isGraphSimpleCycle(PCTSPgraph& graph, std::vector<int>& component_vector) {
     return true;
 }
 
-std::vector<PCTSPedge> getEdgeVectorOfGraph(PCTSPgraph& graph) {
-    std::vector<PCTSPedge> edge_vector;
-    int i = 0;
-    for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
-        edge_vector.insert(edge_vector.begin() + i, edge);
-        i++;
-    }
-    return edge_vector;
-}
 
 bool isSimpleCycle(PCTSPgraph& graph, std::vector<PCTSPedge>& edge_vector) {
     if (edge_vector.size() == 0) return false;
@@ -70,4 +65,74 @@ bool isSimpleCycle(PCTSPgraph& graph, std::vector<PCTSPedge>& edge_vector) {
         i++;
     }
     return i == edge_vector.size() - 1;
+}
+
+CapacityVector getCapacityVectorFromSol(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    SCIP_SOL* sol,
+    std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map
+) {
+    CapacityVector capacity;
+    auto edges = getSolutionEdges(scip, graph, sol, edge_variable_map);
+    for (auto const& edge : edges) {
+        SCIP_VAR* var = edge_variable_map[edge];
+        CapacityType value = (CapacityType)SCIPgetSolVal(scip, sol, var);
+        capacity.push_back(value);
+    }
+    return capacity;
+}
+
+// A graphic of the min-cut is available at
+// <http://www.boost.org/doc/libs/release/libs/graph/doc/stoer_wagner_imgs/stoer_wagner.cpp.gif>
+int runMinCut()
+{
+    using namespace std;
+    // define the 16 edges of the graph. {3, 4} means an undirected edge between
+    // vertices 3 and 4.
+    StdEdgeVector edges = { { 3, 4 }, { 3, 6 }, { 3, 5 }, { 0, 4 }, { 0, 1 },
+        { 0, 6 }, { 0, 7 }, { 0, 5 }, { 0, 2 }, { 4, 1 }, { 1, 6 }, { 1, 5 },
+        { 6, 7 }, { 7, 5 }, { 5, 2 }, { 3, 4 } };
+
+    // for each of the 16 edges, define the associated edge weight. ws[i] is the
+    // weight for the edge that is described by edges[i].
+    CapacityType ws[] = { 0, 3, 1, 3, 1, 2, 6, 1, 8, 1, 1, 80, 2, 1, 1, 4 };
+
+    // construct the graph object. 8 is the number of vertices, which are
+    // numbered from 0 through 7, and 16 is the number of edges.
+    UndirectedCapacityGraph g(&edges[0], &edges[0] + edges.size(), ws, 8, 16);
+
+    // define a property map, `parities`, that will store a boolean value for
+    // each vertex. Vertices that have the same parity after
+    // `stoer_wagner_min_cut` runs are on the same side of the min-cut.
+    BOOST_AUTO(parities,
+        boost::make_one_bit_color_map(
+            num_vertices(g), get(boost::vertex_index, g)));
+
+    // run the Stoer-Wagner algorithm to obtain the min-cut weight. `parities`
+    // is also filled in.
+    int w = boost::stoer_wagner_min_cut(
+        g, get(boost::edge_weight, g), boost::parity_map(parities));
+
+    cout << "The min-cut weight of G is " << w << ".\n" << endl;
+    assert(w == 7);
+
+    cout << "One set of vertices consists of:" << endl;
+    size_t i;
+    for (i = 0; i < num_vertices(g); ++i)
+    {
+        if (get(parities, i))
+            cout << i << endl;
+    }
+    cout << endl;
+
+    cout << "The other set of vertices consists of:" << endl;
+    for (i = 0; i < num_vertices(g); ++i)
+    {
+        if (!get(parities, i))
+            cout << i << endl;
+    }
+    cout << endl;
+
+    return EXIT_SUCCESS;
 }

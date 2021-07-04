@@ -77,3 +77,35 @@ void logSolutionEdges(
         }
     }
 }
+
+SupportToInputVertexLookup getSupportToInputVertexLookup(
+    std::vector<PCTSPvertex>& input_vertices
+) {
+    SupportToInputVertexLookup lookup;
+    for (int i = 0; i < input_vertices.size(); i++) {
+        lookup[input_vertices[i]] = i;
+    }
+    return lookup;
+}
+
+
+SupportToInputVertexLookup getSupportToInputVertexLookupFromEdges(
+    StdEdgeVector& input_edge_vector
+) {
+    SupportToInputVertexLookup lookup;
+    std::set<StdVertex> unique_vertices;
+
+    for (int i = 0; i < input_edge_vector.size(); i++) {
+        StdEdge edge = input_edge_vector[i];
+        if (unique_vertices.count(edge.first) == 0) {
+            unique_vertices.emplace(edge.first);
+            lookup.emplace(i, edge.first);
+        }
+        if (unique_vertices.count(edge.second) == 0) {
+            unique_vertices.emplace(edge.second);
+            lookup.emplace(i, edge.second);
+        }
+    }
+
+    return lookup;
+}

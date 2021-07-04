@@ -108,3 +108,27 @@ std::list<int> getBoostVertexList(VertexIdMap& vertex_id_map, py::list& py_list)
     }
     return vertex_list;
 }
+
+std::vector <PCTSPedge> getEdgeVectorOfGraph(PCTSPgraph& graph) {
+    std::vector < PCTSPedge> edge_vector;
+    int i = 0;
+    for (PCTSPedge edge : boost::make_iterator_range(boost::edges(graph))) {
+        edge_vector.insert(edge_vector.begin() + i, edge);
+        i++;
+    }
+    return edge_vector;
+}
+
+StdEdgeVector getStdEdgeVectorFromEdgeSubset(
+    PCTSPgraph& graph,
+    std::vector < PCTSPedge> edge_subset_vector
+) {
+    StdEdgeVector edges;
+    for (auto const& edge : edge_subset_vector) {
+        StdVertex s = (StdVertex)boost::source(edge, graph);
+        StdVertex t = (StdVertex)boost::target(edge, graph);
+        StdEdge e = { s, t };
+        edges.push_back(e);
+    }
+    return edges;
+}

@@ -30,5 +30,13 @@ void logSolutionEdges(
     PCTSPedgeVariableMap& edge_variable_map
 );
 
+// lookup table from support vertex to input vertex
+typedef std::map<PCTSPvertex, PCTSPvertex> SupportToInputVertexLookup;
+
+SupportToInputVertexLookup getSupportToInputVertexLookup(std::vector<PCTSPvertex>& input_vertices);
+
+SupportToInputVertexLookup getSupportToInputVertexLookupFromEdges(
+    StdEdgeVector& input_edge_vector
+);
 
 #endif
