@@ -1,6 +1,7 @@
 /** Test getting the adjacency grap*/
 
 #include "pctsp/graph.hh"
+#include "fixtures.hh"
 #include <gtest/gtest.h>
 
 TEST(TestGraph, testGraphFromPyEdgeList) {
@@ -79,11 +80,11 @@ TEST(TestGraph, testGetCostMapFromPyDict) {
     // get the std::cost map and check the costs are correct
     PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     PCTSPedge boost_edge1 = boost::edge(getBoostVertex(vertex_id_map, 2),
-                                        getBoostVertex(vertex_id_map, 4), graph)
-                                .first;
+        getBoostVertex(vertex_id_map, 4), graph)
+        .first;
     PCTSPedge boost_edge2 = boost::edge(getBoostVertex(vertex_id_map, 1),
-                                        getBoostVertex(vertex_id_map, 2), graph)
-                                .first;
+        getBoostVertex(vertex_id_map, 2), graph)
+        .first;
     EXPECT_EQ(cost_map[boost_edge1], 5);
     EXPECT_EQ(cost_map[boost_edge2], 7);
 }
@@ -98,13 +99,13 @@ TEST(TestGraph, testGetPyEdgeList) {
     vertex_id_map.insert(position(1, 3));
     vertex_id_map.insert(position(2, 5));
 
-    std::list<PCTSPedge> edge_list = {edge1, edge2};
+    std::list<PCTSPedge> edge_list = { edge1, edge2 };
     py::list py_edge_list = getPyEdgeList(graph, vertex_id_map, edge_list);    EXPECT_EQ(py::len(py_edge_list), edge_list.size());
     EXPECT_TRUE(py_edge_list.contains(py::make_tuple(7, 3)));
 }
 
 TEST(TestGraph, testGetPyVertexList) {
-    std::list<int> vertex_list = {0, 1, 2};
+    std::list<int> vertex_list = { 0, 1, 2 };
     VertexIdMap vertex_id_map;
     vertex_id_map.insert(position(0, 7));
     vertex_id_map.insert(position(1, 3));
@@ -130,3 +131,37 @@ TEST(TestGraph, testGetBoostVertexList) {
     EXPECT_EQ(*(it++), 1);
     EXPECT_EQ(*(it), 2);
 }
+
+typedef GraphFixture EdgeSubsetGraph;
+
+TEST_P(EdgeSubsetGraph, testGetStdEdgeVectorFromEdgeSubset) {
+    PCTSPgraph graph = getGraph();
+    std::vector<PCTSPedge> edge_subset;
+    for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
+        if (boost::source(edge, graph) == 0)
+            edge_subset.push_back(edge);
+        if (boost::target(edge, graph) == 0)
+            edge_subset.push_back(edge);
+    }
+    auto edge_vector = getStdEdgeVectorFromEdgeSubset(graph, edge_subset);
+    EXPECT_GE(edge_vector.size(), 2);
+    for (auto const& pair : edge_vector) {
+        EXPECT_TRUE(pair.first == 0 || pair.second == 0);
+    }
+}
+
+TEST(TestGraph, testRenameVerticesFromEdges) {
+    std::vector<std::pair<int, int>> edges = {
+        {0, 1}, {3,4}, {9, 10}, {0, 10}
+    };
+    auto lookup = renameVerticesFromEdges(edges);
+    std::vector<int> old_names = { 0, 1, 3, 4, 9, 10 };
+    for (int i = 0; i < old_names.size(); i++)
+        EXPECT_EQ(lookup[i], old_names[i]);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    TestGraph,
+    EdgeSubsetGraph,
+    ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE)
+);

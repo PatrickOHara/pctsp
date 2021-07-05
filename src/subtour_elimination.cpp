@@ -5,10 +5,8 @@
 #include "pctsp/subtour_elimination.hh"
 #include "pctsp/exception.hh"
 #include "pctsp/logger.hh"
-#include <boost/graph/one_bit_color_map.hpp>
-#include <boost/graph/stoer_wagner_min_cut.hpp>
+#include <boost/graph/push_relabel_max_flow.hpp>
 #include <boost/property_map/property_map.hpp>
-#include <boost/typeof/typeof.hpp>
 #include <objscip/objscip.h>
 #include <objscip/objscipdefplugins.h>
 
@@ -348,43 +346,6 @@ SCIP_DECL_CONSSEPASOL(PCTSPconshdlrSubtour::scip_sepasol) {
     return SCIP_OKAY;
 }
 
-SCIP_RETCODE PCTSPseparateSubtour(
-    SCIP* scip,               /**< SCIP data structure */
-    SCIP_CONSHDLR* conshdlr,           /**< the constraint handler itself */
-    SCIP_CONS** conss,              /**< array of constraints to process */
-    int nconss,             /**< number of constraints to process */
-    int nusefulconss,       /**< number of useful (non-obsolete) constraints to process */
-    SCIP_SOL* sol,                /**< primal solution that should be separated */
-    SCIP_RESULT* result              /**< pointer to store the result of the separation call */
-) {
-    *result = SCIP_DIDNOTFIND;
-    // load the constraint handler data
-    ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
-    auto& input_graph = *(probdata->getInputGraph());
-    auto& edge_variable_map = *(probdata->getEdgeVariableMap());
-    auto& root_vertex = *(probdata->getRootVertex());
-
-
-    bool sec_disjoint_tour = true;
-    int sec_disjoint_tour_freq = 1;
-    bool sec_maxflow_mincut = false;
-    int sec_maxflow_mincut_freq = 0;
-    if (sec_disjoint_tour && sec_maxflow_mincut_freq > 0) {
-        PCTSPgraph support_graph;
-        getSolutionGraph(scip, input_graph, support_graph, sol, edge_variable_map);
-        PCTSPseparateDisjointTour(
-            scip, conshdlr, input_graph, support_graph, edge_variable_map, root_vertex, sol, result, sec_disjoint_tour_freq
-        );
-    }
-    else if (sec_maxflow_mincut && sec_maxflow_mincut_freq > 0)
-    {
-        PCTSPseparateMaxflowMincut(
-            scip, conshdlr, input_graph, edge_variable_map, root_vertex, sol, result, sec_maxflow_mincut_freq
-        );
-    }
-    return SCIP_OKAY;
-}
-
 SCIP_RETCODE PCTSPseparateDisjointTour(
     SCIP* scip,
     SCIP_CONSHDLR* conshdlr,
@@ -394,17 +355,22 @@ SCIP_RETCODE PCTSPseparateDisjointTour(
     PCTSPvertex& root_vertex,
     SCIP_SOL* sol,
     SCIP_RESULT* result,
+    std::vector<int>& component,
+    int& n_components,
+    int& root_component,
     int freq
 ) {
     // get the connected components of the support graph
-    std::vector< int > component(boost::num_vertices(support_graph));
-    int n_components = boost::connected_components(support_graph, &component[0]);
-    if (n_components == 1) return SCIP_OKAY;
+    n_components = boost::connected_components(support_graph, &component[0]);
+    if (n_components == 1) {
+        root_component = 1;
+        return SCIP_OKAY;
+    }
     std::vector<std::vector<PCTSPvertex>> component_sets;
     for (int i = 0; i < n_components; i++)
         component_sets.push_back(std::vector<PCTSPvertex>());
     auto index = boost::get(vertex_index, support_graph);
-    int root_component = -1;
+    root_component = -1;
     for (auto vertex : boost::make_iterator_range(boost::vertices(support_graph))) {
         int component_id = component[index[vertex]];
         component_sets[component_id].push_back(vertex);
@@ -451,6 +417,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     PCTSPvertex& root_vertex,
     SCIP_SOL* sol,
     SCIP_RESULT* result,
+    std::set<StdVertex>& root_component,
     int freq
 ) {
     // create a capacity map for the edges
@@ -460,40 +427,52 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
 
     // create mapping from input vertices to support vertices (they will be renamed)
     StdEdgeVector edge_vector = getStdEdgeVectorFromEdgeSubset(input_graph, solution_edges);
-    auto lookup = getSupportToInputVertexLookupFromEdges(edge_vector);
+    StdEdgeVector root_edge_vector;
+    for (auto const& pair : edge_vector) {
+        if (root_component.count(pair.first) == 1 && root_component.count(pair.second == 1)) {
+            root_edge_vector.push_back(pair);
+        }
+    }
+    auto lookup = renameVerticesFromEdges(root_edge_vector);
     auto support_root = lookup[root_vertex];
 
-    UndirectedCapacityGraph support_graph;
-    for (int i = 0; i < edge_vector.size(); i++) {
-        auto pair = edge_vector[i];
+    DirectedCapacityGraph support_graph;
+    auto capacity_property = boost::get(edge_capacity, support_graph);
+    auto reverse_edges = boost::get(edge_reverse, support_graph);
+    auto residual_capacity = boost::get(edge_residual_capacity, support_graph);
+    BOOST_LOG_TRIVIAL(info) << "Root edge vector is of size " << root_edge_vector.size();
+    for (int i = 0; i < root_edge_vector.size(); i++) {
+        auto pair = root_edge_vector[i];
         auto cap = capacity_vector[i];
-        boost::add_edge(pair.first, pair.second, cap, support_graph);
+        auto edge1 = boost::add_edge(pair.first, pair.second, cap, support_graph);
+        auto edge2 = boost::add_edge(pair.second, pair.first, cap, support_graph);
+        reverse_edges[edge1.first] = edge2.first;
+        reverse_edges[edge2.first] = edge1.first;
     }
+    BOOST_LOG_TRIVIAL(info) << "Directed capacity graph has " << boost::num_edges(support_graph) << " edges.";
 
-    // define a property map, `parities`, that will store a boolean value for
-    // each vertex. Vertices that have the same parity after
-    // `stoer_wagner_min_cut` runs are on the same side of the min-cut.
-    BOOST_AUTO(parities,
-        boost::make_one_bit_color_map(
-            boost::num_vertices(support_graph), get(boost::vertex_index, support_graph)));
+    auto vindex = boost::get(vertex_index, support_graph);
 
-    // run a max flow / min cut algorithm over the edges
-    // run the Stoer-Wagner algorithm to obtain the min-cut weight. `parities`
-    // is also filled in.
-    int w = boost::stoer_wagner_min_cut(
-        support_graph, get(boost::edge_weight, support_graph), boost::parity_map(parities));
-
+    for (auto edge : boost::make_iterator_range(boost::edges(support_graph))) {
+        std::cout << boost::source(edge, support_graph) << "-" << boost::target(edge, support_graph) << " ";
+    }
+    std::cout << std::endl;
+    for (auto const& target : boost::make_iterator_range(boost::vertices(support_graph))) {
+        if (target != support_root) {
+            auto flow = boost::push_relabel_max_flow(support_graph, support_root, target, capacity_property, residual_capacity, reverse_edges, vindex);
+            BOOST_LOG_TRIVIAL(info) << "Flow from root to " << lookup[target] << " is: " << flow;
+        }
+    }
     // get the component containing the root
-    bool root_component_id = boost::get(parities, support_root);
-    StdVertexVector root_component;
-    StdVertexVector non_root_component; // get the component not containing the root
-    for (auto vertex : boost::make_iterator_range(boost::vertices(support_graph))) {
-        if (boost::get(parities, vertex) == root_component_id)
-            root_component.push_back(vertex);
-        else
-            non_root_component.push_back(vertex);
-    }
-
+    // bool root_component_id = boost::get(parities, support_root);
+    // StdVertexVector root_component;
+    // StdVertexVector non_root_component; // get the component not containing the root
+    // for (auto vertex : boost::make_iterator_range(boost::vertices(support_graph))) {
+    //     if (boost::get(parities, vertex) == root_component_id)
+    //         root_component.push_back(vertex);
+    //     else
+    //         non_root_component.push_back(vertex);
+    // }
 
     // we obtain a cut (S_v, V* / S_v)
     // the set S_v is a possibly violated inequality x(E(S)) <= y(S) - y_v
@@ -524,3 +503,48 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     return SCIP_OKAY;
 }
 
+SCIP_RETCODE PCTSPseparateSubtour(
+    SCIP* scip,               /**< SCIP data structure */
+    SCIP_CONSHDLR* conshdlr,           /**< the constraint handler itself */
+    SCIP_CONS** conss,              /**< array of constraints to process */
+    int nconss,             /**< number of constraints to process */
+    int nusefulconss,       /**< number of useful (non-obsolete) constraints to process */
+    SCIP_SOL* sol,                /**< primal solution that should be separated */
+    SCIP_RESULT* result              /**< pointer to store the result of the separation call */
+) {
+    *result = SCIP_DIDNOTFIND;
+    // load the constraint handler data
+    ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
+    auto& input_graph = *(probdata->getInputGraph());
+    auto& edge_variable_map = *(probdata->getEdgeVariableMap());
+    auto& root_vertex = *(probdata->getRootVertex());
+
+    bool sec_disjoint_tour = true;
+    int sec_disjoint_tour_freq = 1;
+    bool sec_maxflow_mincut = true;
+    int sec_maxflow_mincut_freq = 1;
+    if (sec_disjoint_tour && sec_maxflow_mincut_freq > 0) {
+        PCTSPgraph support_graph;
+        getSolutionGraph(scip, input_graph, support_graph, sol, edge_variable_map);
+        std::vector< int > component(boost::num_vertices(support_graph));
+        int n_components;
+        int root_component_id;
+        PCTSPseparateDisjointTour(
+            scip, conshdlr, input_graph, support_graph, edge_variable_map, root_vertex, sol, result, component, n_components, root_component_id, sec_disjoint_tour_freq
+        );
+        if (sec_maxflow_mincut && sec_maxflow_mincut_freq > 0)
+        {
+            std::set<StdVertex> root_component;
+            auto v_index = boost::get(vertex_index, support_graph);
+            for (auto vertex : boost::make_iterator_range(boost::vertices(support_graph))) {
+                if (component[v_index[vertex]] == root_component_id) {
+                    root_component.emplace(vertex);
+                }
+            }
+            PCTSPseparateMaxflowMincut(
+                scip, conshdlr, input_graph, edge_variable_map, root_vertex, sol, result, root_component, sec_maxflow_mincut_freq
+            );
+        }
+    }
+    return SCIP_OKAY;
+}

@@ -119,7 +119,7 @@ TEST(TestSubtourElimination, testProbDataPCTSP) {
 typedef GraphFixture SubtourGraphFixture;
 
 TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
-    PCTSPinitLogging(logging::trivial::warning);
+    PCTSPinitLogging(logging::trivial::info);
     PCTSPgraph graph = getGraph();
     addSelfLoopsToGraph(graph);
     int quota = getQuota();
