@@ -25,7 +25,8 @@ typedef boost::adjacency_list<listS, vecS, undirectedS, PCTSPvertexProperties,
     PCTSPgraph;
 
 typedef typename boost::graph_traits<PCTSPgraph>::edge_descriptor PCTSPedge;
-typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor PCTSPvertex;
+// typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor PCTSPvertex;
+typedef unsigned long PCTSPvertex;
 typedef typename std::map<PCTSPvertex, int> PCTSPprizeMap;
 typedef typename std::map<PCTSPedge, int> PCTSPcostMap;
 typedef typename std::map<PCTSPedge, SCIP_VAR*> PCTSPedgeVariableMap;
@@ -61,13 +62,12 @@ py::list getPyEdgeList(PCTSPgraph& graph, VertexIdMap& vertex_id_map,
     return py_list;
 }
 
-typedef unsigned int StdVertex;
-typedef std::pair<StdVertex, StdVertex> StdEdge;
-typedef std::vector<StdEdge> StdEdgeVector;
-typedef std::vector<StdVertex> StdVertexVector;
-typedef double CapacityType;
+typedef std::pair<PCTSPvertex, PCTSPvertex> VertexPair;
+typedef std::vector<VertexPair> VertexPairVector;
+typedef std::vector<PCTSPvertex> PCTSPvertexVector;
+typedef long CapacityType;
 typedef std::vector<CapacityType> CapacityVector;
-typedef std::map<StdEdge, CapacityType> StdCapacityMap;
+typedef std::map<VertexPair, CapacityType> StdCapacityMap;
 typedef boost::property<boost::edge_weight_t, CapacityType> BoostCapacityMap;
 typedef boost::adjacency_list <
     boost::vecS,
@@ -88,15 +88,15 @@ typedef boost::adjacency_list<
     property< edge_capacity_t, CapacityType, ResidualCapacityMap>> DirectedCapacityGraph;
 
 template<typename Graph>
-StdEdgeVector getStdEdgeVectorFromGraph(Graph& graph) {
+VertexPairVector getVertexPairVectorFromGraph(Graph& graph) {
     auto edges = getEdgeVectorOfGraph(graph);
-    return getStdEdgeVectorFromEdgeSubset(graph, edges);
+    return getVertexPairVectorFromEdgeSubset(graph, edges);
 }
 
 std::vector <PCTSPedge> getEdgeVectorOfGraph(PCTSPgraph& graph);
 
 
-StdEdgeVector getStdEdgeVectorFromEdgeSubset(
+VertexPairVector getVertexPairVectorFromEdgeSubset(
     PCTSPgraph& graph,
     std::vector < PCTSPedge> edge_subset_vector
 );
@@ -107,31 +107,10 @@ typedef std::map<PCTSPvertex, PCTSPvertex> SupportToInputVertexLookup;
 SupportToInputVertexLookup getSupportToInputVertexLookup(std::vector<PCTSPvertex>& input_vertices);
 
 SupportToInputVertexLookup getSupportToInputVertexLookupFromEdges(
-    StdEdgeVector& input_edge_vector
+    VertexPairVector& input_edge_vector
 );
 
-/**
- * @brief Rename vertices to be in the interval [0, num_unique_vertices]
- *
- * @tparam Vertex An integer type (e.g. long, int)
- * @param vertex_vector
- * @return std::map<Vertex, Vertex> Lookup from the new renamed variables to old variable names
- */
-template <typename Vertex>
-std::map<Vertex, Vertex> renameVertices(
-    std::vector<Vertex>& vertex_vector
-) {
-    std::map<Vertex, Vertex> lookup;
-    std::set<Vertex> unique_vertices;
-    Vertex i = 0;
-    for (Vertex const& vertex : vertex_vector) {
-        if (unique_vertices.count(vertex) == 0) {
-            lookup[i] = vertex;
-            i++;
-        }
-    }
-    return lookup;
-}
+
 
 template <typename Vertex>
 std::map<Vertex, Vertex> renameVerticesFromEdges(
@@ -157,4 +136,22 @@ std::map<Vertex, Vertex> renameVerticesFromEdges(
     return lookup;
 }
 
+// functions for renaming vertices and creating new graphs
+
+template <typename OldVertexContainer, typename OldVertex, typename NewVertex>
+boost::bimap<NewVertex, OldVertex> renameVertices(
+    OldVertexContainer& vertices
+) {
+    boost::bimap<NewVertex, OldVertex> lookup;
+    std::set<OldVertex> unique_vertices;
+    NewVertex new_vertex = 0;
+    for (auto it = vertices.begin(); it != vertices.end(); it++) {
+        OldVertex old_vertex = *it;
+        if (unique_vertices.count(old_vertex) == 0) {
+            lookup[new_vertex] = vertex;
+            new_vertex++;
+        }
+    }
+    return lookup;
+}
 #endif

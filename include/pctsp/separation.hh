@@ -13,7 +13,7 @@ bool isGraphSimpleCycle(PCTSPgraph& graph, std::vector<int>& component_vector);
 
 
 UndirectedCapacityGraph capacityGraphFromEdgeVector(
-    StdEdgeVector& edge_vector,
+    VertexPairVector& edge_vector,
     CapacityVector& capacity_vector
 );
 

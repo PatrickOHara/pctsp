@@ -134,7 +134,7 @@ TEST(TestGraph, testGetBoostVertexList) {
 
 typedef GraphFixture EdgeSubsetGraph;
 
-TEST_P(EdgeSubsetGraph, testGetStdEdgeVectorFromEdgeSubset) {
+TEST_P(EdgeSubsetGraph, testGetVertexPairVectorFromEdgeSubset) {
     PCTSPgraph graph = getGraph();
     std::vector<PCTSPedge> edge_subset;
     for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
@@ -143,7 +143,7 @@ TEST_P(EdgeSubsetGraph, testGetStdEdgeVectorFromEdgeSubset) {
         if (boost::target(edge, graph) == 0)
             edge_subset.push_back(edge);
     }
-    auto edge_vector = getStdEdgeVectorFromEdgeSubset(graph, edge_subset);
+    auto edge_vector = getVertexPairVectorFromEdgeSubset(graph, edge_subset);
     EXPECT_GE(edge_vector.size(), 2);
     for (auto const& pair : edge_vector) {
         EXPECT_TRUE(pair.first == 0 || pair.second == 0);

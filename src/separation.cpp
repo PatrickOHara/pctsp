@@ -67,6 +67,8 @@ bool isSimpleCycle(PCTSPgraph& graph, std::vector<PCTSPedge>& edge_vector) {
     return i == edge_vector.size() - 1;
 }
 
+const CapacityType FLOW_FLOAT_MULTIPLIER = 1000000;
+
 CapacityVector getCapacityVectorFromSol(
     SCIP* scip,
     PCTSPgraph& graph,
@@ -77,8 +79,17 @@ CapacityVector getCapacityVectorFromSol(
     auto edges = getSolutionEdges(scip, graph, sol, edge_variable_map);
     for (auto const& edge : edges) {
         SCIP_VAR* var = edge_variable_map[edge];
-        CapacityType value = (CapacityType)SCIPgetSolVal(scip, sol, var);
-        capacity.push_back(value);
+        double value = (double)SCIPgetSolVal(scip, sol, var);   // value is less than or equal to 2
+        CapacityType int_value;
+        if (SCIPisZero(scip, value))
+            int_value = 0;
+        else if (SCIPisZero(scip, value - 1.0))
+            int_value = FLOW_FLOAT_MULTIPLIER;
+        else if (SCIPisZero(scip, value - 2.0))
+            int_value = FLOW_FLOAT_MULTIPLIER * 2;
+        else
+            int_value = (CapacityType)((double)FLOW_FLOAT_MULTIPLIER * value);
+        capacity.push_back(int_value);
     }
     return capacity;
 }
@@ -90,7 +101,7 @@ int runMinCut()
     using namespace std;
     // define the 16 edges of the graph. {3, 4} means an undirected edge between
     // vertices 3 and 4.
-    StdEdgeVector edges = { { 3, 4 }, { 3, 6 }, { 3, 5 }, { 0, 4 }, { 0, 1 },
+    VertexPairVector edges = { { 3, 4 }, { 3, 6 }, { 3, 5 }, { 0, 4 }, { 0, 1 },
         { 0, 6 }, { 0, 7 }, { 0, 5 }, { 0, 2 }, { 4, 1 }, { 1, 6 }, { 1, 5 },
         { 6, 7 }, { 7, 5 }, { 5, 2 }, { 3, 4 } };
 

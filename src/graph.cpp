@@ -119,15 +119,15 @@ std::vector <PCTSPedge> getEdgeVectorOfGraph(PCTSPgraph& graph) {
     return edge_vector;
 }
 
-StdEdgeVector getStdEdgeVectorFromEdgeSubset(
+VertexPairVector getVertexPairVectorFromEdgeSubset(
     PCTSPgraph& graph,
     std::vector < PCTSPedge> edge_subset_vector
 ) {
-    StdEdgeVector edges;
+    VertexPairVector edges;
     for (auto const& edge : edge_subset_vector) {
-        StdVertex s = (StdVertex)boost::source(edge, graph);
-        StdVertex t = (StdVertex)boost::target(edge, graph);
-        StdEdge e = { s, t };
+        PCTSPvertex s = (PCTSPvertex)boost::source(edge, graph);
+        PCTSPvertex t = (PCTSPvertex)boost::target(edge, graph);
+        VertexPair e = { s, t };
         edges.push_back(e);
     }
     return edges;

@@ -7,6 +7,7 @@
 #include "pctsp/logger.hh"
 #include <boost/graph/push_relabel_max_flow.hpp>
 #include <boost/property_map/property_map.hpp>
+#include <boost/graph/strong_components.hpp>
 #include <objscip/objscip.h>
 #include <objscip/objscipdefplugins.h>
 
@@ -417,7 +418,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     PCTSPvertex& root_vertex,
     SCIP_SOL* sol,
     SCIP_RESULT* result,
-    std::set<StdVertex>& root_component,
+    std::set<PCTSPvertex>& root_component,
     int freq
 ) {
     // create a capacity map for the edges
@@ -426,14 +427,20 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     CapacityVector capacity_vector = getCapacityVectorFromSol(scip, input_graph, sol, edge_variable_map);
 
     // create mapping from input vertices to support vertices (they will be renamed)
-    StdEdgeVector edge_vector = getStdEdgeVectorFromEdgeSubset(input_graph, solution_edges);
-    StdEdgeVector root_edge_vector;
+    VertexPairVector edge_vector = getVertexPairVectorFromEdgeSubset(input_graph, solution_edges);
+    VertexPairVector root_edge_vector;
     for (auto const& pair : edge_vector) {
         if (root_component.count(pair.first) == 1 && root_component.count(pair.second == 1)) {
             root_edge_vector.push_back(pair);
         }
     }
     auto lookup = renameVerticesFromEdges(root_edge_vector);
+
+    cout << endl;
+    for (auto const& [key, value] : lookup) {
+        cout << key << ": " << value << endl;
+    }
+
     auto support_root = lookup[root_vertex];
 
     DirectedCapacityGraph support_graph;
@@ -444,8 +451,8 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     for (int i = 0; i < root_edge_vector.size(); i++) {
         auto pair = root_edge_vector[i];
         auto cap = capacity_vector[i];
-        auto edge1 = boost::add_edge(pair.first, pair.second, cap, support_graph);
-        auto edge2 = boost::add_edge(pair.second, pair.first, cap, support_graph);
+        auto edge1 = boost::add_edge(lookup[pair.first], lookup[pair.second], cap, support_graph);
+        auto edge2 = boost::add_edge(lookup[pair.second], lookup[pair.first], cap, support_graph);
         reverse_edges[edge1.first] = edge2.first;
         reverse_edges[edge2.first] = edge1.first;
     }
@@ -453,20 +460,38 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
 
     auto vindex = boost::get(vertex_index, support_graph);
 
+    StdCapacityMap support_capacity;
     for (auto edge : boost::make_iterator_range(boost::edges(support_graph))) {
         std::cout << boost::source(edge, support_graph) << "-" << boost::target(edge, support_graph) << " ";
+        VertexPair pair = { boost::source(edge, support_graph), boost::target(edge, support_graph) };
+        support_capacity[pair] = capacity_property[edge];
     }
+
+    std::vector< int > component(boost::num_vertices(support_graph));
+    int num = strong_components(support_graph, make_iterator_property_map(component.begin(), get(vertex_index, support_graph)));
+    cout << endl << "Num strongly connected components: " << num << endl;
+
+
+
     std::cout << std::endl;
     for (auto const& target : boost::make_iterator_range(boost::vertices(support_graph))) {
-        if (target != support_root) {
+        if (target != boost::vertex(support_root, support_graph)) {
+            std::cout << "Flow from root to " << lookup[target] << " is: ";
             auto flow = boost::push_relabel_max_flow(support_graph, support_root, target, capacity_property, residual_capacity, reverse_edges, vindex);
-            BOOST_LOG_TRIVIAL(info) << "Flow from root to " << lookup[target] << " is: " << flow;
+            std::cout << flow << std::endl;
+            for (auto edge : boost::make_iterator_range(boost::edges(support_graph))) {
+                auto edge_flow = capacity_property[edge] - residual_capacity[edge];
+                cout << "Flow from " << boost::source(edge, support_graph) << "-" << boost::target(edge, support_graph) << " is " << edge_flow;
+                cout << ". Capacity = " << capacity_property[edge] << ". Residual capacity = " << residual_capacity[edge] << std::endl;
+                VertexPair pair = { boost::source(edge, support_graph), boost::target(edge, support_graph) };
+                residual_capacity[edge] = 0;
+            }
         }
     }
     // get the component containing the root
     // bool root_component_id = boost::get(parities, support_root);
-    // StdVertexVector root_component;
-    // StdVertexVector non_root_component; // get the component not containing the root
+    // PCTSPvertexVector root_component;
+    // PCTSPvertexVector non_root_component; // get the component not containing the root
     // for (auto vertex : boost::make_iterator_range(boost::vertices(support_graph))) {
     //     if (boost::get(parities, vertex) == root_component_id)
     //         root_component.push_back(vertex);
@@ -534,7 +559,7 @@ SCIP_RETCODE PCTSPseparateSubtour(
         );
         if (sec_maxflow_mincut && sec_maxflow_mincut_freq > 0)
         {
-            std::set<StdVertex> root_component;
+            std::set<PCTSPvertex> root_component;
             auto v_index = boost::get(vertex_index, support_graph);
             for (auto vertex : boost::make_iterator_range(boost::vertices(support_graph))) {
                 if (component[v_index[vertex]] == root_component_id) {
