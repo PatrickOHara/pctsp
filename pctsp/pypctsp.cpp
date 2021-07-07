@@ -1,8 +1,7 @@
 
 #include "pctsp/algorithms.hh"
-#include "pctsp/graph.hh"
 #include "pctsp/heuristic.hh"
-#include "pctsp/pyutils.hh"
+#include "pctsp/pygraph.hh"
 
 // algorithms binding
 
@@ -24,11 +23,11 @@ py::list pctsp_branch_and_cut_bind(
 ) {
 
     PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(py_edge_list, vertex_id_map);
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
     PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
-    PCTSPvertex boost_root = (PCTSPvertex)getBoostVertex(vertex_id_map, root_vertex);
+    PCTSPvertex boost_root = getNewVertex(vertex_id_map, root_vertex);
 
     // add self loops to graph - we assume the input graph is simple
     if (hasSelfLoopsOnAllVertices(graph) == false) {
@@ -53,7 +52,7 @@ py::list pctsp_branch_and_cut_bind(
 
 bool graph_from_edge_list(py::list& edge_list, py::dict& prize_dict,
     py::dict& cost_dict) {
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
     PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
@@ -66,19 +65,19 @@ bool graph_from_edge_list(py::list& edge_list, py::dict& prize_dict,
 py::list collapse_bind(py::list& edge_list, py::list& py_tour,
     py::dict& cost_dict, py::dict& prize_dict, int quota, int py_root, int log_level_py = PyLoggingLevels::INFO) {
     PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
     auto tour = getBoostVertexList(vertex_id_map, py_tour);
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
     PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
-    int root_vertex = getBoostVertex(vertex_id_map, py_root);
+    auto root_vertex = getNewVertex(vertex_id_map, py_root);
     auto new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
     return getPyVertexList(vertex_id_map, new_tour);
 }
 
 py::list extend_bind(py::list& edge_list, py::list& py_tour,
     py::dict& cost_dict, py::dict& prize_dict) {
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
     auto tour = getBoostVertexList(vertex_id_map, py_tour);
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
@@ -88,7 +87,7 @@ py::list extend_bind(py::list& edge_list, py::list& py_tour,
 }
 
 py::list extend_until_prize_feasible_bind(py::list& edge_list, py::list& py_tour, py::dict& cost_dict, py::dict& prize_dict, int quota) {
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
     auto tour = getBoostVertexList(vertex_id_map, py_tour);
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);

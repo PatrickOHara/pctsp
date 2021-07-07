@@ -3,6 +3,7 @@
 
 #include "solution.hh"
 #include "graph.hh"
+#include "renaming.hh"
 #include <objscip/objscip.h>
 
 template <class UndirectedGraph, class ParityMap>

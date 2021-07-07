@@ -434,25 +434,26 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
             root_edge_vector.push_back(pair);
         }
     }
-    auto lookup = renameVerticesFromEdges(root_edge_vector);
+    boost::bimap<PCTSPvertex, PCTSPvertex> lookup;
+    auto support_edges = renameEdges(lookup, root_edge_vector);
 
     cout << endl;
     for (auto const& [key, value] : lookup) {
         cout << key << ": " << value << endl;
     }
 
-    auto support_root = lookup[root_vertex];
+    auto support_root = getNewVertex(lookup, root_vertex);
 
     DirectedCapacityGraph support_graph;
     auto capacity_property = boost::get(edge_capacity, support_graph);
     auto reverse_edges = boost::get(edge_reverse, support_graph);
     auto residual_capacity = boost::get(edge_residual_capacity, support_graph);
     BOOST_LOG_TRIVIAL(info) << "Root edge vector is of size " << root_edge_vector.size();
-    for (int i = 0; i < root_edge_vector.size(); i++) {
-        auto pair = root_edge_vector[i];
+    for (int i = 0; i < support_edges.size(); i++) {
+        auto pair = support_edges[i];
         auto cap = capacity_vector[i];
-        auto edge1 = boost::add_edge(lookup[pair.first], lookup[pair.second], cap, support_graph);
-        auto edge2 = boost::add_edge(lookup[pair.second], lookup[pair.first], cap, support_graph);
+        auto edge1 = boost::add_edge(pair.first, pair.second, cap, support_graph);
+        auto edge2 = boost::add_edge(pair.second, pair.first, cap, support_graph);
         reverse_edges[edge1.first] = edge2.first;
         reverse_edges[edge2.first] = edge1.first;
     }
@@ -476,7 +477,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     std::cout << std::endl;
     for (auto const& target : boost::make_iterator_range(boost::vertices(support_graph))) {
         if (target != boost::vertex(support_root, support_graph)) {
-            std::cout << "Flow from root to " << lookup[target] << " is: ";
+            std::cout << "Flow from " << support_root << " to " << target << " is: ";
             auto flow = boost::push_relabel_max_flow(support_graph, support_root, target, capacity_property, residual_capacity, reverse_edges, vindex);
             std::cout << flow << std::endl;
             for (auto edge : boost::make_iterator_range(boost::edges(support_graph))) {

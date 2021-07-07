@@ -4,13 +4,16 @@
 #include "fixtures.hh"
 #include <gtest/gtest.h>
 
+typedef boost::bimap<PCTSPvertex, PCTSPvertex>::value_type position;
+
+
 TEST(TestGraph, testGraphFromPyEdgeList) {
     Py_Initialize();
     py::tuple edge = py::make_tuple(0, 1);
     EXPECT_EQ(py::extract<int>(edge[0]), 0);
     py::list edge_list;
     edge_list.append(edge);
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
     EXPECT_EQ(py::len(edge_list), boost::num_edges(graph));
     EXPECT_TRUE(boost::edge(0, 1, graph).second);
@@ -27,7 +30,7 @@ TEST(TestGraph, testPrizeMapFromPyDict) {
     py::dict prize_dict(prize_list);
     EXPECT_EQ(py::len(prize_list), py::len(prize_list));
 
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     vertex_id_map.insert(position(0, 0));
     vertex_id_map.insert(position(1, 2));
 
@@ -38,16 +41,16 @@ TEST(TestGraph, testPrizeMapFromPyDict) {
 }
 
 TEST(TestGraph, testGetPyVertex) {
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     vertex_id_map.insert(position(0, 1));
     vertex_id_map.insert(position(1, 2));
 
-    EXPECT_EQ(getPyVertex(vertex_id_map, 0), 1);
-    EXPECT_EQ(getPyVertex(vertex_id_map, 1), 2);
+    EXPECT_EQ(getOldVertex(vertex_id_map, 0), 1);
+    EXPECT_EQ(getOldVertex(vertex_id_map, 1), 2);
 }
 
 TEST(TestGraph, testGetBoostVertex) {
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     vertex_id_map.insert(position(0, 1));
     vertex_id_map.insert(position(1, 2));
 
@@ -74,7 +77,7 @@ TEST(TestGraph, testGetCostMapFromPyDict) {
     py::dict cost_dict(cost_list);
 
     // get the graph and vertex lookup
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
 
     // get the std::cost map and check the costs are correct
@@ -94,7 +97,7 @@ TEST(TestGraph, testGetPyEdgeList) {
     PCTSPedge edge1 = boost::add_edge(0, 1, graph).first;
     PCTSPedge edge2 = boost::add_edge(1, 2, graph).first;
 
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     vertex_id_map.insert(position(0, 7));
     vertex_id_map.insert(position(1, 3));
     vertex_id_map.insert(position(2, 5));
@@ -106,7 +109,7 @@ TEST(TestGraph, testGetPyEdgeList) {
 
 TEST(TestGraph, testGetPyVertexList) {
     std::list<int> vertex_list = { 0, 1, 2 };
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     vertex_id_map.insert(position(0, 7));
     vertex_id_map.insert(position(1, 3));
     vertex_id_map.insert(position(2, 5));
@@ -121,7 +124,7 @@ TEST(TestGraph, testGetBoostVertexList) {
     py_list.append(7);
     py_list.append(3);
     py_list.append(5);
-    VertexIdMap vertex_id_map;
+    BoostPyBimap vertex_id_map;
     vertex_id_map.insert(position(0, 7));
     vertex_id_map.insert(position(1, 3));
     vertex_id_map.insert(position(2, 5));
