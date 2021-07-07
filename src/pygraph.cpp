@@ -6,28 +6,11 @@
 
 PCTSPgraph graphFromPyEdgeList(py::list& edge_list, BoostPyBimap& lookup) {
     PCTSPgraph graph;
-
-    auto old_edges = pyListToStdList<std::pair<int, int>>(edge_list);
+    auto old_edges = toStdListOfPairs<PCTSPvertex>(edge_list);
     auto new_edges = renameEdges(lookup, old_edges);
     auto start = new_edges.begin();
     auto end = new_edges.end();
     addEdgesToGraph(graph, start, end);
-
-    // PCTSPvertex vertex_id = 0;
-    // auto length = py::len(edge_list);
-    // for (int i = 0; i < length; i++) {
-    //     py::tuple py_edge = py::extract<py::tuple>(edge_list[i]);
-
-    //     int source = py::extract<int>(py_edge[0]);
-    //     int target = py::extract<int>(py_edge[1]);
-
-    //     int graph_source =
-    //         findOrInsertVertex(lookup, source, vertex_id);
-    //     int graph_target =
-    //         findOrInsertVertex(lookup, target, vertex_id);
-    //     boost::add_edge(graph_source, graph_target, graph);
-    // }
-
     return graph;
 }
 

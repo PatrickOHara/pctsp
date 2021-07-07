@@ -8,9 +8,9 @@
 namespace py = boost::python;
 
 template <typename T>
-inline std::list<T> pyListToStdList(const py::list &iterable) {
+inline std::list<T> pyListToStdList(const py::list& iterable) {
     return std::list<T>(py::stl_input_iterator<T>(iterable),
-                        py::stl_input_iterator<T>());
+        py::stl_input_iterator<T>());
 }
 
 template <class T> inline py::list stdListToPyList(std::list<T> std_list) {
@@ -46,11 +46,25 @@ template <class K, class V> std::map<K, V> pyDictToStdMap(py::dict dictionary) {
 }
 
 template <typename Graph, typename Edge>
-py::list toPyListOfTuples(std::list<Edge> &edge_list) {
+py::list toPyListOfTuples(std::list<Edge>& edge_list) {
 
     std::list<py::tuple> list_of_tuples;
     // iterate over each edge and convert to a python tuple
 
     return stdListToPyList(list_of_tuples);
+}
+
+template< typename Vertex>
+std::list<std::pair<Vertex, Vertex>> toStdListOfPairs(py::list& py_list) {
+    int list_size = py::len(py_list);
+    std::list < std::pair<Vertex, Vertex> >std_list;
+    for (int i = 0; i < list_size; i++) {
+        py::tuple py_tuple = py::extract<py::tuple>(py_list[i]);
+        Vertex first = py::extract<Vertex>(py_tuple[0]);
+        Vertex second = py::extract<Vertex>(py_tuple[1]);
+        std::pair<Vertex, Vertex> std_pair(first, second);
+        std_list.push_back(std_pair);
+    }
+    return std_list;
 }
 #endif
