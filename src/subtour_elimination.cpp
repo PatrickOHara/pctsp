@@ -421,12 +421,13 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     std::set<PCTSPvertex>& root_component,
     int freq
 ) {
+    DirectedCapacityGraph support_graph;
     // create a capacity map for the edges
     // the capacity of each edge is the value in the solution given
     auto solution_edges = getSolutionEdges(scip, input_graph, sol, edge_variable_map);
     CapacityVector capacity_vector = getCapacityVectorFromSol(scip, input_graph, sol, edge_variable_map);
 
-    // create mapping from input vertices to support vertices (they will be renamed)
+    // only get edges that are in the same connected components as the root
     VertexPairVector edge_vector = getVertexPairVectorFromEdgeSubset(input_graph, solution_edges);
     VertexPairVector root_edge_vector;
     for (auto const& pair : edge_vector) {
@@ -434,58 +435,74 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
             root_edge_vector.push_back(pair);
         }
     }
-    boost::bimap<PCTSPvertex, PCTSPvertex> lookup;
+    // create mapping from input vertices to support vertices (they will be renamed)
+    typedef boost::graph_traits<DirectedCapacityGraph>::vertex_descriptor SupportVertex;
+    boost::bimap<SupportVertex, PCTSPvertex> lookup;
     auto support_edges = renameEdges(lookup, root_edge_vector);
 
-    cout << endl;
-    for (auto const& [key, value] : lookup) {
-        cout << key << ": " << value << endl;
-    }
-
-    auto support_root = getNewVertex(lookup, root_vertex);
-
-    DirectedCapacityGraph support_graph;
+    // create the directed support graph with an edge attribute for the capacity
     auto capacity_property = boost::get(edge_capacity, support_graph);
     auto reverse_edges = boost::get(edge_reverse, support_graph);
     auto residual_capacity = boost::get(edge_residual_capacity, support_graph);
-    BOOST_LOG_TRIVIAL(info) << "Root edge vector is of size " << root_edge_vector.size();
     for (int i = 0; i < support_edges.size(); i++) {
         auto pair = support_edges[i];
         auto cap = capacity_vector[i];
+
+        // add edge in both directions since the graph is undirected
         auto edge1 = boost::add_edge(pair.first, pair.second, cap, support_graph);
         auto edge2 = boost::add_edge(pair.second, pair.first, cap, support_graph);
-        reverse_edges[edge1.first] = edge2.first;
-        reverse_edges[edge2.first] = edge1.first;
-    }
-    BOOST_LOG_TRIVIAL(info) << "Directed capacity graph has " << boost::num_edges(support_graph) << " edges.";
 
+        // add a reverse edge
+        auto edge1_reverse = boost::add_edge(pair.second, pair.first, 0, support_graph);
+        auto edge2_reverse = boost::add_edge(pair.first, pair.second, 0, support_graph);
+
+        // store the reverse edges
+        reverse_edges[edge1.first] = edge1_reverse.first;
+        reverse_edges[edge1_reverse.first] = edge1.first;
+        reverse_edges[edge2.first] = edge2_reverse.first;
+        reverse_edges[edge2_reverse.first] = edge2.first;
+    }
+
+    auto support_root = getNewVertex(lookup, root_vertex);
     auto vindex = boost::get(vertex_index, support_graph);
-
-    StdCapacityMap support_capacity;
-    for (auto edge : boost::make_iterator_range(boost::edges(support_graph))) {
-        std::cout << boost::source(edge, support_graph) << "-" << boost::target(edge, support_graph) << " ";
-        VertexPair pair = { boost::source(edge, support_graph), boost::target(edge, support_graph) };
-        support_capacity[pair] = capacity_property[edge];
-    }
-
     std::vector< int > component(boost::num_vertices(support_graph));
     int num = strong_components(support_graph, make_iterator_property_map(component.begin(), get(vertex_index, support_graph)));
-    cout << endl << "Num strongly connected components: " << num << endl;
-
-
-
-    std::cout << std::endl;
-    for (auto const& target : boost::make_iterator_range(boost::vertices(support_graph))) {
-        if (target != boost::vertex(support_root, support_graph)) {
-            std::cout << "Flow from " << support_root << " to " << target << " is: ";
-            auto flow = boost::push_relabel_max_flow(support_graph, support_root, target, capacity_property, residual_capacity, reverse_edges, vindex);
-            std::cout << flow << std::endl;
+    BOOST_LOG_TRIVIAL(debug) << "Directed capacity graph has " << boost::num_edges(support_graph) << " edges and " << num << " strongly connected components.";
+    BOOST_ASSERT(num <= 1);
+    for (auto target : boost::make_iterator_range(boost::vertices(support_graph))) {
+        if (target != support_root) {
+            // reset the residual capacity
             for (auto edge : boost::make_iterator_range(boost::edges(support_graph))) {
-                auto edge_flow = capacity_property[edge] - residual_capacity[edge];
-                cout << "Flow from " << boost::source(edge, support_graph) << "-" << boost::target(edge, support_graph) << " is " << edge_flow;
-                cout << ". Capacity = " << capacity_property[edge] << ". Residual capacity = " << residual_capacity[edge] << std::endl;
-                VertexPair pair = { boost::source(edge, support_graph), boost::target(edge, support_graph) };
                 residual_capacity[edge] = 0;
+            }
+            auto flow = boost::push_relabel_max_flow(support_graph, support_root, target, capacity_property, residual_capacity, reverse_edges, vindex);
+
+            if (flow < 2 * FLOW_FLOAT_MULTIPLIER) {
+                BOOST_LOG_TRIVIAL(info) << "Flow constraint violated: flow from " << support_root << " to " << target << " is: " << flow;
+
+                // get the flow of each edge
+                // auto eindex = boost::get(boost::edge_index, support_graph);
+                // auto edge_flow = boost::make_vector_property_map<boost::edge_weight_t>(eindex);
+
+                // traverse the residual graph from the root
+                // all vertices that are reachable on edges that have some flow are on one side of the cut
+                // all edges that are not reachable by the flow are on the other side of the cut
+                auto unreachable = getUnreachableVertices(support_graph, support_root, residual_capacity);
+                BOOST_LOG_TRIVIAL(info) << unreachable.size() << " vertices are unreachable from root of the residual graph.";
+                auto unreachable_input_vertices = getOldVertices(lookup, unreachable);
+                auto input_target_vertex = getOldVertex(lookup, target);
+                // the component not containing the root violates the subtour elimination constraint
+                SCIP_CALL(addSubtourEliminationConstraint(
+                    scip,
+                    conshdlr,
+                    input_graph,
+                    unreachable_input_vertices,
+                    edge_variable_map,
+                    root_vertex,
+                    input_target_vertex,
+                    sol,
+                    result
+                ));
             }
         }
     }
@@ -504,28 +521,28 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     // the set S_v is a possibly violated inequality x(E(S)) <= y(S) - y_v
 
     // if S_v violates inequality then add it to the LP
-    PCTSPvertex target_vertex;
-    std::vector<PCTSPvertex> support_vertex_set;
-    if (support_vertex_set.size() >= 3) {
-        std::vector<PCTSPvertex> vertex_set(support_vertex_set.size());
-        int i = 0;
-        // get the vertex objects from the original graph
-        for (auto const& solution_vertex : support_vertex_set) {
-            vertex_set[i] = boost::vertex(solution_vertex, input_graph);
-            i++;
-        }
-        SCIP_CALL(addSubtourEliminationConstraint(
-            scip,
-            conshdlr,
-            input_graph,
-            vertex_set,
-            edge_variable_map,
-            root_vertex,
-            target_vertex,
-            sol,
-            result
-        ));
-    }
+    // PCTSPvertex target_vertex;
+    // std::vector<PCTSPvertex> support_vertex_set;
+    // if (support_vertex_set.size() >= 3) {
+    //     std::vector<PCTSPvertex> vertex_set(support_vertex_set.size());
+    //     int i = 0;
+    //     // get the vertex objects from the original graph
+    //     for (auto const& solution_vertex : support_vertex_set) {
+    //         vertex_set[i] = boost::vertex(solution_vertex, input_graph);
+    //         i++;
+    //     }
+    //     SCIP_CALL(addSubtourEliminationConstraint(
+    //         scip,
+    //         conshdlr,
+    //         input_graph,
+    //         vertex_set,
+    //         edge_variable_map,
+    //         root_vertex,
+    //         target_vertex,
+    //         sol,
+    //         result
+    //     ));
+    // }
     return SCIP_OKAY;
 }
 

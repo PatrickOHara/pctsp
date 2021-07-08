@@ -1,4 +1,5 @@
 #include "fixtures.hh"
+#include <algorithm>
 #include <boost/graph/one_bit_color_map.hpp>
 #include <boost/graph/stoer_wagner_min_cut.hpp>
 #include "pctsp/algorithms.hh"
@@ -182,6 +183,36 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     case GraphType::SUURBALLE: EXPECT_EQ(*second_it, second_edge); break;
     default: EXPECT_TRUE(true); break;
     }
+}
+
+TEST(TestSubtourElimination, testGetUnreachableVertices) {
+    typedef boost::property<boost::edge_weight_t, int> DiEdgeWeight;
+    typedef boost::adjacency_list<
+        boost::listS, boost::vecS, boost::directedS, boost::no_property, DiEdgeWeight> WeightedDiGraph;
+    int n_vertices = 6;
+    WeightedDiGraph graph(n_vertices);
+    auto weight = boost::get(edge_weight, graph);
+    for (int i = 0; i < n_vertices - 3; i++) {
+        int w = 1;
+        auto edge = boost::add_edge(i, i + 1, w, graph);
+        // boost::put(weight, edge, w);
+    }
+    boost::add_edge(n_vertices - 3, n_vertices - 2, 0, graph);
+    boost::add_edge(n_vertices - 2, n_vertices - 1, 1, graph);
+
+    for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
+        cout << boost::source(edge, graph) << " ";
+        cout << boost::target(edge, graph) << " ";
+        cout << weight[edge] << endl;
+
+    }
+
+    auto source = boost::vertex(0, graph);
+    auto unreachable = getUnreachableVertices(graph, source, weight);
+    EXPECT_EQ(unreachable.size(), 2);
+    auto end_it = unreachable.end();
+    EXPECT_TRUE(std::find(unreachable.begin(), end_it, source) == end_it);
+    EXPECT_TRUE(std::find(unreachable.begin(), end_it, boost::vertex(n_vertices - 1, graph)) != end_it);
 }
 
 INSTANTIATE_TEST_SUITE_P(

@@ -4,6 +4,8 @@
 #include "solution.hh"
 #include "graph.hh"
 #include "renaming.hh"
+#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/filtered_graph.hpp>
 #include <objscip/objscip.h>
 
 template <class UndirectedGraph, class ParityMap>
@@ -45,6 +47,49 @@ SCIP_RETCODE PCTSPseparateSubtour(
     SCIP_RESULT* result         /**< pointer to store the result of the separation call */
 );
 
+template <typename EdgeWeightMap>
+struct positive_edge_weight {
+    positive_edge_weight() { }
+    positive_edge_weight(EdgeWeightMap weight) : m_weight(weight) { }
+    template <typename Edge>
+    bool operator()(const Edge& e) const {
+        return 0 < get(m_weight, e);
+    }
+    EdgeWeightMap m_weight;
+};
+
+template<typename Graph, typename Weight>
+std::vector<typename boost::graph_traits<Graph>::vertex_descriptor> getUnreachableVertices(
+    Graph& graph,
+    typename boost::graph_traits<Graph>::vertex_descriptor& source_vertex,
+    Weight& weight
+) {
+    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
+    std::vector<Vertex> unreachable_vertices;
+
+    // filter the graph to get edges that have positive weight
+    positive_edge_weight<Weight> filter(weight);
+    boost::filtered_graph<Graph, positive_edge_weight<Weight> > f_graph(graph, filter);
+
+    // create a colour map
+    auto indexmap = boost::get(boost::vertex_index, f_graph);
+    auto colormap = boost::make_vector_property_map<boost::default_color_type>(indexmap);
+
+    // use DFS search to assign colours to vertices
+    boost::default_dfs_visitor visitor;
+    boost::depth_first_visit(f_graph, source_vertex, visitor, colormap);
+
+    // get the colour of the source vertex
+    auto source_color = boost::get(colormap, source_vertex);
+
+    // return all vertices with a different colour to the source vertex
+    for (auto vertex : boost::make_iterator_range(boost::vertices(f_graph))) {
+        if (colormap[vertex] != source_color) {
+            unreachable_vertices.push_back(vertex);
+        }
+    }
+    return unreachable_vertices;
+}
 
 // SCIP_RETCODE PCTSPseparateDisjointTour(
 //     SCIP* scip,

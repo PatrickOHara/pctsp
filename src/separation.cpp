@@ -67,8 +67,6 @@ bool isSimpleCycle(PCTSPgraph& graph, std::vector<PCTSPedge>& edge_vector) {
     return i == edge_vector.size() - 1;
 }
 
-const CapacityType FLOW_FLOAT_MULTIPLIER = 1000000;
-
 CapacityVector getCapacityVectorFromSol(
     SCIP* scip,
     PCTSPgraph& graph,

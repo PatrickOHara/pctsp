@@ -6,6 +6,8 @@
 #include <boost/graph/connected_components.hpp>
 #include <objscip/objscip.h>
 
+const CapacityType FLOW_FLOAT_MULTIPLIER = 1000000;
+
 bool isSimpleCycle(PCTSPgraph& graph, std::vector<PCTSPedge>& edge_vector);
 
 /** Returns true if the graph is a simple cycle */
