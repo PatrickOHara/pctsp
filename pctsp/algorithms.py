@@ -48,8 +48,8 @@ def pctsp_branch_and_cut(
     logging_level: int = logging.INFO,
     sec_disjoint_tour: bool = True,
     sec_disjoint_tour_freq: int = 1,
-    sec_maxflow_mincut: bool = False,
-    sec_maxflow_mincut_freq: bool = 0,
+    sec_maxflow_mincut: bool = True,
+    sec_maxflow_mincut_freq: bool = 1,
 ) -> EdgeList:
     """Branch and cut algorithm for the prize collecting travelling salesman problem
 

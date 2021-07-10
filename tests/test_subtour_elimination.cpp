@@ -136,7 +136,7 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     // initialise and create the model without subtour elimiation constraints
     SCIP* mip = NULL;
     SCIPcreate(&mip);
-    SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip), TRUE);
+    SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip, true, 1, true, 1), TRUE);
     SCIPincludeDefaultPlugins(mip);
     ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &variable_map, &quota);
     SCIPcreateObjProb(

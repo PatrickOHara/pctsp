@@ -339,13 +339,13 @@ SCIP_DECL_CONSPRINT(PCTSPconshdlrSubtour::scip_print) {
 
 SCIP_DECL_CONSSEPALP(PCTSPconshdlrSubtour::scip_sepalp) {
     BOOST_LOG_TRIVIAL(debug) << "scip_sepalp";
-    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result));
+    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq));
     return SCIP_OKAY;
 }
 
 SCIP_DECL_CONSSEPASOL(PCTSPconshdlrSubtour::scip_sepasol) {
     BOOST_LOG_TRIVIAL(debug) << "scip_sepsol";
-    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, sol, result));
+    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, sol, result, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq));
     return SCIP_OKAY;
 }
 
@@ -475,7 +475,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     if (support_root < added_sec.size())
         added_sec[support_root] = true;
     else
-        BOOST_LOG_TRIVIAL(warning) << "Num vertices in support graph is zero.";
+        BOOST_LOG_TRIVIAL(debug) << "Num vertices in support graph is zero.";
     for (auto target : boost::make_iterator_range(boost::vertices(support_graph))) {
         if (!added_sec[target]) {
             // reset the residual capacity
@@ -494,7 +494,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
                 // all vertices that are reachable on edges that have some flow are on one side of the cut
                 // all edges that are not reachable by the flow are on the other side of the cut
                 auto unreachable = getUnreachableVertices(support_graph, support_root, residual_capacity);
-                BOOST_LOG_TRIVIAL(info) << unreachable.size() << " vertices are unreachable from root of the residual graph.";
+                BOOST_LOG_TRIVIAL(debug) << unreachable.size() << " vertices are unreachable from root of the residual graph.";
                 auto unreachable_input_vertices = getOldVertices(lookup, unreachable);
                 auto input_target_vertex = getOldVertex(lookup, target);
                 // the component not containing the root violates the subtour elimination constraint
@@ -510,10 +510,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
                     result
                 ));
                 for (auto const& vertex : unreachable) {
-                    if (vertex < added_sec.size())
-                        added_sec[vertex] = true;
-                    else
-                        BOOST_LOG_TRIVIAL(warning) << vertex << " not less than " << added_sec.size();
+                    added_sec[vertex] = true;
                 }
             }
         }
@@ -528,7 +525,11 @@ SCIP_RETCODE PCTSPseparateSubtour(
     int nconss,             /**< number of constraints to process */
     int nusefulconss,       /**< number of useful (non-obsolete) constraints to process */
     SCIP_SOL* sol,                /**< primal solution that should be separated */
-    SCIP_RESULT* result              /**< pointer to store the result of the separation call */
+    SCIP_RESULT* result,              /**< pointer to store the result of the separation call */
+    bool sec_disjoint_tour,
+    int sec_disjoint_tour_freq,
+    bool sec_maxflow_mincut,
+    int sec_maxflow_mincut_freq
 ) {
     *result = SCIP_DIDNOTFIND;
     // load the constraint handler data
@@ -537,11 +538,7 @@ SCIP_RETCODE PCTSPseparateSubtour(
     auto& edge_variable_map = *(probdata->getEdgeVariableMap());
     auto& root_vertex = *(probdata->getRootVertex());
 
-    bool sec_disjoint_tour = true;
-    int sec_disjoint_tour_freq = 1;
-    bool sec_maxflow_mincut = true;
-    int sec_maxflow_mincut_freq = 1;
-    if (sec_disjoint_tour && sec_maxflow_mincut_freq > 0) {
+    if (sec_disjoint_tour) {
         PCTSPgraph support_graph;
         getSolutionGraph(scip, input_graph, support_graph, sol, edge_variable_map);
         std::vector< int > component(boost::num_vertices(support_graph));
@@ -550,7 +547,7 @@ SCIP_RETCODE PCTSPseparateSubtour(
         PCTSPseparateDisjointTour(
             scip, conshdlr, input_graph, support_graph, edge_variable_map, root_vertex, sol, result, component, n_components, root_component_id, sec_disjoint_tour_freq
         );
-        if (sec_maxflow_mincut && sec_maxflow_mincut_freq > 0)
+        if (sec_maxflow_mincut)
         {
             std::set<PCTSPvertex> root_component;
             auto v_index = boost::get(vertex_index, support_graph);

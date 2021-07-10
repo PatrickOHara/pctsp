@@ -44,7 +44,11 @@ SCIP_RETCODE PCTSPseparateSubtour(
     int nconss,             /**< number of constraints to process */
     int nusefulconss,       /**< number of useful (non-obsolete) constraints to process */
     SCIP_SOL* sol,              /**< primal solution that should be separated */
-    SCIP_RESULT* result         /**< pointer to store the result of the separation call */
+    SCIP_RESULT* result,         /**< pointer to store the result of the separation call */
+    bool sec_disjoint_tour,
+    int sec_disjoint_tour_freq,
+    bool sec_maxflow_mincut,
+    int sec_maxflow_mincut_freq
 );
 
 template <typename EdgeWeightMap>
@@ -162,15 +166,32 @@ public:
 
 class PCTSPconshdlrSubtour : public scip::ObjConshdlr
 {
+
+private:
+
+    bool sec_disjoint_tour;
+    int sec_disjoint_tour_freq;
+    bool sec_maxflow_mincut;
+    int sec_maxflow_mincut_freq;
+
 public:
+
     /** default constructor */
     PCTSPconshdlrSubtour(
-        SCIP* mip
+        SCIP* mip,
+        bool _sec_disjoint_tour,
+        int _sec_disjoint_tour_freq,
+        bool _sec_maxflow_mincut,
+        int _sec_maxflow_mincut_freq
     )
         : ObjConshdlr(mip, "subtour", "PCTSP subtour elimination constraints",
             1000000, -2000000, -2000000, 1, -1, 1, 0,
             FALSE, FALSE, TRUE, SCIP_PROPTIMING_BEFORELP, SCIP_PRESOLTIMING_FAST)
     {
+        sec_disjoint_tour = _sec_disjoint_tour;
+        sec_disjoint_tour_freq = _sec_disjoint_tour_freq;
+        sec_maxflow_mincut = _sec_maxflow_mincut;
+        sec_maxflow_mincut_freq = _sec_maxflow_mincut_freq;
     }
 
     SCIP_DECL_CONSCHECK(scip_check);
