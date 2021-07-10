@@ -125,7 +125,3 @@ TEST(TestSeparation, testIsSimpleCycle) {
     auto edge_vector3 = getEdgeVectorOfGraph(graph1);
     EXPECT_FALSE(isSimpleCycle(graph1, edge_vector3));
 }
-
-TEST(testRunMinCut, testRunMinCut) {
-    runMinCut();
-}

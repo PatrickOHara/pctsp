@@ -200,13 +200,6 @@ TEST(TestSubtourElimination, testGetUnreachableVertices) {
     boost::add_edge(n_vertices - 3, n_vertices - 2, 0, graph);
     boost::add_edge(n_vertices - 2, n_vertices - 1, 1, graph);
 
-    for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
-        cout << boost::source(edge, graph) << " ";
-        cout << boost::target(edge, graph) << " ";
-        cout << weight[edge] << endl;
-
-    }
-
     auto source = boost::vertex(0, graph);
     auto unreachable = getUnreachableVertices(graph, source, weight);
     EXPECT_EQ(unreachable.size(), 2);

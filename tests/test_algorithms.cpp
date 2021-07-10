@@ -55,6 +55,7 @@ TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
     PCTSPvertex root_vertex = boost::vertex(0, graph);
     auto cost_map = get(&PCTSPedgeProperties::cost, graph);
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);
+    assignZeroCostToSelfLoops(graph, cost_map);
 
     // create a file to write the logs to
     std::vector<PCTSPedge> solution_edges;

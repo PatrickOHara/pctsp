@@ -86,62 +86,8 @@ CapacityVector getCapacityVectorFromSol(
         else if (SCIPisZero(scip, value - 2.0))
             int_value = FLOW_FLOAT_MULTIPLIER * 2;
         else
-            int_value = (CapacityType)((double)FLOW_FLOAT_MULTIPLIER * value);
+            int_value = (CapacityType)(((double)FLOW_FLOAT_MULTIPLIER) * value);
         capacity.push_back(int_value);
     }
     return capacity;
-}
-
-// A graphic of the min-cut is available at
-// <http://www.boost.org/doc/libs/release/libs/graph/doc/stoer_wagner_imgs/stoer_wagner.cpp.gif>
-int runMinCut()
-{
-    using namespace std;
-    // define the 16 edges of the graph. {3, 4} means an undirected edge between
-    // vertices 3 and 4.
-    VertexPairVector edges = { { 3, 4 }, { 3, 6 }, { 3, 5 }, { 0, 4 }, { 0, 1 },
-        { 0, 6 }, { 0, 7 }, { 0, 5 }, { 0, 2 }, { 4, 1 }, { 1, 6 }, { 1, 5 },
-        { 6, 7 }, { 7, 5 }, { 5, 2 }, { 3, 4 } };
-
-    // for each of the 16 edges, define the associated edge weight. ws[i] is the
-    // weight for the edge that is described by edges[i].
-    CapacityType ws[] = { 0, 3, 1, 3, 1, 2, 6, 1, 8, 1, 1, 80, 2, 1, 1, 4 };
-
-    // construct the graph object. 8 is the number of vertices, which are
-    // numbered from 0 through 7, and 16 is the number of edges.
-    UndirectedCapacityGraph g(&edges[0], &edges[0] + edges.size(), ws, 8, 16);
-
-    // define a property map, `parities`, that will store a boolean value for
-    // each vertex. Vertices that have the same parity after
-    // `stoer_wagner_min_cut` runs are on the same side of the min-cut.
-    BOOST_AUTO(parities,
-        boost::make_one_bit_color_map(
-            num_vertices(g), get(boost::vertex_index, g)));
-
-    // run the Stoer-Wagner algorithm to obtain the min-cut weight. `parities`
-    // is also filled in.
-    int w = boost::stoer_wagner_min_cut(
-        g, get(boost::edge_weight, g), boost::parity_map(parities));
-
-    cout << "The min-cut weight of G is " << w << ".\n" << endl;
-    assert(w == 7);
-
-    cout << "One set of vertices consists of:" << endl;
-    size_t i;
-    for (i = 0; i < num_vertices(g); ++i)
-    {
-        if (get(parities, i))
-            cout << i << endl;
-    }
-    cout << endl;
-
-    cout << "The other set of vertices consists of:" << endl;
-    for (i = 0; i < num_vertices(g); ++i)
-    {
-        if (!get(parities, i))
-            cout << i << endl;
-    }
-    cout << endl;
-
-    return EXIT_SUCCESS;
 }

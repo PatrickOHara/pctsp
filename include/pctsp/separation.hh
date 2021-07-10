@@ -35,6 +35,4 @@ CapacityVector getCapacityVectorFromSol(
     std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map
 );
 
-int runMinCut();
-
 #endif
