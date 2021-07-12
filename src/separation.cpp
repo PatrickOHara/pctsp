@@ -1,4 +1,8 @@
 #include "pctsp/separation.hh"
+#include <boost/graph/one_bit_color_map.hpp>
+#include <boost/graph/stoer_wagner_min_cut.hpp>
+#include <boost/property_map/property_map.hpp>
+#include <boost/typeof/typeof.hpp>
 #include <iostream>
 
 bool isGraphSimpleCycle(PCTSPgraph& graph, std::vector<int>& component_vector) {
@@ -13,15 +17,6 @@ bool isGraphSimpleCycle(PCTSPgraph& graph, std::vector<int>& component_vector) {
     return true;
 }
 
-std::vector<PCTSPedge> getEdgeVectorOfGraph(PCTSPgraph& graph) {
-    std::vector<PCTSPedge> edge_vector;
-    int i = 0;
-    for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
-        edge_vector.insert(edge_vector.begin() + i, edge);
-        i++;
-    }
-    return edge_vector;
-}
 
 bool isSimpleCycle(PCTSPgraph& graph, std::vector<PCTSPedge>& edge_vector) {
     if (edge_vector.size() == 0) return false;
@@ -70,4 +65,29 @@ bool isSimpleCycle(PCTSPgraph& graph, std::vector<PCTSPedge>& edge_vector) {
         i++;
     }
     return i == edge_vector.size() - 1;
+}
+
+CapacityVector getCapacityVectorFromSol(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    SCIP_SOL* sol,
+    std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map
+) {
+    CapacityVector capacity;
+    auto edges = getSolutionEdges(scip, graph, sol, edge_variable_map);
+    for (auto const& edge : edges) {
+        SCIP_VAR* var = edge_variable_map[edge];
+        double value = (double)SCIPgetSolVal(scip, sol, var);   // value is less than or equal to 2
+        CapacityType int_value;
+        if (SCIPisZero(scip, value))
+            int_value = 0;
+        else if (SCIPisZero(scip, value - 1.0))
+            int_value = FLOW_FLOAT_MULTIPLIER;
+        else if (SCIPisZero(scip, value - 2.0))
+            int_value = FLOW_FLOAT_MULTIPLIER * 2;
+        else
+            int_value = (CapacityType)(((double)FLOW_FLOAT_MULTIPLIER) * value);
+        capacity.push_back(int_value);
+    }
+    return capacity;
 }

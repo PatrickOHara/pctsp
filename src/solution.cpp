@@ -13,7 +13,7 @@ std::vector<PCTSPvertex> getSolutionVertices(SCIP* mip, PCTSPgraph& graph, SCIP_
             auto edge = self_loop.first;
             auto var = edge_variable_map[edge];
             auto value = SCIPgetSolVal(mip, sol, var);
-            if (value > 0) {
+            if (!(SCIPisZero(mip, value)) && (value > 0)) {
                 solution_vertices.push_back(vertex);
             }
         }

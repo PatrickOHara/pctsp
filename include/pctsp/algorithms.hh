@@ -84,9 +84,20 @@ SCIP_RETCODE PCTSPmodelWithoutSECs(
  */
 template <typename Graph, typename Vertex, typename Edge, typename CostMap,
     typename PrizeMap>
-    SCIP_RETCODE PCTSPbranchAndCut(Graph& graph, std::vector<Edge>& solution_edges,
-        CostMap& cost_map, PrizeMap& prize_map,
-        int quota, Vertex root_vertex, const char* log_filepath = NULL, bool print_scip = true) {
+    SCIP_RETCODE PCTSPbranchAndCut(
+        Graph& graph,
+        std::vector<Edge>& solution_edges,
+        CostMap& cost_map,
+        PrizeMap& prize_map,
+        int quota,
+        Vertex root_vertex,
+        const char* log_filepath = NULL,
+        bool sec_disjoint_tour = true,
+        int sec_disjoint_tour_freq = 1,
+        bool sec_maxflow_mincut = true,
+        int sec_maxflow_mincut_freq = 1,
+        bool print_scip = true
+    ) {
 
     // initialise empty model
     SCIP* mip = NULL;
@@ -105,7 +116,7 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
     );
 
     // add custom cutting plane handlers
-    SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip), TRUE);
+    SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE);
 
     // add custom message handler
     SCIP_MESSAGEHDLR* handler;
