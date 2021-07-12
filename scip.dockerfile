@@ -11,7 +11,7 @@ ENV BOOST_PATCH 0
 ENV BOOST_VERSION "${BOOST_MAJOR}.${BOOST_MINOR}.${BOOST_PATCH}"
 ENV BOOST_DIR "/app/boost_${BOOST_MAJOR}_${BOOST_MINOR}_${BOOST_PATCH}"
 ENV BOOST_FILENAME "boost_${BOOST_MAJOR}_${BOOST_MINOR}_${BOOST_PATCH}.tar.bz2"
-ENV BOOST_URL https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source
+ENV BOOST_URL "https://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/${BOOST_FILENAME}/download"
 
 # SCIP variables
 ENV SCIP_VERSION 7.0.2
@@ -26,7 +26,7 @@ ENV SOPLEX_FILENAME soplex-${SOPLEX_VERSION}.tgz
 ENV SOPLEX_URL https://soplex.zib.de/download/release
 
 # download and extract boost, soplex and scip
-ADD ${BOOST_URL}/${BOOST_FILENAME} ${BOOST_FILENAME}
+ADD ${BOOST_URL} ${BOOST_FILENAME}
 ADD ${SOPLEX_URL}/${SOPLEX_FILENAME} ${SOPLEX_FILENAME}
 ADD ${SCIP_URL}/${SCIP_FILENAME} ${SCIP_FILENAME}
 RUN tar --bzip2 -xf ${BOOST_FILENAME}
