@@ -33,8 +33,8 @@ def pctsp_disjoint_tours_relaxation(
         logging_level,
         False,
         0,
-        0,
         False,
+        0,
         time_limit,
     )
 
