@@ -5,13 +5,12 @@ from pathlib import Path
 from typing import Optional
 import networkx as nx
 from tspwplib import EdgeFunctionName, Vertex, VertexFunctionName, EdgeList
+from .constants import FOUR_HOURS
 
 # pylint: disable=import-error
 from .libpypctsp import pctsp_branch_and_cut_bind
 
 # pylint: enable=import-error
-
-FOUR_HOURS: int = 60 * 60 * 4
 
 
 def pctsp_disjoint_tours_relaxation(
@@ -20,7 +19,7 @@ def pctsp_disjoint_tours_relaxation(
     root_vertex: Vertex,
     log_file: Optional[Path] = None,
     logging_level: int = logging.INFO,
-    time_limit: int = FOUR_HOURS,
+    time_limit: float = FOUR_HOURS,
 ) -> EdgeList:
     """Find the relaxation of PCTSP where no subtour elimination constraints are added"""
     pctsp_branch_and_cut(
@@ -54,7 +53,7 @@ def pctsp_branch_and_cut(
     sec_disjoint_tour_freq: int = 1,
     sec_maxflow_mincut: bool = True,
     sec_maxflow_mincut_freq: int = 1,
-    time_limit: int = FOUR_HOURS,
+    time_limit: float = FOUR_HOURS,
 ) -> EdgeList:
     """Branch and cut algorithm for the prize collecting travelling salesman problem
 

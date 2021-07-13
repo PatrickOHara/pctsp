@@ -20,7 +20,7 @@ py::list pctsp_branch_and_cut_bind(
     int sec_disjoint_tour_freq,
     bool sec_maxflow_mincut,
     int sec_maxflow_mincut_freq,
-    int time_limit
+    float time_limit
 ) {
 
     PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));

@@ -2,7 +2,7 @@
 
 
 from .algorithms import pctsp_branch_and_cut
-from .constants import NULL_VERTEX
+from .constants import NULL_VERTEX, FOUR_HOURS
 from .heuristic import (
     collapse,
     extend,
@@ -65,5 +65,6 @@ __all__ = [
     "undirected_vertex_disjoint_paths_map",
     "unitary_gain",
     "vertex_disjoint_cost_map",
+    "FOUR_HOURS",
     "NULL_VERTEX",
 ]
