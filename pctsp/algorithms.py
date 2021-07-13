@@ -11,6 +11,8 @@ from .libpypctsp import pctsp_branch_and_cut_bind
 
 # pylint: enable=import-error
 
+FOUR_HOURS: int = 60 * 60 * 4
+
 
 def pctsp_disjoint_tours_relaxation(
     graph: nx.Graph,
@@ -18,21 +20,23 @@ def pctsp_disjoint_tours_relaxation(
     root_vertex: Vertex,
     log_file: Optional[Path] = None,
     logging_level: int = logging.INFO,
+    time_limit: int = FOUR_HOURS,
 ) -> EdgeList:
     """Find the relaxation of PCTSP where no subtour elimination constraints are added"""
     pctsp_branch_and_cut(
         graph,
         quota,
         root_vertex,
-        cost_cover_disjoint_paths=False,
-        cost_cover_shortest_path=False,
-        cost_cover_steiner_tree=False,
-        log_file=log_file,
-        logging_level=logging_level,
-        sec_disjoint_tour=False,
-        sec_disjoint_tour_freq=0,
-        sec_maxflow_mincut_freq=0,
-        sec_maxflow_mincut=False,
+        False,
+        False,
+        False,
+        log_file,
+        logging_level,
+        False,
+        0,
+        0,
+        False,
+        time_limit,
     )
 
 
@@ -50,6 +54,7 @@ def pctsp_branch_and_cut(
     sec_disjoint_tour_freq: int = 1,
     sec_maxflow_mincut: bool = True,
     sec_maxflow_mincut_freq: int = 1,
+    time_limit: int = FOUR_HOURS,
 ) -> EdgeList:
     """Branch and cut algorithm for the prize collecting travelling salesman problem
 
@@ -57,8 +62,16 @@ def pctsp_branch_and_cut(
         graph: Undirected input graph with edge costs and vertex prizes
         quota: The minimum prize the tour must collect
         root_vertex: The tour must start and end at the root vertex
+        cost_cover_disjoint_paths: True if disjoint paths cost cover inequality is used
+        cost_cover_shortest_paths: True if shortest paths cost cover inequality is used
+        cost_cover_steiner_tree: True if Steiner tree cost cover inequality is used
         log_file: Optional path to store the logs of the algorithm
         logging_level: How verbose should the logging be, e.g. logging.DEBUG?
+        sec_disjoint_tour: True if subtour elimination constraints using disjoint tours are used
+        sec_disjoint_tour_freq: How often should disjoint tour SECs be added as cutting planes
+        sec_maxflow_mincut: True if using the maxflow mincut SEC separation algorithm
+        sec_maxflow_mincut_freq: How frequently to add maxflow mincut SECs.
+        time_limit: Stop searching after this many seconds
 
     Returns:
         Edge list of the optimal tour
@@ -86,5 +99,6 @@ def pctsp_branch_and_cut(
         sec_disjoint_tour_freq,
         sec_maxflow_mincut,
         sec_maxflow_mincut_freq,
+        time_limit,
     )
     return optimal_edges

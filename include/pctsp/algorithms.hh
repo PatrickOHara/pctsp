@@ -92,11 +92,12 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
         int quota,
         Vertex root_vertex,
         const char* log_filepath = NULL,
+        bool print_scip = true,
         bool sec_disjoint_tour = true,
         int sec_disjoint_tour_freq = 1,
         bool sec_maxflow_mincut = true,
         int sec_maxflow_mincut_freq = 1,
-        bool print_scip = true
+        int time_limit = 14400    //  seconds (default 4 hours)
     ) {
 
     // initialise empty model
@@ -135,6 +136,9 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
 
     // turn off presolving
     SCIPsetIntParam(mip, "presolving/maxrounds", 0);
+
+    // time limit
+    SCIPsetIntParam(mip, "limits/time", time_limit);
 
     // TODO add the subtour elimination constraints as cutting planes
     SCIP_CONS* cons;

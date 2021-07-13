@@ -19,7 +19,8 @@ py::list pctsp_branch_and_cut_bind(
     bool sec_disjoint_tour,
     int sec_disjoint_tour_freq,
     bool sec_maxflow_mincut,
-    int sec_maxflow_mincut_freq
+    int sec_maxflow_mincut_freq,
+    int time_limit
 ) {
 
     PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
@@ -41,8 +42,21 @@ py::list pctsp_branch_and_cut_bind(
     }
     // run branch and cut algorithm - returns a list of edges in solution
     std::vector<PCTSPedge> solution_edges;
-    PCTSPbranchAndCut(graph, solution_edges, cost_map, prize_map, quota,
-        boost_root, log_filepath);
+    PCTSPbranchAndCut(
+        graph,
+        solution_edges,
+        cost_map,
+        prize_map,
+        quota,
+        boost_root,
+        log_filepath,
+        true,
+        sec_disjoint_tour,
+        sec_disjoint_tour_freq,
+        sec_maxflow_mincut,
+        sec_maxflow_mincut_freq,
+        time_limit
+    );
 
     // convert list of edges to a python list of python tuples
     return getPyEdgeList(graph, vertex_id_map, solution_edges);
