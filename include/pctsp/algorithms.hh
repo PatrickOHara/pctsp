@@ -116,13 +116,13 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
         true
     );
 
-    // add custom cutting plane handlers
-    SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE);
-
     // add custom message handler
     SCIP_MESSAGEHDLR* handler;
     SCIP_CALL(SCIPcreateMessagehdlrDefault(&handler, false, log_filepath, print_scip));
     SCIP_CALL(SCIPsetMessagehdlr(mip, handler));
+
+    // add custom cutting plane handlers
+    SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE);
 
     BOOST_LOG_TRIVIAL(info) << "Created SCIP program. Adding constraints and variables.";
 
@@ -161,20 +161,17 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
     SCIP_SOL* sol = SCIPgetBestSol(mip);
     solution_edges = getSolutionEdges(mip, graph, sol, edge_variable_map);
     if (print_scip) {
-        BOOST_LOG_TRIVIAL(debug) << "Saving SCIP logs to: " << log_filepath;
+        BOOST_LOG_TRIVIAL(info) << "Saving SCIP logs to: " << log_filepath;
         FILE* log_file = fopen(log_filepath, "w");
         SCIP_CALL(SCIPprintOrigProblem(mip, log_file, NULL, true));
         SCIP_CALL(SCIPprintBestSol(mip, log_file, true));
+        SCIP_CALL(SCIPprintStatistics(mip, log_file));
     }
-
-    BOOST_LOG_TRIVIAL(info) << "Releasing SCIP model.";
     BOOST_LOG_TRIVIAL(debug) << "Releasing constraint handler.";
     SCIP_CALL(SCIPmessagehdlrRelease(&handler));
-
-    BOOST_LOG_TRIVIAL(debug) << "Releasing the model itself.";
+    BOOST_LOG_TRIVIAL(debug) << "Releasing SCIP model.";
     SCIP_CALL(SCIPfree(&mip));
     BOOST_LOG_TRIVIAL(debug) << "Done releasing model. Returning status SCIP_OKAY.";
-    // from the variables, obtain and optimal tour
     return SCIP_OKAY;
 }
 #endif
