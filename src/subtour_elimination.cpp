@@ -331,8 +331,7 @@ SCIP_DECL_CONSPRINT(PCTSPconshdlrSubtour::scip_print) {
         message += " <= ";
         message += std::to_string(SCIPconsGetRhs(scip, cons, &success));
         message += "\n";
-        SCIPinfoMessage(scip, file, message.c_str());
-
+        BOOST_LOG_TRIVIAL(debug) << message;
     }
     return SCIP_OKAY;
 }
