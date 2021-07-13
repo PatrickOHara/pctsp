@@ -37,7 +37,9 @@ py::list pctsp_branch_and_cut_bind(
     }
     // get the log file
     const char* log_filepath = NULL;
+    bool print_scip = false;
     if (py::len(log_filepath_py) > 0) {
+        print_scip = true;
         log_filepath = py::extract<char const*>(log_filepath_py);
     }
     // run branch and cut algorithm - returns a list of edges in solution
@@ -50,7 +52,7 @@ py::list pctsp_branch_and_cut_bind(
         quota,
         boost_root,
         log_filepath,
-        true,
+        print_scip,
         sec_disjoint_tour,
         sec_disjoint_tour_freq,
         sec_maxflow_mincut,
