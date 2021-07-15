@@ -108,7 +108,7 @@ py::list extend_until_prize_feasible_bind(py::list& edge_list, py::list& py_tour
     auto tour = getBoostVertexList(vertex_id_map, py_tour);
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
     PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
-    extend_until_prize_feasible(graph, tour, cost_map, prize_map, quota);
+    extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
     return getPyVertexList(vertex_id_map, tour);
 }
 

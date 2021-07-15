@@ -57,8 +57,15 @@ TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);
     assignZeroCostToSelfLoops(graph, cost_map);
 
-    // create a file to write the logs to
-    std::vector<PCTSPedge> solution_edges;
+    typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor vd;
+    std::vector<vd> tour;
+    std::vector<int> ids = { 0, 1, 3, 6, 7, 2, 0 };
+    for (auto id : ids) {
+        tour.push_back(boost::vertex(id, graph));
+    }
+    auto first = tour.begin();
+    auto last = tour.end();
+    std::vector<PCTSPedge> solution_edges = getEdgesInWalk(graph, first, last);
     SCIP_RETCODE code = PCTSPbranchAndCut(graph, solution_edges, cost_map, prize_map,
         quota, root_vertex, ".logs/test-branch-and-cut.txt", true);
     EXPECT_EQ(SCIP_OKAY, code);
