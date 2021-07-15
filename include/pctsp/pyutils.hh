@@ -3,6 +3,7 @@
 
 // useful functions for binding C++ to python
 
+#define BOOST_PYTHON_MAX_ARITY 30   // max num args in python function
 #include <boost/python.hpp>
 
 namespace py = boost::python;

@@ -51,7 +51,7 @@ TEST_F(SuurballeGraphFixture, testPCTSPwithoutSECs) {
 TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
     PCTSPgraph graph = get_suurballe_graph();
     addSelfLoopsToGraph(graph);
-    int quota = 7;
+    int quota = 6;
     PCTSPvertex root_vertex = boost::vertex(0, graph);
     auto cost_map = get(&PCTSPedgeProperties::cost, graph);
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);

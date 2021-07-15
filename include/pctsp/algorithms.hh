@@ -204,6 +204,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     if (solution_edges.size() > 0) {
         auto first = solution_edges.begin();
         auto last = solution_edges.end();
+        BOOST_LOG_TRIVIAL(info) << "Adding starting solution to solver.";
         addHeuristicEdgesToSolver(mip, graph, NULL, edge_variable_map, first, last);
     }
 

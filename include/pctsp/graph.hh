@@ -25,8 +25,8 @@ typedef boost::adjacency_list<listS, vecS, undirectedS, PCTSPvertexProperties,
     PCTSPgraph;
 
 typedef typename boost::graph_traits<PCTSPgraph>::edge_descriptor PCTSPedge;
-// typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor PCTSPvertex;
-typedef unsigned long PCTSPvertex;
+typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor PCTSPvertex;
+// typedef unsigned long PCTSPvertex;
 typedef typename std::map<PCTSPvertex, int> PCTSPprizeMap;
 typedef typename std::map<PCTSPedge, int> PCTSPcostMap;
 typedef typename std::map<PCTSPedge, SCIP_VAR*> PCTSPedgeVariableMap;
@@ -83,6 +83,29 @@ VertexPairVector getVertexPairVectorFromEdgeSubset(
     PCTSPgraph& graph,
     std::vector < PCTSPedge> edge_subset_vector
 );
+
+template< typename Graph, typename PairIt>
+std::vector<typename boost::graph_traits<Graph>::edge_descriptor> edgesFromVertexPairs(
+    Graph& graph,
+    PairIt& first,
+    PairIt& last
+) {
+    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
+    auto n_edges = std::distance(first, last);
+    std::vector<Edge> edge_vector(n_edges);
+    for (int i = 0; i < n_edges; i++) {
+        auto pair = *first;
+        auto u = pair.first;
+        auto v = pair.second;
+        auto edge = boost::edge(u, v, graph);
+        if (!edge.second) {
+            throw EdgeNotFoundException(std::to_string(u), std::to_string(v));
+        }
+        edge_vector[i] = edge.first;
+        first++;
+    }
+    return edge_vector;
+}
 
 /**
  * @brief Get the variables associated with each edge in the iterator

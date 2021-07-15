@@ -14,14 +14,11 @@ SCIP_RETCODE addHeuristicVarsToSolver(
     }
     SCIP_Bool success;
     SCIP_RESULT* result;
-    SCIP_CALL(SCIPtrySol(scip, sol, FALSE, FALSE, FALSE, FALSE, FALSE, &success));
+    SCIP_CALL(SCIPaddSolFree(scip, &sol, &success));
 
     if (success)
         *result = SCIP_FOUNDSOL;
     else
         *result = SCIP_DIDNOTFIND;
-
-    SCIP_CALL(SCIPfreeSol(scip, &sol));
-
     return SCIP_OKAY;
 }
