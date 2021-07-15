@@ -5,17 +5,19 @@
 
 using namespace std;
 
+typedef GraphFixture WalkFixture;
+
 TEST_F(SuurballeGraphFixture, testTotalPrize) {
     PCTSPgraph graph = SuurballeGraphFixture::get_suurballe_graph();
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);
-    std::list<int> tour = {0, 1, 3, 6, 7, 2, 0};
+    std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
     EXPECT_EQ(total_prize(graph, tour, prize_map), 7);
 }
 
 TEST_F(SuurballeGraphFixture, testTotalPrizeOfTour) {
     PCTSPgraph graph = SuurballeGraphFixture::get_suurballe_graph();
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);
-    std::list<int> tour = {0, 1, 3, 6, 7, 2, 0};
+    std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
     EXPECT_EQ(total_prize_of_tour(graph, tour, prize_map), 6);
 }
 
@@ -25,7 +27,7 @@ TEST_P(CompleteGraphParameterizedFixture, testTotalPrize) {
     auto prize_map = get(&PCTSPvertexProperties::prize, graph);
 
     // prize of vertex is equal to its label
-    std::list<int> tour = {1, 2, 3, 1};
+    std::list<int> tour = { 1, 2, 3, 1 };
     int expected_prize = 1 + 2 + 3 + 1;
     EXPECT_EQ(total_prize(graph, tour, prize_map), expected_prize);
 
@@ -34,14 +36,14 @@ TEST_P(CompleteGraphParameterizedFixture, testTotalPrize) {
     EXPECT_EQ(total_prize(graph, empty_tour, prize_map), 0);
 
     // total prize of one vertex is itself
-    std::list<int> one_tour = {1};
+    std::list<int> one_tour = { 1 };
     EXPECT_EQ(total_prize(graph, one_tour, prize_map), 1);
 }
 
 TEST_F(SuurballeGraphFixture, testTotalCost) {
     PCTSPgraph graph = SuurballeGraphFixture::get_suurballe_graph();
     auto cost_map = get(&PCTSPedgeProperties::cost, graph);
-    std::list<int> tour = {0, 1, 3, 6, 7, 2, 0};
+    std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
 
     // expected cost of tour
     int expected_cost = 21;
@@ -52,12 +54,12 @@ TEST_F(SuurballeGraphFixture, testTotalCost) {
     EXPECT_EQ(total_cost(graph, empty_tour, cost_map), 0);
 
     // expect edge exception if edge not in graph
-    std::list<int> invalid_tour = {0, 1, 2, 0};
+    std::list<int> invalid_tour = { 0, 1, 2, 0 };
     EXPECT_THROW(total_cost(graph, invalid_tour, cost_map),
-                 EdgeNotFoundException);
+        EdgeNotFoundException);
 }
 
-void CheckReorderTourFromRoot(std::list<int> &tour, int root_vertex) {
+void CheckReorderTourFromRoot(std::list<int>& tour, int root_vertex) {
     std::list<int> new_tour = ReorderTourFromRoot(tour, root_vertex);
     std::list<int>::iterator root_finder =
         std::find(new_tour.begin(), new_tour.end(), root_vertex);
@@ -68,11 +70,11 @@ TEST(TestWalk, TestReorderTourFromRoot) {
     typedef typename std::list<int> Tour;
 
     int root_vertex = 0;
-    Tour tour1 = {1, 2, 3, 0, 1};
-    Tour tour2 = {0, 1, 2, 3, 0};
-    Tour tour3 = {0};
+    Tour tour1 = { 1, 2, 3, 0, 1 };
+    Tour tour2 = { 0, 1, 2, 3, 0 };
+    Tour tour3 = { 0 };
     Tour tour4 = {};
-    Tour tour5 = {0, 0};
+    Tour tour5 = { 0, 0 };
 
     CheckReorderTourFromRoot(tour1, root_vertex);
     CheckReorderTourFromRoot(tour2, root_vertex);
@@ -80,3 +82,29 @@ TEST(TestWalk, TestReorderTourFromRoot) {
     CheckReorderTourFromRoot(tour4, root_vertex);
     CheckReorderTourFromRoot(tour5, root_vertex);
 }
+
+TEST_P(WalkFixture, testGetEdgeVector) {
+    auto graph = getGraph();
+    typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor Vertex;
+    std::vector<Vertex> tour;
+    for (int i = 0; i < 4; i++)
+        tour.push_back(boost::vertex(i, graph));
+    tour.push_back(boost::vertex(0, graph));
+    auto start = tour.begin();
+    auto last = tour.end();
+    auto edge_vector = getEdgesInWalk(graph, start, last);
+    EXPECT_EQ(tour.size(), edge_vector.size() + 1);
+    for (auto const& edge : edge_vector) {
+        auto u = boost::source(edge, graph);
+        auto v = boost::target(edge, graph);
+        auto it = std::find(tour.begin(), tour.end(), u);
+        it++;
+        EXPECT_EQ(v, *it);
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    TestWalk,
+    WalkFixture,
+    ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5)
+);

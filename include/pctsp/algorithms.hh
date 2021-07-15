@@ -42,6 +42,18 @@ SCIP_RETCODE PCTSPaddEdgeVariables(SCIP* mip, Graph& graph, CostMap& cost_map,
     return SCIP_OKAY;
 }
 
+/**
+ * @brief Add a heuristic solution to the solver
+ *
+ * @tparam EdgeVariableMap
+ * @tparam EdgeIt
+ * @param scip Solver
+ * @param heur Heuristic
+ * @param edge_variable_map Map from edges to variables
+ * @param begin Start iterator over edges
+ * @param end End iterator over edges in solution to heuristic
+ * @return SCIP_RETCODE
+ */
 template <typename EdgeVariableMap, typename EdgeIt>
 SCIP_RETCODE addNewHeuristicToSolver(
     SCIP* scip,
@@ -72,6 +84,23 @@ SCIP_RETCODE addNewHeuristicToSolver(
     SCIP_CALL(SCIPfreeSol(scip, &sol));
 
     return SCIP_OKAY;
+}
+
+template <typename Graph, typename EdgeVariableMap, typename VertexIt>
+SCIP_RETCODE addNewHeuristicToSolver(
+    SCIP* scip,
+    Graph& graph,
+    SCIP_HEUR* heur,
+    EdgeVariableMap& edge_variable_map,
+    VertexIt& first,
+    VertexIt& last
+) {
+    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
+    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
+
+    auto self_loops = getSelfLoops(graph, first, last);
+    auto edges_of_walk = getEdgesInWalk(graph, first, last);
+
 }
 
 /** Get a SCIP model of the prize-collecting TSP without any subtour
