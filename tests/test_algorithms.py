@@ -40,5 +40,7 @@ def test_pctsp_with_heuristic(tspwplib_graph, root):
     quota = 30
     tour = random_tour_complete_graph(tspwplib_graph, root, quota)
     edge_list = edge_list_from_walk(tour)
-    pctsp_branch_and_cut(tspwplib_graph, quota, root, initial_solution=edge_list)
+    print(edge_list)
+    if len(edge_list) > 2:
+        pctsp_branch_and_cut(tspwplib_graph, quota, root, initial_solution=edge_list)
     # assert False

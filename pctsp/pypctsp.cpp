@@ -30,11 +30,15 @@ py::list pctsp_branch_and_cut_bind(
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
     PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     PCTSPvertex boost_root = getNewVertex(vertex_id_map, root_vertex);
-    std::list<std::pair<int, int>> initial_solution_std = toStdListOfPairs<int>(initial_solution_py);
-    auto initial_solution_pairs = getNewEdges(vertex_id_map, initial_solution_std);
-    auto pairs_first = initial_solution_pairs.begin();
-    auto pairs_last = initial_solution_pairs.end();
-    auto solution_edges = edgesFromVertexPairs(graph, pairs_first, pairs_last);
+
+    std::vector<PCTSPedge> solution_edges;
+    if (py::len(initial_solution_py) > 0) {
+        std::list<std::pair<int, int>> initial_solution_std = toStdListOfPairs<int>(initial_solution_py);
+        auto initial_solution_pairs = getNewEdges(vertex_id_map, initial_solution_std);
+        // auto pairs_first = initial_solution_pairs.begin();
+        // auto pairs_last = initial_solution_pairs.end();
+        // solution_edges = edgesFromVertexPairs(graph, pairs_first, pairs_last);
+    }
 
     // add self loops to graph - we assume the input graph is simple
     if (hasSelfLoopsOnAllVertices(graph) == false) {
