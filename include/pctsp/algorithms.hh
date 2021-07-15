@@ -42,6 +42,38 @@ SCIP_RETCODE PCTSPaddEdgeVariables(SCIP* mip, Graph& graph, CostMap& cost_map,
     return SCIP_OKAY;
 }
 
+template <typename EdgeVariableMap, typename EdgeIt>
+SCIP_RETCODE addNewHeuristicToSolver(
+    SCIP* scip,
+    SCIP_HEUR* heur,
+    EdgeVariableMap& edge_variable_map,
+    EdgeIt& begin,
+    EdgeIt& end
+) {
+    SCIP_SOL* sol;
+    SCIP_CALL(SCIPcreateSol(scip, &sol, heur));
+    while (begin != end) {
+        auto edge = *begin;
+        auto u = edge.first;
+        auto v = edge.second;
+        SCIP_VAR* var = edge_variable_map[edge];
+        SCIP_CALL(SCIPsetSolVal(scip, sol, var, 1.0));
+        begin++;
+    }
+    SCIP_Bool success;
+    SCIP_RESULT* result;
+    SCIP_CALL(SCIPtrySol(scip, sol, FALSE, FALSE, FALSE, FALSE, FALSE, &success));
+
+    if (success)
+        *result = SCIP_FOUNDSOL;
+    else
+        *result = SCIP_DIDNOTFIND;
+
+    SCIP_CALL(SCIPfreeSol(scip, &sol));
+
+    return SCIP_OKAY;
+}
+
 /** Get a SCIP model of the prize-collecting TSP without any subtour
  * elimiation constraints (SECs).
  *
@@ -140,7 +172,7 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
     // time limit
     SCIPsetRealParam(mip, "limits/time", time_limit);
 
-    // TODO add the subtour elimination constraints as cutting planes
+    // add the subtour elimination constraints as cutting planes
     SCIP_CONS* cons;
     std::string cons_name("subtour-constraint");
     PCTSPcreateBasicConsSubtour(mip, &cons, cons_name, graph, root_vertex);
@@ -149,7 +181,10 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
 
     // TODO add the cost cover inequalities as cutting planes
 
-    // TODO add selected heuristics to reduce the upper bound on the optimal
+    // add selected heuristics to reduce the upper bound on the optimal
+    if (solution_edges.size() > 0) {
+
+    }
 
     // TODO adjust parameters for the branching strategy
 

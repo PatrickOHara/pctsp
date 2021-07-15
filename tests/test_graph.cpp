@@ -4,9 +4,9 @@
 #include "fixtures.hh"
 #include <gtest/gtest.h>
 
-typedef GraphFixture EdgeSubsetGraph;
+typedef GraphFixture GraphFix;
 
-TEST_P(EdgeSubsetGraph, testGetVertexPairVectorFromEdgeSubset) {
+TEST_P(GraphFix, testGetVertexPairVectorFromEdgeSubset) {
     PCTSPgraph graph = getGraph();
     std::vector<PCTSPedge> edge_subset;
     for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
@@ -22,8 +22,45 @@ TEST_P(EdgeSubsetGraph, testGetVertexPairVectorFromEdgeSubset) {
     }
 }
 
+TEST(TestGraph, testGetVerticesOfEdges) {
+    PCTSPgraph graph;
+    PCTSPedge edge1 = boost::add_edge(0, 1, graph).first;
+    PCTSPedge edge2 = boost::add_edge(1, 2, graph).first;
+    PCTSPedge edge3 = boost::add_edge(2, 3, graph).first;
+
+    std::vector<PCTSPedge> edges;
+    edges.push_back(edge1);
+    edges.push_back(edge2);
+
+    auto first = edges.begin();
+    auto last = edges.end();
+    auto vertices = getVerticesOfEdges(graph, first, last);
+    std::cout << std::endl;
+    EXPECT_FALSE(std::find(vertices.begin(), vertices.end(), 0) == vertices.end());
+    EXPECT_FALSE(std::find(vertices.begin(), vertices.end(), boost::vertex(1, graph)) == vertices.end());
+    EXPECT_TRUE(std::find(vertices.begin(), vertices.end(), 3) == vertices.end());
+
+}
+
+TEST_P(GraphFix, testGetSelfLoops) {
+    PCTSPgraph graph = getGraph();
+    typedef boost::graph_traits< PCTSPgraph >::vertex_descriptor Vertex;
+    std::vector<Vertex> subset = { 0, 1, 3 };
+    for (auto const vertex : subset) {
+        boost::add_edge(vertex, vertex, graph);
+    }
+    auto first = subset.begin();
+    auto last = subset.end();
+    auto self_loops = getSelfLoops(graph, first, last);
+    for (auto const edge : self_loops) {
+        Vertex source = boost::source(edge, graph);
+        EXPECT_EQ(source, boost::target(edge, graph));
+        EXPECT_FALSE(std::find(subset.begin(), subset.end(), source) == subset.end());
+    }
+}
+
 INSTANTIATE_TEST_SUITE_P(
     TestGraph,
-    EdgeSubsetGraph,
+    GraphFix,
     ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE)
 );
