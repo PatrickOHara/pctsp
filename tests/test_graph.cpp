@@ -39,7 +39,30 @@ TEST(TestGraph, testGetVerticesOfEdges) {
     EXPECT_FALSE(std::find(vertices.begin(), vertices.end(), 0) == vertices.end());
     EXPECT_FALSE(std::find(vertices.begin(), vertices.end(), boost::vertex(1, graph)) == vertices.end());
     EXPECT_TRUE(std::find(vertices.begin(), vertices.end(), 3) == vertices.end());
+}
 
+TEST(TestGraph, testEdgesFromVertexPairs) {
+    PCTSPgraph graph;
+    PCTSPedge edge1 = boost::add_edge(0, 1, graph).first;
+    PCTSPedge edge2 = boost::add_edge(1, 2, graph).first;
+    PCTSPedge edge3 = boost::add_edge(2, 3, graph).first;
+
+    typedef typename std::pair<int, int> Pair;
+    std::vector<Pair> pairs;
+    for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
+        int u = boost::source(edge, graph);
+        int v = boost::target(edge, graph);
+        Pair pair(u, v);
+        pairs.push_back(pair);
+    }
+
+    auto first = pairs.begin();
+    auto last = pairs.end();
+    auto edge_vector = edgesFromVertexPairs(graph, first, last);
+    EXPECT_EQ(edge_vector.size(), pairs.size());
+    EXPECT_EQ(std::count(edge_vector.begin(), edge_vector.end(), edge1), 1);
+    EXPECT_EQ(std::count(edge_vector.begin(), edge_vector.end(), edge2), 1);
+    EXPECT_EQ(std::count(edge_vector.begin(), edge_vector.end(), edge3), 1);
 }
 
 TEST_P(GraphFix, testGetSelfLoops) {

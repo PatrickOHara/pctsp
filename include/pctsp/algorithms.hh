@@ -46,7 +46,7 @@ SCIP_RETCODE PCTSPaddEdgeVariables(SCIP* mip, Graph& graph, CostMap& cost_map,
 SCIP_RETCODE addHeuristicVarsToSolver(
     SCIP* scip,
     SCIP_HEUR* heur,
-    std::vector<SCIP_VAR*>& vars
+    std::vector<SCIP_VAR*> vars
 );
 
 template <typename Graph, typename EdgeVariableMap, typename EdgeIt>
@@ -69,8 +69,8 @@ SCIP_RETCODE addHeuristicEdgesToSolver(
     auto vars_of_self_loops = getEdgeVariables(scip, graph, edge_variable_map, loops_first, loops_last);
     auto vars_of_edges = getEdgeVariables(scip, graph, edge_variable_map, first, last);
     vars_of_edges.insert(vars_of_edges.end(), vars_of_self_loops.begin(), vars_of_self_loops.end());
-
-    return addHeuristicVarsToSolver(scip, heur, vars_of_edges);
+    SCIP_CALL(addHeuristicVarsToSolver(scip, heur, vars_of_edges));
+    return SCIP_OKAY;
 }
 
 template <typename Graph, typename EdgeVariableMap, typename VertexIt>
@@ -205,7 +205,8 @@ SCIP_RETCODE PCTSPbranchAndCut(
         auto first = solution_edges.begin();
         auto last = solution_edges.end();
         BOOST_LOG_TRIVIAL(info) << "Adding starting solution to solver.";
-        addHeuristicEdgesToSolver(mip, graph, NULL, edge_variable_map, first, last);
+        SCIP_HEUR* heur = NULL;
+        addHeuristicEdgesToSolver(mip, graph, heur, edge_variable_map, first, last);
     }
 
     // TODO adjust parameters for the branching strategy

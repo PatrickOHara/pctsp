@@ -5,7 +5,7 @@
 SCIP_RETCODE addHeuristicVarsToSolver(
     SCIP* scip,
     SCIP_HEUR* heur,
-    std::vector<SCIP_VAR*>& vars
+    std::vector<SCIP_VAR*> vars
 ) {
     SCIP_SOL* sol;
     SCIP_CALL(SCIPcreateSol(scip, &sol, heur));
@@ -16,9 +16,9 @@ SCIP_RETCODE addHeuristicVarsToSolver(
     SCIP_RESULT* result;
     SCIP_CALL(SCIPaddSolFree(scip, &sol, &success));
 
-    if (success)
-        *result = SCIP_FOUNDSOL;
-    else
-        *result = SCIP_DIDNOTFIND;
+    // if (success)
+    //     *result = SCIP_FOUNDSOL;
+    // else
+    //     *result = SCIP_DIDNOTFIND;
     return SCIP_OKAY;
 }

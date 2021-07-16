@@ -4,6 +4,9 @@
 #include "pctsp/graph.hh"
 #include "pctsp/algorithms.hh"
 
+typedef GraphFixture AlgorithmsFixture;
+
+
 /** Test edge variables are added to the model */
 TEST_F(SuurballeGraphFixture, testPCTSPaddEdgeVariables) {
     PCTSPgraph graph = get_suurballe_graph();
@@ -100,3 +103,43 @@ TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
         EXPECT_TRUE(n == 0 || n == 2);
     }
 }
+
+TEST_P(AlgorithmsFixture, testAddHeuristicVarsToSolver) {
+    PCTSPgraph graph = getGraph();
+    addSelfLoopsToGraph(graph);
+    int quota = 6;
+    PCTSPvertex root_vertex = boost::vertex(0, graph);
+    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
+    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
+    assignZeroCostToSelfLoops(graph, cost_map);
+
+    std::vector<PCTSPvertex> tour = { 0, 1, 4, 6, 7, 5, 3, 2, 0 };
+    auto first = tour.begin();
+    auto last = tour.end();
+    std::vector<PCTSPedge> solution_edges = getEdgesInWalk(graph, first, last);
+
+    std::map<PCTSPedge, SCIP_VAR*> variable_map;
+    std::map<PCTSPedge, int> weight_map;
+    putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
+
+    // initialise and create the model without subtour elimiation constraints
+    SCIP* scip_model = NULL;
+    SCIPcreate(&scip_model);
+    SCIPincludeDefaultPlugins(scip_model);
+    SCIPcreateProbBasic(scip_model, "test-add-heuristic");
+
+    // add variables and constraints
+    SCIP_RETCODE code =
+        PCTSPmodelWithoutSECs(scip_model, graph, cost_map, weight_map, quota,
+            root_vertex, variable_map);
+    auto first_edges = solution_edges.begin();
+    auto last_edges = solution_edges.end();
+    addHeuristicEdgesToSolver(scip_model, graph, NULL, variable_map, first_edges, last_edges);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    TestAlgorithms,
+    AlgorithmsFixture,
+    ::testing::Values(GraphType::GRID8)
+);
+

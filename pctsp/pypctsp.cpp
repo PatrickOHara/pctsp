@@ -35,9 +35,9 @@ py::list pctsp_branch_and_cut_bind(
     if (py::len(initial_solution_py) > 0) {
         std::list<std::pair<int, int>> initial_solution_std = toStdListOfPairs<int>(initial_solution_py);
         auto initial_solution_pairs = getNewEdges(vertex_id_map, initial_solution_std);
-        // auto pairs_first = initial_solution_pairs.begin();
-        // auto pairs_last = initial_solution_pairs.end();
-        // solution_edges = edgesFromVertexPairs(graph, pairs_first, pairs_last);
+        auto pairs_first = initial_solution_pairs.begin();
+        auto pairs_last = initial_solution_pairs.end();
+        solution_edges = edgesFromVertexPairs(graph, pairs_first, pairs_last);
     }
 
     // add self loops to graph - we assume the input graph is simple

@@ -32,16 +32,17 @@ def pctsp_disjoint_tours_relaxation(
         graph,
         quota,
         root_vertex,
-        False,
-        False,
-        False,
-        log_file,
-        logging_level,
-        False,
-        0,
-        False,
-        0,
-        time_limit,
+        cost_cover_disjoint_paths=False,
+        cost_cover_shortest_path=False,
+        cost_cover_steiner_tree=False,
+        initial_solution=None,
+        log_file=log_file,
+        logging_level=logging_level,
+        sec_disjoint_tour=False,
+        sec_disjoint_tour_freq=0,
+        sec_maxflow_mincut=False,
+        sec_maxflow_mincut_freq=0,
+        time_limit=time_limit,
     )
 
 
@@ -53,7 +54,7 @@ def pctsp_branch_and_cut(
     cost_cover_disjoint_paths: bool = False,
     cost_cover_shortest_path: bool = False,
     cost_cover_steiner_tree: bool = False,
-    initial_solution: EdgeList = [],
+    initial_solution: Optional[EdgeList] = None,
     log_file: Optional[Path] = None,
     logging_level: int = logging.INFO,
     sec_disjoint_tour: bool = True,
@@ -92,7 +93,7 @@ def pctsp_branch_and_cut(
         str_log_file = ""
 
     initial_yes_instance = list()
-    if len(initial_solution) > 0 and is_pctsp_yes_instance(
+    if initial_solution and is_pctsp_yes_instance(
         graph, quota, root_vertex, initial_solution
     ):
         initial_yes_instance = initial_solution
