@@ -4,7 +4,13 @@ import logging
 from pathlib import Path
 from typing import Optional
 import networkx as nx
-from tspwplib import EdgeFunctionName, Vertex, VertexFunctionName, EdgeList
+from tspwplib import (
+    EdgeFunctionName,
+    Vertex,
+    VertexFunctionName,
+    EdgeList,
+    is_pctsp_yes_instance,
+)
 from .constants import FOUR_HOURS
 
 # pylint: disable=import-error
@@ -26,16 +32,17 @@ def pctsp_disjoint_tours_relaxation(
         graph,
         quota,
         root_vertex,
-        False,
-        False,
-        False,
-        log_file,
-        logging_level,
-        False,
-        0,
-        False,
-        0,
-        time_limit,
+        cost_cover_disjoint_paths=False,
+        cost_cover_shortest_path=False,
+        cost_cover_steiner_tree=False,
+        initial_solution=None,
+        log_file=log_file,
+        logging_level=logging_level,
+        sec_disjoint_tour=False,
+        sec_disjoint_tour_freq=0,
+        sec_maxflow_mincut=False,
+        sec_maxflow_mincut_freq=0,
+        time_limit=time_limit,
     )
 
 
@@ -47,6 +54,7 @@ def pctsp_branch_and_cut(
     cost_cover_disjoint_paths: bool = False,
     cost_cover_shortest_path: bool = False,
     cost_cover_steiner_tree: bool = False,
+    initial_solution: Optional[EdgeList] = None,
     log_file: Optional[Path] = None,
     logging_level: int = logging.INFO,
     sec_disjoint_tour: bool = True,
@@ -64,6 +72,7 @@ def pctsp_branch_and_cut(
         cost_cover_disjoint_paths: True if disjoint paths cost cover inequality is used
         cost_cover_shortest_paths: True if shortest paths cost cover inequality is used
         cost_cover_steiner_tree: True if Steiner tree cost cover inequality is used
+        initial_solution: Edges of a feasible solution found by a heuristic
         log_file: Optional path to store the logs of the algorithm
         logging_level: How verbose should the logging be, e.g. logging.DEBUG?
         sec_disjoint_tour: True if subtour elimination constraints using disjoint tours are used
@@ -83,6 +92,12 @@ def pctsp_branch_and_cut(
     else:
         str_log_file = ""
 
+    initial_yes_instance = list()
+    if initial_solution and is_pctsp_yes_instance(
+        graph, quota, root_vertex, initial_solution
+    ):
+        initial_yes_instance = initial_solution
+
     optimal_edges: EdgeList = pctsp_branch_and_cut_bind(
         edges,
         prize_dict,
@@ -92,6 +107,7 @@ def pctsp_branch_and_cut(
         cost_cover_disjoint_paths,
         cost_cover_shortest_path,
         cost_cover_steiner_tree,
+        initial_yes_instance,
         str_log_file,
         logging_level,
         sec_disjoint_tour,

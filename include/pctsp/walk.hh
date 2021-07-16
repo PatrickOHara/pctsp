@@ -10,8 +10,8 @@ using namespace boost;
 using namespace std;
 
 template <typename Vertex>
-std::list<Vertex> ReorderTourFromRoot(std::list<Vertex> &tour,
-                                      Vertex root_vertex) {
+std::list<Vertex> ReorderTourFromRoot(std::list<Vertex>& tour,
+    Vertex root_vertex) {
     // return a new tour with the root vertex at the start and end
 
     // NOTE the tour is assumed to start and end with the same vertex
@@ -27,7 +27,8 @@ std::list<Vertex> ReorderTourFromRoot(std::list<Vertex> &tour,
     // root is the first vertex in the tour
     if (root_finder == tour.begin()) {
         new_tour = std::list<Vertex>(tour.begin(), tour.end());
-    } else {
+    }
+    else {
         new_tour = std::list<Vertex>(root_finder, tour.end());
         tour_iterator_t tour_it = tour.begin();
         ++tour_it; // skip first vertex - we have already added it
@@ -39,8 +40,34 @@ std::list<Vertex> ReorderTourFromRoot(std::list<Vertex> &tour,
     return new_tour;
 }
 
+template <typename Graph, typename VertexIt>
+std::vector<typename boost::graph_traits<Graph>::edge_descriptor> getEdgesInWalk(
+    Graph& graph,
+    VertexIt& first,
+    VertexIt& last
+) {
+    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
+    auto n_vertices = std::distance(first, last);
+    if (n_vertices < 2) {
+        return std::vector<Edge>();
+    }
+    std::vector<Edge> edges(n_vertices - 1);
+
+    for (int i = 0; i < n_vertices - 1; i++) {
+        auto prev_vertex = *first;
+        first++;
+        auto current_vertex = *first;
+        auto edge = boost::edge(prev_vertex, current_vertex, graph);
+        if (!edge.second) {
+            throw EdgeNotFoundException(std::to_string(prev_vertex), std::to_string(current_vertex));
+        }
+        edges[i] = edge.first;
+    }
+    return edges;
+}
+
 template <typename Graph, typename CostMap, typename Vertex>
-int total_cost(Graph &graph, std::list<Vertex> &tour, CostMap cost_map) {
+int total_cost(Graph& graph, std::list<Vertex>& tour, CostMap cost_map) {
     // if there are no edges in the tour, return zero
     if (tour.size() <= 1) {
         return 0;
@@ -61,13 +88,14 @@ int total_cost(Graph &graph, std::list<Vertex> &tour, CostMap cost_map) {
         Vertex current_vertex = *tour_iterator;
         auto current_vertex_descriptor = boost::vertex(current_vertex, graph);
         auto edge = boost::edge(prev_vertex_descriptor,
-                                current_vertex_descriptor, graph);
+            current_vertex_descriptor, graph);
         bool edge_exists = edge.second;
         if (edge_exists) {
             cost += cost_map[edge.first];
-        } else {
+        }
+        else {
             throw EdgeNotFoundException(std::to_string(prev_vertex),
-                                        std::to_string(current_vertex));
+                std::to_string(current_vertex));
         }
         prev_vertex = current_vertex;
         prev_vertex_descriptor = boost::vertex(prev_vertex, graph);
@@ -76,12 +104,12 @@ int total_cost(Graph &graph, std::list<Vertex> &tour, CostMap cost_map) {
 }
 
 template <typename Graph, typename PrizeMap, typename Vertex>
-int total_prize(Graph &graph, std::list<Vertex> &tour, PrizeMap &prize_map) {
+int total_prize(Graph& graph, std::list<Vertex>& tour, PrizeMap& prize_map) {
     // calculate the total prize of a tour
     typedef typename std::list<Vertex>::iterator tour_iterator_t;
     int prize = 0;
     for (tour_iterator_t tour_iterator = tour.begin();
-         tour_iterator != tour.end(); ++tour_iterator) {
+        tour_iterator != tour.end(); ++tour_iterator) {
         auto vertex = boost::vertex(*tour_iterator, graph);
         int prize_of_vertex = prize_map[vertex];
         prize += prize_of_vertex;
@@ -90,8 +118,8 @@ int total_prize(Graph &graph, std::list<Vertex> &tour, PrizeMap &prize_map) {
 }
 
 template <typename Graph, typename PrizeMap, typename Vertex>
-int total_prize_of_tour(Graph &graph, std::list<Vertex> &tour,
-                        PrizeMap &prize_map) {
+int total_prize_of_tour(Graph& graph, std::list<Vertex>& tour,
+    PrizeMap& prize_map) {
     // total prize of all vertices apart from the last vertex (which is
     // repeated)
     std::list<Vertex> tour_copy(tour.begin(), --tour.end());

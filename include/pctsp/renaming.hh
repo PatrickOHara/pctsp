@@ -132,7 +132,7 @@ std::vector<std::pair<OldVertex, OldVertex>> getOldEdges(
 
 template<typename OldEdgeContainer, typename OldVertex, typename NewVertex>
 std::vector<std::pair<NewVertex, NewVertex>> getNewEdges(
-    boost::bimap<NewVertex, NewVertex>& vertex_bimap,
+    boost::bimap<NewVertex, OldVertex>& vertex_bimap,
     OldEdgeContainer& old_edges
 ) {
     std::vector<std::pair<NewVertex, NewVertex>> new_edges(old_edges.size());

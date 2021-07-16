@@ -8,6 +8,8 @@
 #include <boost/property_map/property_map.hpp>
 #include <objscip/objscip.h>
 
+#include "pctsp/exception.hh"
+
 using namespace boost;
 
 struct PCTSPvertexProperties {
@@ -23,8 +25,8 @@ typedef boost::adjacency_list<listS, vecS, undirectedS, PCTSPvertexProperties,
     PCTSPgraph;
 
 typedef typename boost::graph_traits<PCTSPgraph>::edge_descriptor PCTSPedge;
-// typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor PCTSPvertex;
-typedef unsigned long PCTSPvertex;
+typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor PCTSPvertex;
+// typedef unsigned long PCTSPvertex;
 typedef typename std::map<PCTSPvertex, int> PCTSPprizeMap;
 typedef typename std::map<PCTSPedge, int> PCTSPcostMap;
 typedef typename std::map<PCTSPedge, SCIP_VAR*> PCTSPedgeVariableMap;
@@ -81,5 +83,96 @@ VertexPairVector getVertexPairVectorFromEdgeSubset(
     PCTSPgraph& graph,
     std::vector < PCTSPedge> edge_subset_vector
 );
+
+template< typename Graph, typename PairIt>
+std::vector<typename boost::graph_traits<Graph>::edge_descriptor> edgesFromVertexPairs(
+    Graph& graph,
+    PairIt& first,
+    PairIt& last
+) {
+    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
+    auto n_edges = std::distance(first, last);
+    std::vector<Edge> edge_vector(n_edges);
+    for (int i = 0; i < n_edges; i++) {
+        auto pair = *first;
+        auto u = pair.first;
+        auto v = pair.second;
+        auto edge = boost::edge(u, v, graph);
+        if (!edge.second) {
+            throw EdgeNotFoundException(std::to_string(u), std::to_string(v));
+        }
+        edge_vector[i] = edge.first;
+        first++;
+    }
+    return edge_vector;
+}
+
+/**
+ * @brief Get the variables associated with each edge in the iterator
+ */
+template <typename Graph, typename EdgeVariableMap, typename EdgeIt>
+std::vector<SCIP_VAR*> getEdgeVariables(
+    SCIP* scip,
+    Graph& graph,
+    EdgeVariableMap& edge_variable_map,
+    EdgeIt& first,
+    EdgeIt& last
+) {
+    auto n_edges = std::distance(first, last);
+    std::vector<SCIP_VAR*> variables(n_edges);
+    for (int i = 0; i < n_edges; i++) {
+        SCIP_VAR* var = edge_variable_map[*first];
+        variables[i] = var;
+        first++;
+    }
+    return variables;
+}
+
+template <typename Graph, typename EdgeIt>
+std::vector<typename boost::graph_traits< Graph >::vertex_descriptor> getVerticesOfEdges(
+    Graph& graph,
+    EdgeIt& first,
+    EdgeIt& last
+) {
+    typedef typename boost::graph_traits< Graph >::vertex_descriptor Vertex;
+    std::set<Vertex> vertex_set;
+    while (first != last) {
+        auto edge = *first;
+        Vertex u = boost::source(edge, graph);
+        Vertex v = boost::target(edge, graph);
+        if (vertex_set.count(u) == 0) {
+            vertex_set.emplace(u);
+        }
+        if (vertex_set.count(v) == 0) {
+            vertex_set.emplace(v);
+        }
+        first++;
+    }
+    int i = 0;
+    std::vector<Vertex> vertex_vector(vertex_set.size());
+    for (auto const& vertex : vertex_set) {
+        vertex_vector[i++] = vertex;
+    }
+    return vertex_vector;
+}
+
+template <typename Graph, typename VertexIt>
+std::vector<typename boost::graph_traits<Graph>::edge_descriptor> getSelfLoops(
+    Graph& graph, VertexIt& first, VertexIt& last
+) {
+    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
+    auto n_vertices = std::distance(first, last);
+    std::vector<Edge> edges(n_vertices);
+    for (int i = 0; i < n_vertices; i++) {
+        auto vertex = *first;
+        auto pair = boost::edge(vertex, vertex, graph);
+        if (!pair.second) {
+            throw NoSelfLoopFoundException(std::to_string(vertex));
+        }
+        edges[i] = pair.first;
+        first++;
+    }
+    return edges;
+}
 
 #endif

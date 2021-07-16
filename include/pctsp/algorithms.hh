@@ -6,10 +6,11 @@
 #include "scip/message_default.h"
 
 #include "constraint.hh"
+#include "heuristic.hh"
 #include "logger.hh"
+#include "preprocessing.hh"
 #include "solution.hh"
 #include "subtour_elimination.hh"
-#include "preprocessing.hh"
 using namespace boost;
 using namespace scip;
 using namespace std;
@@ -40,6 +41,55 @@ SCIP_RETCODE PCTSPaddEdgeVariables(SCIP* mip, Graph& graph, CostMap& cost_map,
         // SCIP_CALL(SCIPreleaseVar(mip, &edge_variable));
     }
     return SCIP_OKAY;
+}
+
+SCIP_RETCODE addHeuristicVarsToSolver(
+    SCIP* scip,
+    SCIP_HEUR* heur,
+    std::vector<SCIP_VAR*> vars
+);
+
+template <typename Graph, typename EdgeVariableMap, typename EdgeIt>
+SCIP_RETCODE addHeuristicEdgesToSolver(
+    SCIP* scip,
+    Graph& graph,
+    SCIP_HEUR* heur,
+    EdgeVariableMap& edge_variable_map,
+    EdgeIt& first,
+    EdgeIt& last
+) {
+    auto n_edges = std::distance(first, last);
+    auto vertex_vector = getVerticesOfEdges(graph, first, last);
+    std::advance(first, -n_edges);  // move iterator back to beginning
+    auto vertex_first = vertex_vector.begin();
+    auto vertex_last = vertex_vector.end();
+    auto self_loops = getSelfLoops(graph, vertex_first, vertex_last);
+    auto loops_first = self_loops.begin();
+    auto loops_last = self_loops.end();
+    auto vars_of_self_loops = getEdgeVariables(scip, graph, edge_variable_map, loops_first, loops_last);
+    auto vars_of_edges = getEdgeVariables(scip, graph, edge_variable_map, first, last);
+    vars_of_edges.insert(vars_of_edges.end(), vars_of_self_loops.begin(), vars_of_self_loops.end());
+    SCIP_CALL(addHeuristicVarsToSolver(scip, heur, vars_of_edges));
+    return SCIP_OKAY;
+}
+
+template <typename Graph, typename EdgeVariableMap, typename VertexIt>
+SCIP_RETCODE addHeuristicTourToSolver(
+    SCIP* scip,
+    Graph& graph,
+    SCIP_HEUR* heur,
+    EdgeVariableMap& edge_variable_map,
+    VertexIt& first,
+    VertexIt& last
+) {
+    auto self_loops = getSelfLoops(graph, first, last);
+    auto edges_of_walk = getEdgesInWalk(graph, first, last);
+
+    auto vars_of_self_loops = getEdgeVariables(scip, graph, edge_variable_map, self_loops.begin(), self_loops.end());
+    auto vars_of_edges = getEdgeVariables(scip, graph, edge_variable_map, edges_of_walk.begin(), edges_of_walk.end());
+    vars_of_edges.insert(vars_of_edges.end(), vars_of_self_loops.begin(), vars_of_self_loops.end());
+
+    return addHeuristicVarsToSolver(scip, heur, vars_of_edges);
 }
 
 /** Get a SCIP model of the prize-collecting TSP without any subtour
@@ -82,23 +132,24 @@ SCIP_RETCODE PCTSPmodelWithoutSECs(
 
 /** Solve the Prize Collecting TSP problem using a branch and cut algorithm
  */
-template <typename Graph, typename Vertex, typename Edge, typename CostMap,
-    typename PrizeMap>
-    SCIP_RETCODE PCTSPbranchAndCut(
-        Graph& graph,
-        std::vector<Edge>& solution_edges,
-        CostMap& cost_map,
-        PrizeMap& prize_map,
-        int quota,
-        Vertex root_vertex,
-        const char* log_filepath = NULL,
-        bool print_scip = true,
-        bool sec_disjoint_tour = true,
-        int sec_disjoint_tour_freq = 1,
-        bool sec_maxflow_mincut = true,
-        int sec_maxflow_mincut_freq = 1,
-        float time_limit = 14400    //  seconds (default 4 hours)
-    ) {
+template <typename Graph, typename CostMap, typename PrizeMap>
+SCIP_RETCODE PCTSPbranchAndCut(
+    Graph& graph,
+    std::vector<typename boost::graph_traits<Graph>::edge_descriptor>& solution_edges,
+    CostMap& cost_map,
+    PrizeMap& prize_map,
+    int quota,
+    typename boost::graph_traits<Graph>::vertex_descriptor root_vertex,
+    const char* log_filepath = NULL,
+    bool print_scip = true,
+    bool sec_disjoint_tour = true,
+    int sec_disjoint_tour_freq = 1,
+    bool sec_maxflow_mincut = true,
+    int sec_maxflow_mincut_freq = 1,
+    float time_limit = 14400    //  seconds (default 4 hours)
+) {
+    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
+    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
 
     // initialise empty model
     SCIP* mip = NULL;
@@ -140,7 +191,7 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
     // time limit
     SCIPsetRealParam(mip, "limits/time", time_limit);
 
-    // TODO add the subtour elimination constraints as cutting planes
+    // add the subtour elimination constraints as cutting planes
     SCIP_CONS* cons;
     std::string cons_name("subtour-constraint");
     PCTSPcreateBasicConsSubtour(mip, &cons, cons_name, graph, root_vertex);
@@ -149,7 +200,14 @@ template <typename Graph, typename Vertex, typename Edge, typename CostMap,
 
     // TODO add the cost cover inequalities as cutting planes
 
-    // TODO add selected heuristics to reduce the upper bound on the optimal
+    // add selected heuristics to reduce the upper bound on the optimal
+    if (solution_edges.size() > 0) {
+        auto first = solution_edges.begin();
+        auto last = solution_edges.end();
+        BOOST_LOG_TRIVIAL(info) << "Adding starting solution to solver.";
+        SCIP_HEUR* heur = NULL;
+        addHeuristicEdgesToSolver(mip, graph, heur, edge_variable_map, first, last);
+    }
 
     // TODO adjust parameters for the branching strategy
 

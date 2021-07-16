@@ -14,6 +14,7 @@ py::list pctsp_branch_and_cut_bind(
     bool cost_cover_disjoint_paths,
     bool cost_cover_shortest_path,
     bool cost_cover_steiner_tree,
+    py::list& initial_solution_py,
     py::str& log_filepath_py,
     int log_level_py,
     bool sec_disjoint_tour,
@@ -30,6 +31,15 @@ py::list pctsp_branch_and_cut_bind(
     PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     PCTSPvertex boost_root = getNewVertex(vertex_id_map, root_vertex);
 
+    std::vector<PCTSPedge> solution_edges;
+    if (py::len(initial_solution_py) > 0) {
+        std::list<std::pair<int, int>> initial_solution_std = toStdListOfPairs<int>(initial_solution_py);
+        auto initial_solution_pairs = getNewEdges(vertex_id_map, initial_solution_std);
+        auto pairs_first = initial_solution_pairs.begin();
+        auto pairs_last = initial_solution_pairs.end();
+        solution_edges = edgesFromVertexPairs(graph, pairs_first, pairs_last);
+    }
+
     // add self loops to graph - we assume the input graph is simple
     if (hasSelfLoopsOnAllVertices(graph) == false) {
         addSelfLoopsToGraph(graph);
@@ -43,7 +53,7 @@ py::list pctsp_branch_and_cut_bind(
         log_filepath = py::extract<char const*>(log_filepath_py);
     }
     // run branch and cut algorithm - returns a list of edges in solution
-    std::vector<PCTSPedge> solution_edges;
+    // std::vector<PCTSPedge> solution_edges;
     PCTSPbranchAndCut(
         graph,
         solution_edges,
@@ -108,7 +118,7 @@ py::list extend_until_prize_feasible_bind(py::list& edge_list, py::list& py_tour
     auto tour = getBoostVertexList(vertex_id_map, py_tour);
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
     PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
-    extend_until_prize_feasible(graph, tour, cost_map, prize_map, quota);
+    extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
     return getPyVertexList(vertex_id_map, tour);
 }
 

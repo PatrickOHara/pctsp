@@ -23,7 +23,7 @@ struct UnitaryGainOfVertex {
 };
 
 template <typename Graph, typename CostMap, typename PrizeMap, typename T>
-UnitaryGainOfVertex unitary_gain_of_vertex(Graph& g, std::list<T>& tour,
+UnitaryGainOfVertex unitaryGainOfVertex(Graph& g, std::list<T>& tour,
     CostMap& cost_map,
     PrizeMap& prize_map, T vertex) {
     // typedef typename Graph::edge_descriptor Edge;
@@ -80,7 +80,7 @@ UnitaryGainOfVertex unitary_gain_of_vertex(Graph& g, std::list<T>& tour,
 }
 
 template <typename GainMap, typename VertexSet>
-float calculate_average_gain(VertexSet& vertices_in_tour, GainMap& gain_map) {
+float calculateAverageGain(VertexSet& vertices_in_tour, GainMap& gain_map) {
     float total_gain = 0.0;
     int num_vertices_considered = 0;
     for (auto const& [key, val] : gain_map) {
@@ -96,7 +96,7 @@ float calculate_average_gain(VertexSet& vertices_in_tour, GainMap& gain_map) {
 
 template <typename Graph, typename Vertex, typename CostMap, typename PrizeMap,
     typename GainMap, typename VertexSet>
-    Vertex find_vertex_with_biggest_gain(Graph& graph, std::list<Vertex>& tour,
+    Vertex findVertexWithBiggestGain(Graph& graph, std::list<Vertex>& tour,
         CostMap& cost_map, PrizeMap& prize_map,
         GainMap& gain_map,
         VertexSet& vertices_in_tour) {
@@ -112,7 +112,7 @@ template <typename Graph, typename Vertex, typename CostMap, typename PrizeMap,
         // only look at vertices not in the tour
         Vertex vertex = *vp.first;
         if (vertices_in_tour.count(vertex) == 0) {
-            UnitaryGainOfVertex gain = unitary_gain_of_vertex(
+            UnitaryGainOfVertex gain = unitaryGainOfVertex(
                 graph, tour, cost_map, prize_map, vertex);
             gain_map[vertex] = gain;
             if (gain.gain_of_vertex > biggest_gain) {
@@ -129,7 +129,7 @@ template <typename Graph, typename Vertex, typename CostMap, typename PrizeMap,
 }
 
 template <typename GainMap, typename Tour, typename Vertex>
-void insert_biggest_gain_vertex_into_tour(Tour& tour,
+void insertBiggestGainVertexIntoTour(Tour& tour,
     Vertex& biggest_gain_vertex,
     GainMap& gain_map) {
     // initializing list iterator to beginning
@@ -162,17 +162,17 @@ void extend(Graph& g, std::list<Vertex>& tour, CostMap& cost_map,
 
     while (exists_vertices_with_above_avg_gain) {
         try {
-            Vertex biggest_gain_vertex = find_vertex_with_biggest_gain(
+            Vertex biggest_gain_vertex = findVertexWithBiggestGain(
                 g, tour, cost_map, prize_map, gain_map, vertices_in_tour);
             float biggest_gain = gain_map[biggest_gain_vertex].gain_of_vertex;
             // only calculate the average gain once
             if (calculate_avg_gain) {
-                avg_gain = calculate_average_gain(vertices_in_tour, gain_map);
+                avg_gain = calculateAverageGain(vertices_in_tour, gain_map);
                 calculate_avg_gain = false;
             }
             // add vertex with biggest gain to tour if it has above average gain
             if (biggest_gain > avg_gain) {
-                insert_biggest_gain_vertex_into_tour(tour, biggest_gain_vertex,
+                insertBiggestGainVertexIntoTour(tour, biggest_gain_vertex,
                     gain_map);
                 vertices_in_tour.insert(biggest_gain_vertex);
             }
@@ -187,7 +187,7 @@ void extend(Graph& g, std::list<Vertex>& tour, CostMap& cost_map,
 }
 
 template <typename Graph, typename Vertex, typename CostMap, typename PrizeMap>
-void extend_until_prize_feasible(Graph& g, std::list<Vertex>& tour,
+void extendUntilPrizeFeasible(Graph& g, std::list<Vertex>& tour,
     CostMap& cost_map, PrizeMap& prize_map,
     int quota) {
     // Run the extension algorithm until the total prize of the tour is greater
@@ -209,10 +209,10 @@ void extend_until_prize_feasible(Graph& g, std::list<Vertex>& tour,
     bool insert_a_vertex = true;
     while (prize < quota && insert_a_vertex) {
         try {
-            auto biggest_gain_vertex = find_vertex_with_biggest_gain(
+            auto biggest_gain_vertex = findVertexWithBiggestGain(
                 g, tour, cost_map, prize_map, gain_map, vertices_in_tour);
             if (insert_a_vertex) {
-                insert_biggest_gain_vertex_into_tour(tour, biggest_gain_vertex,
+                insertBiggestGainVertexIntoTour(tour, biggest_gain_vertex,
                     gain_map);
                 vertices_in_tour.insert(biggest_gain_vertex);
                 attempts++;
