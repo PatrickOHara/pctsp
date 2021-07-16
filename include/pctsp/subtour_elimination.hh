@@ -95,31 +95,32 @@ std::vector<typename boost::graph_traits<Graph>::vertex_descriptor> getUnreachab
     return unreachable_vertices;
 }
 
-// SCIP_RETCODE PCTSPseparateDisjointTour(
-//     SCIP* scip,
-//     SCIP_CONSHDLR* conshdlr,
-//     PCTSPgraph& input_graph,
-//     PCTSPgraph& support_graph,
-//     PCTSPedgeVariableMap& edge_variable_map,
-//     PCTSPvertex& root_vertex,
-//     SCIP_SOL* sol,
-//     SCIP_RESULT* result,
-//     std::vector<int>& component,
-//     int& n_components,
-//     int& root_component,
-//     int freq
-// );
+SCIP_RETCODE PCTSPseparateDisjointTour(
+    SCIP* scip,
+    SCIP_CONSHDLR* conshdlr,
+    PCTSPgraph& input_graph,
+    PCTSPgraph& support_graph,
+    PCTSPedgeVariableMap& edge_variable_map,
+    PCTSPvertex& root_vertex,
+    SCIP_SOL* sol,
+    SCIP_RESULT* result,
+    std::vector<int>& component,
+    int& n_components,
+    int& root_component,
+    int freq
+);
 
-// SCIP_RETCODE PCTSPseparateMaxflowMincut(
-//     SCIP* scip,
-//     SCIP_CONSHDLR* conshdlr,
-//     PCTSPgraph& input_graph,
-//     PCTSPedgeVariableMap& edge_variable_map,
-//     PCTSPvertex& root_vertex,
-//     SCIP_SOL* sol,
-//     SCIP_RESULT* result,
-//     int freq
-// );
+SCIP_RETCODE PCTSPseparateMaxflowMincut(
+    SCIP* scip,
+    SCIP_CONSHDLR* conshdlr,
+    PCTSPgraph& input_graph,
+    PCTSPedgeVariableMap& edge_variable_map,
+    PCTSPvertex& root_vertex,
+    SCIP_SOL* sol,
+    SCIP_RESULT* result,
+    std::set<PCTSPvertex>& root_component,
+    int freq
+);
 
 void insertEdgeVertexVariables(VarVector& edge_variables,
     VarVector& vertex_variables,
