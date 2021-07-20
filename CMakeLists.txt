@@ -21,13 +21,6 @@ find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development REQUIRED)
 find_package(Boost 1.71.0 REQUIRED COMPONENTS python graph log log_setup thread filesystem system REQUIRED)
 find_package(SCIP REQUIRED)
 
-include(ExternalProject)
-ExternalProject_Add(csv
-GIT_REPOSITORY  https://github.com/vincentlaucsb/csv-parser.git
-GIT_TAG         master
-INSTALL_COMMAND   "cmake --install -DCMAKE_INSTALL_PREFIX ${CMAKE_SYSTEM_PREFIX_PATH}"
-)
-
 # find the python sitelibs
 set(FindSitePkgCommand "import site; print(site.getsitepackages()[0])")
 execute_process ( COMMAND ${Python3_EXECUTABLE} -c "${FindSitePkgCommand}"

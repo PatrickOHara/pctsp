@@ -2,6 +2,10 @@
 #include "pctsp/stats.hh"
 #include <gtest/gtest.h>
 
+#include "csv.hpp"
+
+using namespace csv;
+
 TEST(TestStats, testCSVReader) {
     CSVReader reader("very_big_file.csv");
 

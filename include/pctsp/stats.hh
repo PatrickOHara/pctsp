@@ -4,11 +4,6 @@
 
 #include <vector>
 
-#include "csv-parser/include/csv.hpp"
-// # include "csv.hpp"
-
-using namespace csv;
-
 
 /**
  * @brief Useful statistics to save for each node of the B&B tree
