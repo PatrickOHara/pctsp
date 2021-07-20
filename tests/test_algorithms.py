@@ -11,10 +11,19 @@ from tspwplib import (
 from pctsp import pctsp_branch_and_cut, random_tour_complete_graph
 
 
-def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root):
+def test_pctsp_on_suurballes_graph(
+    suurballes_undirected_graph, root, logger_dir, metrics_filename, logger_filename
+):
     """Test the branch and cut algorithm on a small, undirected sparse graph"""
     quota = 6
-    edge_list = pctsp_branch_and_cut(suurballes_undirected_graph, quota, root)
+    edge_list = pctsp_branch_and_cut(
+        suurballes_undirected_graph,
+        quota,
+        root,
+        log_scip_filename=logger_filename,
+        metrics_filename=metrics_filename,
+        output_dir=logger_dir,
+    )
     assert len(edge_list) > 0
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
     optimal_tour = walk_from_edge_list(ordered_edges)
@@ -24,10 +33,19 @@ def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root):
     assert total_cost_networkx(suurballes_undirected_graph, optimal_tour) == 20
 
 
-def test_pctsp_on_tspwplib(tspwplib_graph, root):
+def test_pctsp_on_tspwplib(
+    tspwplib_graph, root, logger_dir, metrics_filename, logger_filename
+):
     """Test the branch and cut algorithm on a small, undirected sparse graph"""
     quota = 30
-    edge_list = pctsp_branch_and_cut(tspwplib_graph, quota, root)
+    edge_list = pctsp_branch_and_cut(
+        tspwplib_graph,
+        quota,
+        root,
+        log_scip_filename=logger_filename,
+        metrics_filename=metrics_filename,
+        output_dir=logger_dir,
+    )
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
     assert len(edge_list) > 0
     optimal_tour = walk_from_edge_list(ordered_edges)
@@ -35,9 +53,19 @@ def test_pctsp_on_tspwplib(tspwplib_graph, root):
     assert total_cost_networkx(tspwplib_graph, optimal_tour) > 0
 
 
-def test_pctsp_with_heuristic(tspwplib_graph, root):
+def test_pctsp_with_heuristic(
+    tspwplib_graph, root, logger_dir, metrics_filename, logger_filename
+):
     """Test adding an initial solution to solver"""
     quota = 30
     tour = random_tour_complete_graph(tspwplib_graph, root, quota)
     edge_list = edge_list_from_walk(tour)
-    pctsp_branch_and_cut(tspwplib_graph, quota, root, initial_solution=edge_list)
+    pctsp_branch_and_cut(
+        tspwplib_graph,
+        quota,
+        root,
+        initial_solution=edge_list,
+        log_scip_filename=logger_filename,
+        metrics_filename=metrics_filename,
+        output_dir=logger_dir,
+    )

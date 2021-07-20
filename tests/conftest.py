@@ -255,6 +255,12 @@ def stats_dir(tmp_path_factory) -> Path:
 
 
 @pytest.fixture(scope="function")
+def metrics_filename() -> str:
+    """Name of CSV for node metrics"""
+    return "test_scip_metrics.csv"
+
+
+@pytest.fixture(scope="function")
 def logger_filename() -> str:
     """Temp logging file"""
     return "pctsp_log.txt"
