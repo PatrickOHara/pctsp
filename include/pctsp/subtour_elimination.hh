@@ -1,6 +1,7 @@
 #ifndef __PCTSP_SUBTOUR_ELIMINATION__
 #define __PCTSP_SUBTOUR_ELIMINATION__
 
+#include "data_structures.hh"
 #include "solution.hh"
 #include "graph.hh"
 #include "renaming.hh"
@@ -130,40 +131,6 @@ void insertEdgeVertexVariables(VarVector& edge_variables,
 
 std::vector<PCTSPedge> getInducedEdges(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
 
-/** SCIP user problem data for PCTSP */
-class ProbDataPCTSP : public scip::ObjProbData
-{
-    int* quota_;
-    PCTSPgraph* graph_;
-    PCTSPvertex* root_vertex_;
-    PCTSPedgeVariableMap* edge_variable_map_;
-public:
-    /** default constructor */
-    ProbDataPCTSP(
-        PCTSPgraph* graph,
-        PCTSPvertex* root_vertex,
-        PCTSPedgeVariableMap* edge_variable_map,
-        int* quota
-    )
-    {
-        graph_ = graph;
-        root_vertex_ = root_vertex;
-        edge_variable_map_ = edge_variable_map;
-        quota_ = quota;
-    };
-
-    /** Get the input graph */
-    PCTSPgraph* getInputGraph();
-
-    /** Get the quota */
-    int* getQuota();
-
-    /** Get the root vertex */
-    PCTSPvertex* getRootVertex();
-
-    /** Get the mapping from edges to variables */
-    PCTSPedgeVariableMap* getEdgeVariableMap();
-};
 
 class PCTSPconshdlrSubtour : public scip::ObjConshdlr
 {

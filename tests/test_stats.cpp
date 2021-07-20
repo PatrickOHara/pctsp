@@ -2,20 +2,10 @@
 #include "pctsp/stats.hh"
 #include <gtest/gtest.h>
 
-#include "csv.hpp"
 
-using namespace csv;
-
-TEST(TestStats, testCSVReader) {
-    CSVReader reader("very_big_file.csv");
-
-    for (auto& row : reader) {
-        if (row["timestamp"].is_int()) {
-            // Can use get<>() with any integer type, but negative
-            // numbers cannot be converted to unsigned types
-            row["timestamp"].get<int>();
-
-            // ..
-        }
-    }
+TEST(TestStats, testWriteNodeStatsToCSV) {
+    NodeStats node = { 5.2, 0, 0, 1, 0, 0, 2, 0, 7.0 };
+    std::vector<NodeStats> stats = { node };
+    std::string file_path = ".logs/test_node_stats.csv";
+    writeNodeStatsToCSV(stats, file_path);
 }

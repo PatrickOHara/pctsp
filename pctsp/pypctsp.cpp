@@ -15,8 +15,11 @@ py::list pctsp_branch_and_cut_bind(
     bool cost_cover_shortest_path,
     bool cost_cover_steiner_tree,
     py::list& initial_solution_py,
-    py::str& log_filepath_py,
-    int log_level_py,
+    py::str& log_boost_filepath_py,
+    py::str& log_scip_filepath_py,
+    int logging_level_py,
+    py::str& metrics_csv_filepath_py,
+    py::str& name_py,
     bool sec_disjoint_tour,
     int sec_disjoint_tour_freq,
     bool sec_maxflow_mincut,
@@ -24,7 +27,7 @@ py::list pctsp_branch_and_cut_bind(
     float time_limit
 ) {
 
-    PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
+    PCTSPinitLogging(getBoostLevelFromPyLevel(logging_level_py));
     BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(py_edge_list, vertex_id_map);
     PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
@@ -45,15 +48,12 @@ py::list pctsp_branch_and_cut_bind(
         addSelfLoopsToGraph(graph);
         assignZeroCostToSelfLoops(graph, cost_map);
     }
+    std::string name = py::extract<std::string>(name_py);
+
     // get the log file
-    const char* log_filepath = NULL;
-    bool print_scip = false;
-    if (py::len(log_filepath_py) > 0) {
-        print_scip = true;
-        log_filepath = py::extract<char const*>(log_filepath_py);
-    }
+    std::string log_scip_filepath = py::extract<std::string>(log_scip_filepath_py);
+    std::string metrics_csv_filepath = py::extract<std::string>(metrics_csv_filepath_py);
     // run branch and cut algorithm - returns a list of edges in solution
-    // std::vector<PCTSPedge> solution_edges;
     PCTSPbranchAndCut(
         graph,
         solution_edges,
@@ -61,8 +61,9 @@ py::list pctsp_branch_and_cut_bind(
         prize_map,
         quota,
         boost_root,
-        log_filepath,
-        print_scip,
+        log_scip_filepath,
+        metrics_csv_filepath,
+        name,
         sec_disjoint_tour,
         sec_disjoint_tour_freq,
         sec_maxflow_mincut,
