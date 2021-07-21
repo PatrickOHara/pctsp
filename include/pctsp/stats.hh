@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 
-
 const std::vector<std::string> NODE_STATS_COL_NAMES = {
     "lower_bound",
     "node_id",
@@ -39,6 +38,5 @@ void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_p
 void writeNodeStatsColumnNames(std::ofstream& csv_file);
 
 void writeNodeStatsRow(NodeStats& node_stats, std::ofstream& csv_file);
-
 
 #endif

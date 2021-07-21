@@ -6,6 +6,7 @@
 #include "scip/message_default.h"
 
 #include "constraint.hh"
+#include "event_handlers.hh"
 #include "heuristic.hh"
 #include "logger.hh"
 #include "preprocessing.hh"
@@ -176,7 +177,10 @@ SCIP_RETCODE PCTSPbranchAndCut(
     SCIP_CALL(SCIPsetMessagehdlr(mip, handler));
 
     // add custom cutting plane handlers
-    SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE);
+    SCIP_CALL(SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE));
+
+    // add event handlers
+    SCIP_CALL( SCIPincludeObjEventhdlr(mip, new NodeEventhdlr(mip), TRUE) );
 
     BOOST_LOG_TRIVIAL(info) << "Created SCIP program. Adding constraints and variables.";
 

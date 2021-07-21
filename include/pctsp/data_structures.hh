@@ -44,6 +44,9 @@ public:
 
     /** Get the mapping from edges to variables */
     EdgeVarLookup* getEdgeVariableMap();
+
+    /** Get the node statistics */
+    std::vector<NodeStats>* getNodeStats();
 };
 
 #endif

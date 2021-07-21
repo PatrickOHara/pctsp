@@ -236,22 +236,6 @@ SCIP_RETCODE PCTSPcreateBasicConsSubtour(
     return SCIP_OKAY;
 }
 
-PCTSPgraph* ProbDataPCTSP::getInputGraph() {
-    return graph_;
-}
-
-int* ProbDataPCTSP::getQuota() {
-    return quota_;
-}
-
-PCTSPvertex* ProbDataPCTSP::getRootVertex() {
-    return root_vertex_;
-}
-
-PCTSPedgeVariableMap* ProbDataPCTSP::getEdgeVariableMap() {
-    return edge_variable_map_;
-}
-
 SCIP_DECL_CONSCHECK(PCTSPconshdlrSubtour::scip_check)
 {
     auto nvars = SCIPgetNVars(scip);
