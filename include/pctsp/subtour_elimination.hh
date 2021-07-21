@@ -108,6 +108,7 @@ SCIP_RETCODE PCTSPseparateDisjointTour(
     std::vector<int>& component,
     int& n_components,
     int& root_component,
+    int& num_conss_added,
     int freq
 );
 
@@ -120,6 +121,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     SCIP_SOL* sol,
     SCIP_RESULT* result,
     std::set<PCTSPvertex>& root_component,
+    int& num_conss_added,
     int freq
 );
 
