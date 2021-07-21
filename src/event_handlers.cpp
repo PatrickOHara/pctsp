@@ -29,7 +29,7 @@ SCIP_DECL_EVENTDELETE(NodeEventhdlr::scip_delete) {
 }
 
 SCIP_DECL_EVENTEXEC(NodeEventhdlr::scip_exec) {
-    if (SCIPgetStage(scip) >= SCIP_STAGE_SOLVING) {
+    // if (SCIPgetStage(scip) >= SCIP_STAGE_SOLVING) {
         ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
         std::vector<NodeStats> & stats_vector = *probdata->getNodeStats();
         // int num_nodes = SCIPgetNTotalNodes(scip);
@@ -38,18 +38,17 @@ SCIP_DECL_EVENTEXEC(NodeEventhdlr::scip_exec) {
         // get current node and update info about current node
         SCIP_NODE* node = SCIPgetCurrentNode(scip);
         unsigned int node_id = SCIPnodeGetNumber(node);
-
         if (stats_size < node_id) {
             // resize stats array
             stats_vector.resize(node_id);
         }
         double lower_bound = SCIPnodeGetLowerbound(node);
         double upper_bound = SCIPgetUpperbound(scip);
-        unsigned int parent_id = 0;
-        // if (node_id > 1) {
-        //     SCIP_NODE* parent = SCIPnodeGetParent(node);
-        //     parent_id = SCIPnodeGetNumber(parent);
-        // }
+        unsigned int parent_id = 1;
+        if (node_id > 1) {
+            SCIP_NODE* parent = SCIPnodeGetParent(node);
+            parent_id = SCIPnodeGetNumber(parent);
+        }
         unsigned int num_sec_disjoint_tour = 0;
         unsigned int num_sec_maxflow_mincut = 0;
         unsigned int num_cost_cover_disjoint_paths = 0;
@@ -58,10 +57,7 @@ SCIP_DECL_EVENTEXEC(NodeEventhdlr::scip_exec) {
         NodeStats node_stats = {lower_bound, node_id, num_sec_disjoint_tour, num_sec_maxflow_mincut,
             num_cost_cover_disjoint_paths, num_cost_cover_shortest_paths, num_cost_cover_steiner_tree,
             parent_id, upper_bound};
-        // if (node_id >=0 && node_id < stats_vector.size())
             stats_vector[node_id-1] = node_stats;
-        // else
-            // std::cout << "Bad node id: " << node_id << std::endl;
-    }
+    // }
     return SCIP_OKAY;
 }
