@@ -545,7 +545,7 @@ SCIP_RETCODE PCTSPseparateSubtour(
             scip, conshdlr, input_graph, support_graph, edge_variable_map, root_vertex, sol, result, component, n_components, root_component_id, num_disjoint_tour_secs_added, sec_disjoint_tour_freq
         );
         // increment node stats with num constraints added
-        node_stats[node_id-1].num_sec_maxflow_mincut += num_disjoint_tour_secs_added;
+        node_stats[node_id-1].num_sec_disjoint_tour += num_disjoint_tour_secs_added;
 
         if (sec_maxflow_mincut)
         {
@@ -560,7 +560,7 @@ SCIP_RETCODE PCTSPseparateSubtour(
             PCTSPseparateMaxflowMincut(
                 scip, conshdlr, input_graph, edge_variable_map, root_vertex, sol, result, root_component, num_maxflow_mincut_secs_added, sec_maxflow_mincut_freq
             );
-            node_stats[node_id].num_sec_maxflow_mincut += num_maxflow_mincut_secs_added;
+            node_stats[node_id-1].num_sec_maxflow_mincut += num_maxflow_mincut_secs_added;
         }
     }
     return SCIP_OKAY;

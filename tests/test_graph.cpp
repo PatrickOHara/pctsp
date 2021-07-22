@@ -35,7 +35,6 @@ TEST(TestGraph, testGetVerticesOfEdges) {
     auto first = edges.begin();
     auto last = edges.end();
     auto vertices = getVerticesOfEdges(graph, first, last);
-    std::cout << std::endl;
     EXPECT_FALSE(std::find(vertices.begin(), vertices.end(), 0) == vertices.end());
     EXPECT_FALSE(std::find(vertices.begin(), vertices.end(), boost::vertex(1, graph)) == vertices.end());
     EXPECT_TRUE(std::find(vertices.begin(), vertices.end(), 3) == vertices.end());
