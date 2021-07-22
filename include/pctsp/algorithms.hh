@@ -6,10 +6,12 @@
 #include "scip/message_default.h"
 
 #include "constraint.hh"
+#include "event_handlers.hh"
 #include "heuristic.hh"
 #include "logger.hh"
 #include "preprocessing.hh"
 #include "solution.hh"
+#include "stats.hh"
 #include "subtour_elimination.hh"
 using namespace boost;
 using namespace scip;
@@ -140,8 +142,9 @@ SCIP_RETCODE PCTSPbranchAndCut(
     PrizeMap& prize_map,
     int quota,
     typename boost::graph_traits<Graph>::vertex_descriptor root_vertex,
-    const char* log_filepath = NULL,
-    bool print_scip = true,
+    std::string log_filepath = "scip_logs.txt",
+    std::string metrics_csv_filepath = "metrics.csv",
+    std::string name = "pctsp",
     bool sec_disjoint_tour = true,
     int sec_disjoint_tour_freq = 1,
     bool sec_maxflow_mincut = true,
@@ -157,23 +160,27 @@ SCIP_RETCODE PCTSPbranchAndCut(
     SCIP_CALL(SCIPincludeDefaultPlugins(mip));
 
     // datastructures needed for the MIP solver
+    std::vector<NodeStats> node_stats;  // save node statistics
     std::map<Edge, SCIP_VAR*> edge_variable_map;
     std::map<Edge, int> weight_map;
-    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota);
+    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota, &node_stats);
     SCIPcreateObjProb(
         mip,
-        "test-pctsp-with-secs",
+        name.c_str(),
         probdata,
         true
     );
 
     // add custom message handler
     SCIP_MESSAGEHDLR* handler;
-    SCIP_CALL(SCIPcreateMessagehdlrDefault(&handler, false, log_filepath, print_scip));
+    SCIP_CALL(SCIPcreateMessagehdlrDefault(&handler, false, log_filepath.c_str(), true));
     SCIP_CALL(SCIPsetMessagehdlr(mip, handler));
 
     // add custom cutting plane handlers
-    SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE);
+    SCIP_CALL(SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE));
+
+    // add event handlers
+    SCIP_CALL( SCIPincludeObjEventhdlr(mip, new NodeEventhdlr(mip), TRUE) );
 
     BOOST_LOG_TRIVIAL(info) << "Created SCIP program. Adding constraints and variables.";
 
@@ -215,16 +222,19 @@ SCIP_RETCODE PCTSPbranchAndCut(
     // Solve the model
     SCIP_CALL(SCIPsolve(mip));
     BOOST_LOG_TRIVIAL(info) << "Model solved. Getting edge list of best solution.";
+
     // Get the solution
     SCIP_SOL* sol = SCIPgetBestSol(mip);
     solution_edges = getSolutionEdges(mip, graph, sol, edge_variable_map);
-    if (print_scip) {
-        BOOST_LOG_TRIVIAL(info) << "Saving SCIP logs to: " << log_filepath;
-        FILE* log_file = fopen(log_filepath, "w");
-        SCIP_CALL(SCIPprintOrigProblem(mip, log_file, NULL, true));
-        SCIP_CALL(SCIPprintBestSol(mip, log_file, true));
-        SCIP_CALL(SCIPprintStatistics(mip, log_file));
-    }
+    BOOST_LOG_TRIVIAL(info) << "Saving SCIP logs to: " << log_filepath;
+    FILE* log_file = fopen(log_filepath.c_str(), "w");
+    SCIP_CALL(SCIPprintOrigProblem(mip, log_file, NULL, true));
+    SCIP_CALL(SCIPprintBestSol(mip, log_file, true));
+    SCIP_CALL(SCIPprintStatistics(mip, log_file));
+
+    // Get the metrics and statistics of the solver
+    writeNodeStatsToCSV(node_stats, metrics_csv_filepath);
+
     BOOST_LOG_TRIVIAL(debug) << "Releasing constraint handler.";
     SCIP_CALL(SCIPmessagehdlrRelease(&handler));
     BOOST_LOG_TRIVIAL(debug) << "Releasing SCIP model.";

@@ -236,22 +236,6 @@ SCIP_RETCODE PCTSPcreateBasicConsSubtour(
     return SCIP_OKAY;
 }
 
-PCTSPgraph* ProbDataPCTSP::getInputGraph() {
-    return graph_;
-}
-
-int* ProbDataPCTSP::getQuota() {
-    return quota_;
-}
-
-PCTSPvertex* ProbDataPCTSP::getRootVertex() {
-    return root_vertex_;
-}
-
-PCTSPedgeVariableMap* ProbDataPCTSP::getEdgeVariableMap() {
-    return edge_variable_map_;
-}
-
 SCIP_DECL_CONSCHECK(PCTSPconshdlrSubtour::scip_check)
 {
     auto nvars = SCIPgetNVars(scip);
@@ -360,6 +344,7 @@ SCIP_RETCODE PCTSPseparateDisjointTour(
     std::vector<int>& component,
     int& n_components,
     int& root_component,
+    int& num_conss_added,
     int freq
 ) {
     // get the connected components of the support graph
@@ -403,6 +388,7 @@ SCIP_RETCODE PCTSPseparateDisjointTour(
                 sol,
                 result
             ));
+            num_conss_added ++;
         }
     }
     return SCIP_OKAY;
@@ -417,6 +403,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     SCIP_SOL* sol,
     SCIP_RESULT* result,
     std::set<PCTSPvertex>& root_component,
+    int& num_conss_added,
     int freq
 ) {
     DirectedCapacityGraph support_graph;
@@ -508,6 +495,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
                     sol,
                     result
                 ));
+                num_conss_added ++;
                 for (auto const& vertex : unreachable) {
                     added_sec[vertex] = true;
                 }
@@ -537,15 +525,28 @@ SCIP_RETCODE PCTSPseparateSubtour(
     auto& edge_variable_map = *(probdata->getEdgeVariableMap());
     auto& root_vertex = *(probdata->getRootVertex());
 
+    // data for node statistics
+    auto& node_stats = *(probdata->getNodeStats());
+    SCIP_NODE* node = SCIPgetCurrentNode(scip);
+    unsigned int node_id = SCIPnodeGetNumber(node);
+    if (node_stats.size() < node_id) {
+        // resize stats array
+        node_stats.resize(node_id);
+    }
+
     if (sec_disjoint_tour) {
         PCTSPgraph support_graph;
         getSolutionGraph(scip, input_graph, support_graph, sol, edge_variable_map);
         std::vector< int > component(boost::num_vertices(support_graph));
         int n_components;
         int root_component_id;
+        int num_disjoint_tour_secs_added = 0;
         PCTSPseparateDisjointTour(
-            scip, conshdlr, input_graph, support_graph, edge_variable_map, root_vertex, sol, result, component, n_components, root_component_id, sec_disjoint_tour_freq
+            scip, conshdlr, input_graph, support_graph, edge_variable_map, root_vertex, sol, result, component, n_components, root_component_id, num_disjoint_tour_secs_added, sec_disjoint_tour_freq
         );
+        // increment node stats with num constraints added
+        node_stats[node_id-1].num_sec_disjoint_tour += num_disjoint_tour_secs_added;
+
         if (sec_maxflow_mincut)
         {
             std::set<PCTSPvertex> root_component;
@@ -555,9 +556,11 @@ SCIP_RETCODE PCTSPseparateSubtour(
                     root_component.emplace(vertex);
                 }
             }
+            int num_maxflow_mincut_secs_added = 0;
             PCTSPseparateMaxflowMincut(
-                scip, conshdlr, input_graph, edge_variable_map, root_vertex, sol, result, root_component, sec_maxflow_mincut_freq
+                scip, conshdlr, input_graph, edge_variable_map, root_vertex, sol, result, root_component, num_maxflow_mincut_secs_added, sec_maxflow_mincut_freq
             );
+            node_stats[node_id-1].num_sec_maxflow_mincut += num_maxflow_mincut_secs_added;
         }
     }
     return SCIP_OKAY;
