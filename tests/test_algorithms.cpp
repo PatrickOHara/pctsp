@@ -70,10 +70,11 @@ TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
     auto last = tour.end();
     std::vector<PCTSPedge> solution_edges = getEdgesInWalk(graph, first, last);
     std::string name = "test-branch-and-cut";
+    std::string bounds_filepath = ".logs/" + name + "-bounds.csv";
     std::string log_filepath = ".logs/" + name + ".txt";
     std::string metrics_csv_filepath = ".logs/test_branch_and_cut.csv";
     SCIP_RETCODE code = PCTSPbranchAndCut(graph, solution_edges, cost_map, prize_map,
-        quota, root_vertex, log_filepath, metrics_csv_filepath, name, true);
+        quota, root_vertex, bounds_filepath, log_filepath, metrics_csv_filepath, name, true);
     EXPECT_EQ(SCIP_OKAY, code);
     EXPECT_GT(solution_edges.size(), 0); // check the list is not empty
 

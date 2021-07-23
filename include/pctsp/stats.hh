@@ -39,4 +39,40 @@ void writeNodeStatsColumnNames(std::ofstream& csv_file);
 
 void writeNodeStatsRow(NodeStats& node_stats, std::ofstream& csv_file);
 
+template<typename StringIt>
+void writeRowCSV(std::ofstream& csv_file, StringIt& first, StringIt& last) {
+    auto num_items = std::distance(first, last);
+    for (int i = 0; i < num_items; i++) {
+        csv_file << *first++;
+        if (i < num_items - 1) csv_file << ",";
+    }
+    csv_file << "\n";
+}
+
+typedef std::chrono::time_point<std::chrono::system_clock> TimePointUTC;
+
+std::string timePointToString(TimePointUTC& time_stamp);
+
+const std::vector<std::string> BOUNDS_COLUMN_NAMES = {
+    "start_timestamp",
+    "end_timestamp",
+    "lower_bound",
+    "upper_bound",
+    "node_id"
+};
+
+struct Bounds {
+   TimePointUTC start_timestamp;
+   TimePointUTC end_timestamp;
+   double lower_bound;
+   double upper_bound;
+   unsigned int node_id;
+};
+
+void writeBoundsToCSV(std::vector<Bounds>& bounds_vector, std::string& file_path);
+
+void writeBoundsColumnsNames(std::ofstream& csv_file);
+
+void writeBoundsRow(Bounds& bounds, std::ofstream& csv_file);
+
 #endif

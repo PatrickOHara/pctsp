@@ -1,6 +1,6 @@
 add_library(pypctsp SHARED "pypctsp.cpp")
 set_target_properties(pypctsp PROPERTIES SUFFIX ${PYTHON_MODULE_EXTENSION})
-target_compile_options(pypctsp PRIVATE -std=c++17)
+set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 20)
 
 # setting for Mac OS X
 if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )

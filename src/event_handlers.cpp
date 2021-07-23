@@ -56,3 +56,73 @@ SCIP_DECL_EVENTEXEC(NodeEventhdlr::scip_exec) {
     }
     return SCIP_OKAY;
 }
+
+// bound handler 
+
+std::string timePointToString(TimePointUTC& time_stamp) {
+    using namespace std::chrono;
+    auto dp = floor<days>(time_stamp);
+    year_month_day ymd{dp};
+    hh_mm_ss time{floor<milliseconds>(time_stamp - dp)};
+    int year = (int) ymd.year();
+    unsigned int month = (unsigned int) ymd.month();
+    unsigned int day = (unsigned int) ymd.day();
+    long h = time.hours().count();
+    long M= time.minutes().count();
+    long s = time.seconds().count();
+    long ms = time.subseconds().count();
+    // "%Y-%m-%dT%H:%M:%SZ"
+    std::string date_string = std::to_string(year) + "-" + std::to_string(month) + "-" + std::to_string(day);
+    std::string time_string = std::to_string(h) + ":" + std::to_string(M) +":" + std::to_string(s) + "." + std::to_string(ms);
+    std::string time_zone_string = "Z";
+    std::string all = date_string + "T" + time_string + time_zone_string;
+    return all;
+}
+
+
+TimePointUTC BoundsEventHandler::getLastTimestamp() {
+    return _last_timestamp;
+}
+
+std::vector<Bounds> BoundsEventHandler::getBoundsVector() {
+    return _bounds_vector;
+}
+
+SCIP_DECL_EVENTFREE(BoundsEventHandler::scip_free) {
+   return SCIP_OKAY;
+}
+
+SCIP_DECL_EVENTINIT(BoundsEventHandler::scip_init) {
+    return SCIP_OKAY;
+}
+
+SCIP_DECL_EVENTEXIT(BoundsEventHandler::scip_exit) {
+    return SCIP_OKAY;
+}
+
+SCIP_DECL_EVENTINITSOL(BoundsEventHandler::scip_initsol) {
+    SCIP_CALL( SCIPcatchEvent( scip, SCIP_EVENTTYPE_LPSOLVED, eventhdlr, NULL, NULL) );
+    return SCIP_OKAY;
+}
+
+SCIP_DECL_EVENTEXITSOL(BoundsEventHandler::scip_exitsol) {
+    SCIP_CALL( SCIPdropEvent( scip, SCIP_EVENTTYPE_LPSOLVED, eventhdlr, NULL, -1) );
+    return SCIP_OKAY;
+}
+
+SCIP_DECL_EVENTDELETE(BoundsEventHandler::scip_delete) {
+    return SCIP_OKAY;
+}
+
+SCIP_DECL_EVENTEXEC(BoundsEventHandler::scip_exec) {
+    TimePointUTC start = _last_timestamp;
+    TimePointUTC end = std::chrono::system_clock::now();
+    double lower_bound = SCIPgetLowerbound(scip);
+    double upper_bound = SCIPgetUpperbound(scip);
+    SCIP_NODE* node = SCIPgetCurrentNode(scip);
+    unsigned int node_id = SCIPnodeGetNumber(node);
+    Bounds bounds = {start, end, lower_bound, upper_bound, node_id};
+    _bounds_vector.push_back(bounds);
+    _last_timestamp = std::chrono::system_clock::now();
+    return SCIP_OKAY;
+}

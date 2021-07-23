@@ -142,6 +142,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     PrizeMap& prize_map,
     int quota,
     typename boost::graph_traits<Graph>::vertex_descriptor root_vertex,
+    std::string bounds_csv_filepath = "bounds.csv",
     std::string log_filepath = "scip_logs.txt",
     std::string metrics_csv_filepath = "metrics.csv",
     std::string name = "pctsp",
@@ -181,6 +182,8 @@ SCIP_RETCODE PCTSPbranchAndCut(
 
     // add event handlers
     SCIP_CALL( SCIPincludeObjEventhdlr(mip, new NodeEventhdlr(mip), TRUE) );
+    BoundsEventHandler* bounds_handler = new BoundsEventHandler(mip);
+    SCIP_CALL( SCIPincludeObjEventhdlr(mip, bounds_handler, TRUE));
 
     BOOST_LOG_TRIVIAL(info) << "Created SCIP program. Adding constraints and variables.";
 
@@ -231,6 +234,10 @@ SCIP_RETCODE PCTSPbranchAndCut(
     SCIP_CALL(SCIPprintOrigProblem(mip, log_file, NULL, true));
     SCIP_CALL(SCIPprintBestSol(mip, log_file, true));
     SCIP_CALL(SCIPprintStatistics(mip, log_file));
+
+    // Write the bounds to file
+    std::vector<Bounds> bounds_vector = bounds_handler->getBoundsVector();
+    writeBoundsToCSV(bounds_vector, bounds_csv_filepath);
 
     // Get the metrics and statistics of the solver
     writeNodeStatsToCSV(node_stats, metrics_csv_filepath);

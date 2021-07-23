@@ -20,7 +20,8 @@ if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )
     set_target_properties(${TARGET} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup" )
 endif()
 
-target_compile_options(${TARGET} PRIVATE -std=c++17)
+# target_compile_options(${TARGET} PRIVATE -std=c++20)
+set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 20)
 target_include_directories(${TARGET} PUBLIC ${PCTSP_INCLUDE_DIRS})
 target_include_directories(${TARGET} PRIVATE
     ${Boost_INCLUDE_DIRS}
