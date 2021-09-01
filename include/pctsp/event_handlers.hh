@@ -68,7 +68,7 @@ public:
       : ObjEventhdlr(scip, "pctsp_bound_handler","Record upper and lower bounds")
    {
       using namespace std::chrono;
-      _last_timestamp = time_point_cast<TimeAccuracy>(system_clock::now());
+      _last_timestamp = time_point_cast<SubSeconds>(system_clock::now());
       _bounds_vector = std::vector<Bounds>();
    }
 

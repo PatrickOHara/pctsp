@@ -33,4 +33,4 @@ def test_read_node_stats(
     for col in time_cols:
         bounds_df[col] = pd.to_datetime(bounds_df[col])
     for _, row in bounds_df[time_cols].iterrows():
-        assert row["start_timestamp"] < row["end_timestamp"]
+        assert row["start_timestamp"] <= row["end_timestamp"]

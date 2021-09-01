@@ -50,8 +50,8 @@ void writeRowCSV(std::ofstream& csv_file, StringIt& first, StringIt& last) {
     csv_file << "\n";
 }
 
-typedef typename std::chrono::milliseconds TimeAccuracy;
-typedef typename std::chrono::time_point<std::chrono::system_clock, TimeAccuracy> TimePointUTC;
+typedef typename std::chrono::milliseconds SubSeconds;
+typedef typename std::chrono::time_point<std::chrono::system_clock, SubSeconds> TimePointUTC;
 
 std::string timePointToString(TimePointUTC& time_stamp);
 

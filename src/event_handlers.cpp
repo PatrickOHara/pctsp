@@ -61,37 +61,13 @@ SCIP_DECL_EVENTEXEC(NodeEventhdlr::scip_exec) {
 
 std::string timePointToString(TimePointUTC& time_stamp) {
     using namespace std::chrono;
-    auto ms = duration_cast<milliseconds>(time_stamp.time_since_epoch()) % 1000;
-    // std::chrono::year_month_day ymd{dp};
-    // std::chrono::hh_mm_ss time{floor<std::chrono::milliseconds>(time_stamp - dp)};
-    // int year = (int) ymd.year();
-    // unsigned int month = (unsigned int) ymd.month();
-    // unsigned int day = (unsigned int) ymd.day();
-    // long h = time.hours().count();
-    // long M= time.minutes().count();
-    // long s = time.seconds().count();
-    // long ms = time.subseconds().count();
-    // "%Y-%m-%dT%H:%M:%SZ"
-    // std::string date_string = std::to_string(year) + "-" + std::to_string(month) + "-" + std::to_string(day);
-    // std::string time_string = std::to_string(h) + ":" + std::to_string(M) +":" + std::to_string(s) + "." + std::to_string(ms);
-    // std::string time_zone_string = "Z";
-    // std::string all = date_string + "T" + time_string + time_zone_string;
-
-
-    // new code...
+    auto ms = duration_cast<SubSeconds>(time_stamp.time_since_epoch()) % 1000;
     time_t tt = std::chrono::system_clock::to_time_t(time_stamp);
     tm utc_tm = *gmtime(&tt);
-    // std::cout << utc_tm.tm_year + 1900 << '-';
-    // std::cout << utc_tm.tm_mon + 1 << '-';
-    // std::cout << utc_tm.tm_mday << ' ';
-    // std::cout << utc_tm.tm_hour << ':';
-    // std::cout << utc_tm.tm_min << ':';
-    // std::cout << utc_tm.tm_sec << ".";
     std::string time_zone_string = "Z";
     char mbstr[100];
     std::strftime(mbstr, sizeof(mbstr), "%FT%T", std::localtime(&tt));
     std::string all = std::string(mbstr) + "." + std::to_string(ms.count()) + time_zone_string;
-    std::cout << all << std::endl;
     return all;
 }
 
@@ -132,14 +108,15 @@ SCIP_DECL_EVENTDELETE(BoundsEventHandler::scip_delete) {
 
 SCIP_DECL_EVENTEXEC(BoundsEventHandler::scip_exec) {
     using namespace std::chrono;
-    TimePointUTC start = _last_timestamp;
-    TimePointUTC end = time_point_cast<TimeAccuracy>(system_clock::now());
+    TimePointUTC start;
+    start = getLastTimestamp();
+    TimePointUTC end = time_point_cast<SubSeconds>(system_clock::now());
     double lower_bound = SCIPgetLowerbound(scip);
     double upper_bound = SCIPgetUpperbound(scip);
     SCIP_NODE* node = SCIPgetCurrentNode(scip);
     unsigned int node_id = SCIPnodeGetNumber(node);
     Bounds bounds = {start, end, lower_bound, upper_bound, node_id};
     _bounds_vector.push_back(bounds);
-    _last_timestamp = time_point_cast<TimeAccuracy>(system_clock::now());
+    _last_timestamp = time_point_cast<SubSeconds>(system_clock::now());
     return SCIP_OKAY;
 }
