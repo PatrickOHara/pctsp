@@ -2,6 +2,7 @@
 #ifndef __PCTSP_STATS__
 #define __PCTSP_STATS__
 
+#include <chrono>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -49,7 +50,8 @@ void writeRowCSV(std::ofstream& csv_file, StringIt& first, StringIt& last) {
     csv_file << "\n";
 }
 
-typedef std::chrono::time_point<std::chrono::system_clock> TimePointUTC;
+typedef typename std::chrono::milliseconds TimeAccuracy;
+typedef typename std::chrono::time_point<std::chrono::system_clock, TimeAccuracy> TimePointUTC;
 
 std::string timePointToString(TimePointUTC& time_stamp);
 

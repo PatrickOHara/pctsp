@@ -1,7 +1,6 @@
 #ifndef __PCTSP_EVENT_HANDLERS__
 #define __PCTSP_EVENT_HANDLERS__
 
-#include <chrono> 
 #include "data_structures.hh"
 #include "graph.hh"
 #include "stats.hh"
@@ -68,7 +67,8 @@ public:
       )
       : ObjEventhdlr(scip, "pctsp_bound_handler","Record upper and lower bounds")
    {
-      _last_timestamp = std::chrono::system_clock::now();
+      using namespace std::chrono;
+      _last_timestamp = time_point_cast<TimeAccuracy>(system_clock::now());
       _bounds_vector = std::vector<Bounds>();
    }
 

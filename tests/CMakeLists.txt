@@ -35,7 +35,7 @@ set(TARGET "test_pctsp")
 # add any test files here
 add_executable(${TARGET} ${TEST_SOURCES})
 
-set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 20)
+set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 17)
 
 # link libraries and include files
 target_link_libraries(${TARGET} PRIVATE

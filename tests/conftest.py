@@ -253,6 +253,10 @@ def stats_dir(tmp_path_factory) -> Path:
     """Temp stats directory"""
     return tmp_path_factory.mktemp(".stats")
 
+@pytest.fixture(scope="function")
+def bounds_filename() -> str:
+    """Name of CSV file for lower and upper bounds"""
+    return "test_scip_bounds.csv"
 
 @pytest.fixture(scope="function")
 def metrics_filename() -> str:
