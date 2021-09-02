@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16.0)
 project(pctsp_project)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # list of modules to find
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules;")
@@ -18,7 +19,7 @@ message("SCIP_ROOT: " $ENV{SCIP_ROOT})
 
 # dependencies
 find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development REQUIRED)
-find_package(Boost 1.71.0 REQUIRED COMPONENTS python graph log log_setup thread filesystem system REQUIRED)
+find_package(Boost 1.71.0 REQUIRED COMPONENTS python3 graph log log_setup thread filesystem system REQUIRED)
 find_package(SCIP REQUIRED)
 
 # find the python sitelibs
@@ -31,7 +32,7 @@ message("Python3_LIBRARIES: " ${Python3_LIBRARIES})
 message("Python3_SITE_PACKAGES: " ${Python3_SITE_PACKAGES})
 message("SCIP_INCLUDE_DIRS: " ${SCIP_INCLUDE_DIRS})
 message("SCIP_LIBARIES: " ${SCIP_LIBRARIES})
-message("Boost_INCLUDE_DIR: " ${Boost_INCLUDE_DIRS})
+message("Boost_INCLUDE_DIRS: " ${Boost_INCLUDE_DIRS})
 message("Boost_LIBRARIES: " ${Boost_LIBRARIES})
 
 set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
@@ -48,7 +49,10 @@ find_package(PythonExtensions REQUIRED)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(PCTSP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(PCTSP_LIBRARIES "")
+
+if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )
 set(MACOSX_RPATH TRUE)
+endif()
 
 # get the suffix for python extension module and store in PYTHON_MODULE_EXTENSION
 execute_process (COMMAND "${Python3_EXECUTABLE}" -c "from distutils import sysconfig;print(sysconfig.get_config_var('EXT_SUFFIX'))"

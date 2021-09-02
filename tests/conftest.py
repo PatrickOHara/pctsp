@@ -255,6 +255,12 @@ def stats_dir(tmp_path_factory) -> Path:
 
 
 @pytest.fixture(scope="function")
+def bounds_filename() -> str:
+    """Name of CSV file for lower and upper bounds"""
+    return "test_scip_bounds.csv"
+
+
+@pytest.fixture(scope="function")
 def metrics_filename() -> str:
     """Name of CSV for node metrics"""
     return "test_scip_metrics.csv"

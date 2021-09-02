@@ -21,10 +21,29 @@ void writeNodeStatsRow(NodeStats& node_stats, std::ofstream& csv_file) {
 }
 
 void writeNodeStatsColumnNames(std::ofstream& csv_file) {
+    auto first = NODE_STATS_COL_NAMES.begin();
+    auto last =  NODE_STATS_COL_NAMES.end();
+    writeRowCSV(csv_file, first, last);
+}
 
-    for (int i = 0; i < NODE_STATS_COL_NAMES.size(); i++) {
-        csv_file << NODE_STATS_COL_NAMES.at(i);
-        if (i < NODE_STATS_COL_NAMES.size() - 1) csv_file << ",";
+void writeBoundsToCSV(std::vector<Bounds>& bounds_vector, std::string& file_path) {
+    std::ofstream csv_file(file_path);
+    writeBoundsColumnsNames(csv_file);
+    for (Bounds& bounds : bounds_vector) {
+        writeBoundsRow(bounds, csv_file);
     }
-    csv_file << "\n";
+}
+
+void writeBoundsColumnsNames(std::ofstream& csv_file) {
+    auto first = BOUNDS_COLUMN_NAMES.begin();
+    auto last = BOUNDS_COLUMN_NAMES.end();
+    writeRowCSV(csv_file, first, last);
+}
+
+void writeBoundsRow(Bounds& bounds, std::ofstream& csv_file) {
+    csv_file << timePointToString(bounds.start_timestamp) << ",";
+    csv_file << timePointToString(bounds.end_timestamp) << ",";
+    csv_file << bounds.lower_bound << ",";
+    csv_file << bounds.upper_bound << ",";
+    csv_file << bounds.node_id << "\n";
 }

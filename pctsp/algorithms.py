@@ -52,6 +52,7 @@ def pctsp_branch_and_cut(
     graph: nx.Graph,
     quota: int,
     root_vertex: Vertex,
+    bounds_csv_filename: str = "scip_bounds.csv",
     cost_cover_disjoint_paths: bool = False,
     cost_cover_shortest_path: bool = False,
     cost_cover_steiner_tree: bool = False,
@@ -74,6 +75,7 @@ def pctsp_branch_and_cut(
         graph: Undirected input graph with edge costs and vertex prizes
         quota: The minimum prize the tour must collect
         root_vertex: The tour must start and end at the root vertex
+        bounds_csv_filename: Name of the csv file to save upper and lower bounds
         cost_cover_disjoint_paths: True if disjoint paths cost cover inequality is used
         cost_cover_shortest_paths: True if shortest paths cost cover inequality is used
         cost_cover_steiner_tree: True if Steiner tree cost cover inequality is used
@@ -98,6 +100,7 @@ def pctsp_branch_and_cut(
     if not output_dir:
         output_dir = Path(".")
     output_dir.mkdir(exist_ok=True, parents=False)
+    bounds_csv_filepath = output_dir / bounds_csv_filename
     metrics_filepath = output_dir / metrics_filename
     log_boost_filepath = output_dir / log_boost_filename
     log_scip_filepath = output_dir / log_scip_filename
@@ -114,6 +117,7 @@ def pctsp_branch_and_cut(
         cost_dict,
         quota,
         root_vertex,
+        str(bounds_csv_filepath),
         cost_cover_disjoint_paths,
         cost_cover_shortest_path,
         cost_cover_steiner_tree,

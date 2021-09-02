@@ -11,6 +11,7 @@ py::list pctsp_branch_and_cut_bind(
     py::dict& cost_dict,
     int quota,
     int root_vertex,
+    py::str& bounds_csv_filepath_py,
     bool cost_cover_disjoint_paths,
     bool cost_cover_shortest_path,
     bool cost_cover_steiner_tree,
@@ -51,6 +52,7 @@ py::list pctsp_branch_and_cut_bind(
     std::string name = py::extract<std::string>(name_py);
 
     // get the log file
+    std::string bounds_csv_filepath = py::extract<std::string>(bounds_csv_filepath_py);
     std::string log_scip_filepath = py::extract<std::string>(log_scip_filepath_py);
     std::string metrics_csv_filepath = py::extract<std::string>(metrics_csv_filepath_py);
     // run branch and cut algorithm - returns a list of edges in solution
@@ -61,6 +63,7 @@ py::list pctsp_branch_and_cut_bind(
         prize_map,
         quota,
         boost_root,
+        bounds_csv_filepath,
         log_scip_filepath,
         metrics_csv_filepath,
         name,

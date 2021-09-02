@@ -50,6 +50,7 @@ __all__ = [
     "extract_suurballe_edge_disjoint_paths",
     "find_parents_in_shortest_path_tree",
     "get_relative_prefered_site_package",
+    "graph_from_edge_list",
     "is_ancestor",
     "pctsp_branch_and_cut",
     "preorder",
