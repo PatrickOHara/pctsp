@@ -32,7 +32,7 @@ getVariableNameToWeightMap(std::map<Edge, SCIP_VAR *> &edge_variable_map,
 }
 
 template <typename Edge, typename EdgeVariableMap>
-SCIP_RETCODE PCTSPaddRootVertexConstraint(SCIP *mip,
+SCIP_RETCODE PCTSPaddRootVertexConstraint(SCIP *scip,
                                           EdgeVariableMap edge_variable_map,
                                           Edge root_self_loop) {
     SCIP_VAR *root_variable = edge_variable_map[root_self_loop];
@@ -41,15 +41,15 @@ SCIP_RETCODE PCTSPaddRootVertexConstraint(SCIP *mip,
     vars[0] = root_variable;
     double values[1];
     values[0] = 1;
-    SCIP_CALL(SCIPcreateConsBasicLinear(mip, &cons, "root-constraint", 1, vars,
+    SCIP_CALL(SCIPcreateConsBasicLinear(scip, &cons, "root-constraint", 1, vars,
                                         values, 1, 1));
-    SCIP_CALL(SCIPaddCons(mip, cons));
-    SCIP_CALL(SCIPreleaseCons(mip, &cons));
+    SCIP_CALL(SCIPaddCons(scip, cons));
+    SCIP_CALL(SCIPreleaseCons(scip, &cons));
     return SCIP_OKAY;
 }
 
 template <typename Graph, typename EdgeVariableMap>
-SCIP_RETCODE PCTSPaddDegreeTwoConstraint(SCIP *mip, Graph &graph,
+SCIP_RETCODE PCTSPaddDegreeTwoConstraint(SCIP *scip, Graph &graph,
                                          EdgeVariableMap &edge_variable_map) {
     // for each vertex in the graph, get the variable that represents the vertex
     // then add a constraint that sets the sum of the variables of the neighbors
@@ -90,11 +90,11 @@ SCIP_RETCODE PCTSPaddDegreeTwoConstraint(SCIP *mip, Graph &graph,
             }
         }
         // add the variables to an equality constraint
-        SCIP_CALL(SCIPcreateConsBasicLinear(mip, &cons, cons_name.c_str(),
+        SCIP_CALL(SCIPcreateConsBasicLinear(scip, &cons, cons_name.c_str(),
                                             num_neighbors, vars, coefs, 0, 0));
-        SCIP_CALL(SCIPaddCons(mip, cons));
+        SCIP_CALL(SCIPaddCons(scip, cons));
         // release the constraint
-        SCIP_CALL(SCIPreleaseCons(mip, &cons));
+        SCIP_CALL(SCIPreleaseCons(scip, &cons));
 
         cons_count++;
     }
@@ -106,36 +106,36 @@ SCIP_RETCODE PCTSPaddDegreeTwoConstraint(SCIP *mip, Graph &graph,
  * is at least the quota.
  */
 template <typename VariableMap, typename WeightMap>
-SCIP_RETCODE PCTSPaddPrizeConstraint(SCIP *mip, VariableMap &variable_map,
+SCIP_RETCODE PCTSPaddPrizeConstraint(SCIP *scip, VariableMap &variable_map,
                                      WeightMap &weight_map, int quota,
                                      int num_edge_variables) {
     SCIP_CONS *cons = nullptr;
 
     // arrays to store variables and weights of items in knapsack
-    SCIP_VAR **vars = SCIPgetVars(mip);
+    SCIP_VAR **vars = SCIPgetVars(scip);
 
     std::map<const char *, int> variable_name_to_weight_map =
         getVariableNameToWeightMap(variable_map, weight_map);
 
     // take the negative quota and set it to be the capacity of the knapsack
-    // SCIP_CALL(SCIPcreateConsBasicLinear(mip, &cons, "prize-constraint", 0,
+    // SCIP_CALL(SCIPcreateConsBasicLinear(scip, &cons, "prize-constraint", 0,
     // NULL,
-    //                                     NULL, -SCIPinfinity(mip), -quota));
-    SCIP_CALL(SCIPcreateConsLinear(mip, &cons, "prize-constraint", 0, NULL,
-                                   NULL, -SCIPinfinity(mip), -quota, TRUE, TRUE,
+    //                                     NULL, -SCIPinfinity(scip), -quota));
+    SCIP_CALL(SCIPcreateConsLinear(scip, &cons, "prize-constraint", 0, NULL,
+                                   NULL, -SCIPinfinity(scip), -quota, TRUE, TRUE,
                                    TRUE, TRUE, TRUE, FALSE, false, FALSE, FALSE,
                                    FALSE));
     for (int i = 0; i < num_edge_variables; i++) {
         SCIP_VAR *variable = vars[i];
         int weight = -variable_name_to_weight_map[SCIPvarGetName(variable)];
-        SCIP_CALL(SCIPaddCoefLinear(mip, cons, variable, weight));
-        SCIP_CALL(SCIPreleaseVar(mip, &variable));
+        SCIP_CALL(SCIPaddCoefLinear(scip, cons, variable, weight));
+        SCIP_CALL(SCIPreleaseVar(scip, &variable));
     }
 
-    SCIP_CALL(SCIPaddCons(mip, cons));
+    SCIP_CALL(SCIPaddCons(scip, cons));
 
     // remember to release the constraint once done with it
-    SCIP_CALL(SCIPreleaseCons(mip, &cons));
+    SCIP_CALL(SCIPreleaseCons(scip, &cons));
 
     return SCIP_OKAY;
 }

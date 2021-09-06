@@ -27,7 +27,7 @@ std::vector<typename boost::graph_traits<UndirectedGraph>::edge_descriptor> getE
 typedef typename std::vector<SCIP_VAR*> VarVector;
 
 SCIP_RETCODE addSubtourEliminationConstraint(
-    SCIP* mip,
+    SCIP* scip,
     SCIP_CONSHDLR* conshdlr,
     PCTSPgraph& graph,
     std::vector<PCTSPvertex>& vertex_set,
@@ -148,13 +148,13 @@ public:
 
     /** default constructor */
     PCTSPconshdlrSubtour(
-        SCIP* mip,
+        SCIP* scip,
         bool _sec_disjoint_tour,
         int _sec_disjoint_tour_freq,
         bool _sec_maxflow_mincut,
         int _sec_maxflow_mincut_freq
     )
-        : ObjConshdlr(mip, "subtour", "PCTSP subtour elimination constraints",
+        : ObjConshdlr(scip, "subtour", "PCTSP subtour elimination constraints",
             1000000, -2000000, -2000000, 1, -1, 1, 0,
             FALSE, FALSE, TRUE, SCIP_PROPTIMING_BEFORELP, SCIP_PRESOLTIMING_FAST)
     {
@@ -180,7 +180,7 @@ public:
  * of the SCIP solver.
  */
 SCIP_RETCODE PCTSPcreateConsSubtour(
-    SCIP* mip,
+    SCIP* scip,
     SCIP_CONS** cons,
     std::string& name,
     PCTSPgraph& graph,
@@ -197,7 +197,7 @@ SCIP_RETCODE PCTSPcreateConsSubtour(
 );
 
 SCIP_RETCODE PCTSPcreateBasicConsSubtour(
-    SCIP* mip,
+    SCIP* scip,
     SCIP_CONS** cons,
     std::string& name,
     PCTSPgraph& graph,

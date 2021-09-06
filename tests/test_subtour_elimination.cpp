@@ -45,10 +45,10 @@ TEST(TestSubtourElimination, testDisconnectedCut) {
 
 TEST(TestSubtourElimination, testInsertEdgeVertexVariables) {
     // create linear program
-    SCIP* mip = NULL;
-    SCIPcreate(&mip);
-    SCIPincludeDefaultPlugins(mip);
-    SCIPcreateProbBasic(mip, "test-insert-edge-vertex-variables");
+    SCIP* scip = NULL;
+    SCIPcreate(&scip);
+    SCIPincludeDefaultPlugins(scip);
+    SCIPcreateProbBasic(scip, "test-insert-edge-vertex-variables");
 
     int n_edge_vars = 4;
     int n_vertex_vars = 2;
@@ -61,14 +61,14 @@ TEST(TestSubtourElimination, testInsertEdgeVertexVariables) {
 
     for (int i = 0; i < n_edge_vars; i++) {
         SCIP_VAR* var = NULL;
-        SCIPcreateVarBasic(mip, &var, NULL, 0, 1, 1, SCIP_VARTYPE_CONTINUOUS);
-        SCIPaddVar(mip, var);
+        SCIPcreateVarBasic(scip, &var, NULL, 0, 1, 1, SCIP_VARTYPE_CONTINUOUS);
+        SCIPaddVar(scip, var);
         edge_variables[i] = var;
     }
     for (int i = 0; i < n_vertex_vars; i++) {
         SCIP_VAR* var = NULL;
-        SCIPcreateVarBasic(mip, &var, NULL, 0, 1, 1, SCIP_VARTYPE_CONTINUOUS);
-        SCIPaddVar(mip, var);
+        SCIPcreateVarBasic(scip, &var, NULL, 0, 1, 1, SCIP_VARTYPE_CONTINUOUS);
+        SCIPaddVar(scip, var);
         vertex_variables[i] = var;
     }
     // run insertion algorithm
@@ -90,8 +90,8 @@ TEST(TestSubtourElimination, testInsertEdgeVertexVariables) {
 
 TEST(TestSubtourElimination, testProbDataPCTSP) {
     PCTSPgraph graph;
-    SCIP* mip = NULL;
-    SCIPcreate(&mip);
+    SCIP* scip = NULL;
+    SCIPcreate(&scip);
     boost::add_edge(0, 1, graph);
     SCIP_VAR* var;
     PCTSPedgeVariableMap edge_variable_map;
@@ -100,17 +100,17 @@ TEST(TestSubtourElimination, testProbDataPCTSP) {
     std::vector<NodeStats> node_stats;
     auto probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota, &node_stats);
     SCIPcreateObjProb(
-        mip,
+        scip,
         "test-prob-data",
         probdata,
         true
     );
-    SCIPcreateVarBasic(mip, &var, "var0", 0, 1, 1, SCIP_VARTYPE_BINARY);
+    SCIPcreateVarBasic(scip, &var, "var0", 0, 1, 1, SCIP_VARTYPE_BINARY);
     auto edge = boost::edge(0, 1, graph).first;
     edge_variable_map[edge] = var;
 
     // now check the when we get the prob data from the function call that the data is the same
-    ProbDataPCTSP* loaddata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(mip));
+    ProbDataPCTSP* loaddata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
     auto loaded_edge = boost::edge(0, 1, *loaddata->getInputGraph()).first;
     auto loaded_var = (*loaddata->getEdgeVariableMap())[loaded_edge];
     EXPECT_EQ(loaded_edge, edge);
@@ -136,42 +136,42 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
 
     // initialise and create the model without subtour elimiation constraints
-    SCIP* mip = NULL;
-    SCIPcreate(&mip);
-    SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip, true, 1, true, 1), TRUE);
-    SCIPincludeDefaultPlugins(mip);
+    SCIP* scip = NULL;
+    SCIPcreate(&scip);
+    SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, true, 1, true, 1), TRUE);
+    SCIPincludeDefaultPlugins(scip);
     ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &variable_map, &quota, &node_stats);
     SCIPcreateObjProb(
-        mip,
+        scip,
         "test-pctsp-with-secs",
         probdata,
         true
     );
-    SCIPsetIntParam(mip, "presolving/maxrounds", 0);
+    SCIPsetIntParam(scip, "presolving/maxrounds", 0);
 
     // add custom message handler
     SCIP_MESSAGEHDLR* handler;
     SCIPcreateMessagehdlrDefault(&handler, false, ".logs/test-create-basic_subtour.txt", true);
-    SCIPsetMessagehdlr(mip, handler);
+    SCIPsetMessagehdlr(scip, handler);
 
     // add variables and constraints
-    PCTSPmodelWithoutSECs(mip, graph, cost_map, weight_map, quota,
+    PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota,
         root_vertex, variable_map);
     EXPECT_EQ(probdata->getEdgeVariableMap()->size(), variable_map.size());
 
     // create and add subtour elimination constraint
     SCIP_CONS* cons;
     std::string cons_name("subtour-constraint");
-    PCTSPcreateBasicConsSubtour(mip, &cons, cons_name, graph, root_vertex);
-    SCIPaddCons(mip, cons);
-    SCIPreleaseCons(mip, &cons);
-    SCIPprintOrigProblem(mip, NULL, NULL, false);
+    PCTSPcreateBasicConsSubtour(scip, &cons, cons_name, graph, root_vertex);
+    SCIPaddCons(scip, cons);
+    SCIPreleaseCons(scip, &cons);
+    SCIPprintOrigProblem(scip, NULL, NULL, false);
 
-    SCIPsolve(mip);
-    auto sol = SCIPgetBestSol(mip);
-    SCIPprintSol(mip, sol, NULL, false);
+    SCIPsolve(scip);
+    auto sol = SCIPgetBestSol(scip);
+    SCIPprintSol(scip, sol, NULL, false);
 
-    auto solution_edges = getSolutionEdges(mip, graph, sol, variable_map);
+    auto solution_edges = getSolutionEdges(scip, graph, sol, variable_map);
     auto first_edge = boost::edge(3, 5, graph).first;
     auto second_edge = boost::edge(1, 4, graph).first;
     auto first_it = std::find(solution_edges.begin(), solution_edges.end(), first_edge);

@@ -126,7 +126,7 @@ SCIP_RETCODE includeShortestPathCostCover(SCIP* scip, std::vector<int>& path_dis
 
 SCIP_RETCODE includeDisjointPathsCostCover(SCIP* scip, std::vector<int>& path_distances);
 
-template <typename Graph, typename CostMap>
+template <class Graph, class CostMap>
 SCIP_RETCODE includeShortestPathCostCover(
     SCIP* scip,
     Graph& graph,
@@ -136,13 +136,35 @@ SCIP_RETCODE includeShortestPathCostCover(
     typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
     std::vector<Vertex> pred (boost::num_vertices(graph));
     std::vector<int> distances (boost::num_vertices(graph));
-    dijkstra_shortest_paths(graph, source_vertex, boost::predecessor_map(
-        boost::make_iterator_property_map(
-            pred.begin(), get(boost::vertex_index, graph)
-        )).distance_map(
-            boost::make_iterator_property_map(distances.begin(), get(boost::vertex_index, graph))
-        )
+    auto vindex = get(boost::vertex_index, graph);
+    auto pred_map = boost::predecessor_map(boost::make_iterator_property_map(pred.begin(), vindex));
+    // auto distance_map = boost::distance_map(boost::make_iterator_property_map(distances.begin(), vindex));
+    // auto weightmap = get(boost::edge_weight, graph);
+
+    dijkstra_shortest_paths(
+        graph,
+        source_vertex,
+        pred_map.distance_map(boost::make_iterator_property_map(
+            distances.begin(), vindex
+        ))
     );
+
+    // dijkstra_shortest_paths(
+    //     graph,
+    //     source_vertex,
+    //     weight_map,
+    //     vindex,
+    //     pred_map,
+    //     distance_map
+    // );
+    // dijkstra_shortest_paths(
+    //     graph,
+    //     source_vertex,
+    //     weight_map=weightmap,
+    //     vertex_index_map=vindex,
+    //     predecessor_map=pred_map,
+    //     distance_map=distance_map
+    // );
     return includeShortestPathCostCover(scip, distances);
 }
 
