@@ -126,8 +126,6 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     // double rhs = 0;
     double rhs = -1;
 
-    SCIP_CONS* cons;
-
     SCIP_VAR* transvars[nvars];
 
     for (int i = 0; i < nvars; i++) {
