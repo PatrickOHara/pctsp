@@ -2,15 +2,8 @@
 #include "pctsp/data_structures.hh"
 #include "pctsp/logger.hh"
 
-struct SCIP_ConsData
-{
-    std::map<PCTSPvertex, int>* shortest_path_map;
-    std::map<PCTSPvertex, int>* disjoint_paths_map;
-};
-
 SCIP_RETCODE addCoverInequality(
     SCIP* scip,
-    SCIP_CONSHDLR* conshdlr,
     std::vector<SCIP_VAR*>& variables,
     SCIP_RESULT* result,
     SCIP_SOL* sol
@@ -26,164 +19,40 @@ SCIP_RETCODE addCoverInequality(
     SCIP_VAR* transvars[nvars];
     SCIPgetTransformedVars(scip, nvars, vars, transvars);
 
+    SCIP_CONS* cons;
+    const char* cons_name = "cost-cover";
+    SCIPcreateConsBasicLinear(scip, &cons, cons_name, nvars, vars, coefs, lhs, rhs);
+    SCIPaddCons(scip, cons);
+    SCIPreleaseCons(scip, &cons);
+
     // create the row and add the data and variables
-    BOOST_LOG_TRIVIAL(info) << "Adding variables to row.";
-    SCIP_ROW* row;
-    const char* row_name = "";
-    SCIPcreateEmptyRowConshdlr(scip, &row, conshdlr, row_name, lhs, rhs, false, false, true);
-    SCIPaddVarsToRow(scip, row, nvars, transvars, coefs);
+    // BOOST_LOG_TRIVIAL(info) << "Adding variables to row.";
+    // SCIP_ROW* row;
+    // const char* row_name = "";
+    // SCIPcreateEmptyRowConshdlr(scip, &row, conshdlr, row_name, lhs, rhs, false, false, true);
+    // SCIPaddVarsToRow(scip, row, nvars, transvars, coefs);
 
-    BOOST_LOG_TRIVIAL(info) << "Added " << nvars << " to a cover inequality.";
+    // BOOST_LOG_TRIVIAL(info) << "Added " << nvars << " to a cover inequality.";
 
-    // test if the cut effects the LP
-    if (SCIPisCutEfficacious(scip, sol, row)) {
-        SCIP_Bool infeasible;
-        SCIP_CALL(SCIPaddRow(scip, row, false, &infeasible));
-        SCIPprintRow(scip, row, NULL);
-        if (infeasible)
-            *result = SCIP_CUTOFF;
-        else
-            *result = SCIP_SEPARATED;
-    }
-    SCIP_CALL(SCIPreleaseRow(scip, &row));
+    // // test if the cut effects the LP
+    // if (SCIPisCutEfficacious(scip, sol, row)) {
+    //     SCIP_Bool infeasible;
+    //     SCIP_CALL(SCIPaddRow(scip, row, false, &infeasible));
+    //     SCIPprintRow(scip, row, NULL);
+    //     if (infeasible)
+    //         *result = SCIP_CUTOFF;
+    //     else
+    //         *result = SCIP_SEPARATED;
+    // }
+    // SCIP_CALL(SCIPreleaseRow(scip, &row));
     return SCIP_OKAY;
 }
-
-SCIP_RETCODE createConsCostCover(
-    SCIP*                 scip,               /**< SCIP data structure */
-    SCIP_CONS**           cons,               /**< pointer to hold the created constraint */
-    std::string& name,
-    std::map<PCTSPvertex, int>& disjoint_paths_map,
-    std::map<PCTSPvertex, int>& shortest_path_map,
-    SCIP_Bool             initial,            /**< should the LP relaxation of constraint be in the initial LP? */
-    SCIP_Bool             separate,           /**< should the constraint be separated during LP processing? */
-    SCIP_Bool             enforce,            /**< should the constraint be enforced during node processing? */
-    SCIP_Bool             check,              /**< should the constraint be checked for feasibility? */
-    SCIP_Bool             propagate,          /**< should the constraint be propagated during node processing? */
-    SCIP_Bool             local,              /**< is constraint only valid locally? */
-    SCIP_Bool             modifiable,         /**< is constraint modifiable (subject to column generation)? */
-    SCIP_Bool             dynamic,            /**< is constraint dynamic? */
-    SCIP_Bool             removable           /**< should the constraint be removed from the LP due to aging or cleanup? */
-) {
-    SCIP_CONSHDLR* conshdlr;
-    SCIP_CONSDATA* consdata;
-
-    // find the constraint handler
-    conshdlr = SCIPfindConshdlr(scip, "cost_cover");
-    if (conshdlr == NULL)
-    {
-        SCIPerrorMessage("cost cover constraint handler not found\n");
-        return SCIP_PLUGINNOTFOUND;
-    }
-    // store the constraint data
-    SCIP_CALL( SCIPallocBlockMemory(scip, &consdata) );
-    consdata->disjoint_paths_map = &disjoint_paths_map;
-    consdata->shortest_path_map = &shortest_path_map;
-
-    /* create constraint */
-    SCIP_CALL(SCIPcreateCons(scip, cons, name.c_str(), conshdlr, consdata, initial, separate, enforce, check, propagate,
-        local, modifiable, dynamic, removable, FALSE));
-
-    return SCIP_OKAY;
-}
-
-SCIP_RETCODE checkAllCostCover(
-    SCIP* scip,
-    SCIP_CONSDATA* consdata,
-    SCIP_RESULT* result,
-    bool cost_cover_shortest_path,
-    bool cost_cover_disjoint_paths,
-    bool cost_cover_steiner_tree
-) {
-    auto cost_upper_bound = SCIPgetUpperbound(scip);
-    bool shortest_path_violation = FALSE;
-    bool disjoint_paths_violation = FALSE;
-
-    if (cost_cover_shortest_path) {
-        // ToDo: multiple shortest path by two
-        auto shortest_path_map = *consdata->shortest_path_map;
-        shortest_path_violation= isCostCoverPathsViolated(shortest_path_map, cost_upper_bound);
-    }
-    else if (cost_cover_disjoint_paths) {
-        auto disjoint_paths_map = *consdata->disjoint_paths_map;
-        disjoint_paths_violation = isCostCoverPathsViolated(disjoint_paths_map, cost_upper_bound);
-    }
-    else if (cost_cover_steiner_tree) {
-        throw NotImplementedException();
-    }
-    if (shortest_path_violation || disjoint_paths_violation) {
-        *result = SCIP_INFEASIBLE;
-    }
-    return SCIP_OKAY;
-}
-
-SCIP_DECL_CONSCHECK(CostCoverConshdlr::scip_check)
-{
-    
-    bool found = FALSE;
-    if (nconss == 0) {
-        *result = SCIP_DIDNOTRUN;
-    }
-    else {
-        SCIP_CONS* cons = conss[0];
-        SCIP_CONSDATA* consdata = SCIPconsGetData(cons);
-        checkAllCostCover(scip, consdata, result, cost_cover_shortest_path, cost_cover_disjoint_paths, cost_cover_steiner_tree);
-   }
-    return SCIP_OKAY;
-}
-
-SCIP_DECL_CONSENFOPS(CostCoverConshdlr::scip_enfops) {
-    bool found = FALSE;
-    if (nconss == 0) {
-        *result = SCIP_DIDNOTRUN;
-    }
-    else {
-        SCIP_CONS* cons = conss[0];
-        SCIP_CONSDATA* consdata = SCIPconsGetData(cons);
-        checkAllCostCover(scip, consdata, result, cost_cover_shortest_path, cost_cover_disjoint_paths, cost_cover_steiner_tree);
-   }
-    return SCIP_OKAY;
-}
-
-SCIP_DECL_CONSENFOLP(CostCoverConshdlr::scip_enfolp) {
-    bool found = FALSE;
-    if (nconss == 0) {
-        *result = SCIP_DIDNOTRUN;
-    }
-    else {
-        SCIP_CONS* cons = conss[0];
-        SCIP_CONSDATA* consdata = SCIPconsGetData(cons);
-        checkAllCostCover(scip, consdata, result, cost_cover_shortest_path, cost_cover_disjoint_paths, cost_cover_steiner_tree);
-   }
-    return SCIP_OKAY;
-}
-
-SCIP_DECL_CONSTRANS(CostCoverConshdlr::scip_trans) {
-    return SCIP_OKAY;
-}
-
-SCIP_DECL_CONSLOCK(CostCoverConshdlr::scip_lock) {
-    return SCIP_OKAY;
-}
-
-SCIP_DECL_CONSPRINT(CostCoverConshdlr::scip_print) {
-    return SCIP_OKAY;
-}
-
-SCIP_DECL_CONSSEPALP(CostCoverConshdlr::scip_sepalp) {
-    return SCIP_OKAY;
-}
-
-SCIP_DECL_CONSSEPASOL(CostCoverConshdlr::scip_sepasol) {
-    return SCIP_OKAY;
-}
-
 
 // Cost cover event handler for new solutions
 
 struct SCIP_EventhdlrData
 {
-    std::map<PCTSPvertex, int>* paths_cost_map;
+    std::vector<int>* path_distances;
 };
 
 SCIP_DECL_EVENTFREE(CostCoverEventHandler::scip_free) {
@@ -222,8 +91,8 @@ SCIP_DECL_EVENTEXEC(CostCoverEventHandler::scip_exec) {
     PCTSPvertex root_vertex = *probdata->getRootVertex();
     PCTSPedgeVariableMap edge_variable_map = *probdata->getEdgeVariableMap();
 
-    auto paths_cost_map = *eventhdlrdata->paths_cost_map;
-    auto violated_vertices = separateCostCoverPaths(paths_cost_map, cost_upper_bound);
+    auto path_distances = *eventhdlrdata->path_distances;
+    auto violated_vertices = separateCostCoverPaths(graph, path_distances, cost_upper_bound);
     bool violation_found = violated_vertices.size() > 0;
     for (auto& vertex: violated_vertices) {
         std::vector<PCTSPvertex> cover_vertices = {root_vertex, vertex};
@@ -232,20 +101,38 @@ SCIP_DECL_EVENTEXEC(CostCoverEventHandler::scip_exec) {
     return SCIP_OKAY;
 }
 
-const std::string SHORTEST_PATH_COST_COVER_NAME = "shortest-path-cost-cover-event-handler";
-const std::string DISJOINT_PATHS_COST_COVER_NAME = "disjoint-paths-cost-cover-event-handler";
-
-template <typename Vertex>
 SCIP_RETCODE includeCostCoverEventHandler(
     SCIP* scip,
-    std::map<Vertex, int>& paths_cost_map
+    const std::string& name,
+    const std::string& description,
+    std::vector<int>& path_distances
 )
 {
-    CostCoverEventHandler* handler = new CostCoverEventHandler(scip);
+    CostCoverEventHandler* handler = new CostCoverEventHandler(scip, name, description);
     SCIP_CALL(SCIPincludeObjEventhdlr(scip, handler, true));
 
-    SCIP_EVENTHDLRDATA* eventhdlrdata;   
+    SCIP_EVENTHDLRDATA* eventhdlrdata; 
+    SCIP_EVENTHDLR* eventhdlr = SCIPfindEventhdlr(scip, name.c_str());  
     SCIP_CALL( SCIPallocBlockMemory(scip, &eventhdlrdata) );
-    eventhdlrdata = SCIPeventhdlrGetData(handler);
-    eventhdlrdata->paths_cost_map = paths_cost_map;
+    eventhdlrdata = SCIPeventhdlrGetData(eventhdlr);
+    eventhdlrdata->path_distances = &path_distances;
+    return SCIP_OKAY;
+}
+
+SCIP_RETCODE includeShortestPathCostCover(SCIP* scip, std::vector<int>& path_distances) {
+    return includeCostCoverEventHandler(
+        scip,
+        SHORTEST_PATH_COST_COVER_NAME,
+        COST_COVER_DESCRIPTION,
+        path_distances
+    );
+}
+
+SCIP_RETCODE includeDisjointPathsCostCover(SCIP* scip, std::vector<int>& path_distances) {
+    return includeCostCoverEventHandler(
+        scip,
+        DISJOINT_PATHS_COST_COVER_NAME,
+        COST_COVER_DESCRIPTION,
+        path_distances
+    );
 }

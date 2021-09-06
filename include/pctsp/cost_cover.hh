@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <objscip/objscip.h>
 #include <objscip/objscipdefplugins.h>
@@ -14,45 +15,25 @@
 /**
  * @brief Find vertices that cannot be reached from the source
  * in cost less than or equal to the cost upper bound.
- * 
- * @tparam UndirectedGraph 
- * @tparam CostMap 
- * @param graph 
- * @param cost_map 
- * @param source_vertex 
- * @param cost_upper_bound 
- * @return std::vector<boost::graph_traits<Graph>::vertex_descriptor> 
  */
-template <class Vertex>
-std::vector<Vertex> separateCostCoverPaths(
-    std::map<Vertex, int>& cost_map,
+template <class Graph>
+std::vector<typename boost::graph_traits<Graph>::vertex_descriptor> separateCostCoverPaths(
+    Graph& graph,
+    std::vector<int>& path_distances,
     int cost_upper_bound
 ) {
+    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
     std::vector<Vertex> separated_vertices;
-    for (auto const& [key, val] : cost_map){
-        if (val > cost_upper_bound) {
-            separated_vertices.push_back(key);
+    for (auto vertex: boost::make_iterator_range(boost::vertices(graph))) {
+        if (path_distances[vertex] > cost_upper_bound) {
+            separated_vertices.push_back(vertex);
         }
     }
     return separated_vertices;
 }
 
-template <class Vertex>
-bool isCostCoverPathsViolated(
-    std::map<Vertex, int>& cost_map,
-    int cost_upper_bound
-) {
-    for (auto const& [key, val] : cost_map){
-        if (val > cost_upper_bound) {
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
 SCIP_RETCODE addCoverInequality(
     SCIP* scip,
-    SCIP_CONSHDLR* conshdlr,
     std::vector<SCIP_VAR*>& variables,
     SCIP_RESULT* result,
     SCIP_SOL* sol
@@ -82,57 +63,15 @@ SCIP_RETCODE addCoverInequalityFromVertices(
     return SCIP_OKAY;
 }
 
-class CostCoverConshdlr : public scip::ObjConshdlr
-{
-private:
-    bool cost_cover_disjoint_paths;
-    bool cost_cover_shortest_path;
-    bool cost_cover_steiner_tree;
-
-public:
-
-    CostCoverConshdlr(
-        SCIP* scip,
-        bool _cost_cover_disjoint_paths,
-        bool _cost_cover_shortest_path,
-        bool _cost_cover_steiner_tree
-    ) : ObjConshdlr(scip, "cost_cover", "PCTSP cost cover constraints",
-            1000000, -2000000, -2000000, 1, -1, 1, 0,
-            FALSE, FALSE, TRUE, SCIP_PROPTIMING_BEFORELP, SCIP_PRESOLTIMING_FAST)
-    {
-        cost_cover_disjoint_paths = _cost_cover_disjoint_paths;
-        cost_cover_shortest_path = _cost_cover_shortest_path;
-        cost_cover_steiner_tree = _cost_cover_steiner_tree;
-    }
-
-    SCIP_DECL_CONSCHECK(scip_check);
-    SCIP_DECL_CONSENFOPS(scip_enfops);
-    SCIP_DECL_CONSENFOLP(scip_enfolp);
-    SCIP_DECL_CONSTRANS(scip_trans);
-    SCIP_DECL_CONSLOCK(scip_lock);
-    SCIP_DECL_CONSPRINT(scip_print);
-    SCIP_DECL_CONSSEPALP(scip_sepalp);
-    SCIP_DECL_CONSSEPASOL(scip_sepasol);
-};
 
 class CostCoverEventHandler : public scip::ObjEventhdlr
 {
-private:
-    bool cost_cover_disjoint_paths;
-    bool cost_cover_shortest_path;
-    bool cost_cover_steiner_tree;
+
 public:
-   CostCoverEventHandler(
-        SCIP* scip,
-        bool _cost_cover_disjoint_paths,
-        bool _cost_cover_shortest_path,
-        bool _cost_cover_steiner_tree
-      )
-      : ObjEventhdlr(scip, "cost_cover_handler","Add cost cover inequalities when a new solution if found")
+   CostCoverEventHandler(SCIP* scip, const std::string& name, const std::string& description)
+      : ObjEventhdlr(scip, name.c_str(), description.c_str())
    {
-        cost_cover_disjoint_paths = _cost_cover_disjoint_paths;
-        cost_cover_shortest_path = _cost_cover_shortest_path;
-        cost_cover_steiner_tree = _cost_cover_steiner_tree;
+
    }
 
    /** destructor of event handler to free user data (called when SCIP is exiting) */
@@ -172,5 +111,39 @@ public:
    virtual SCIP_DECL_EVENTEXEC(scip_exec);
 };
 
+const std::string SHORTEST_PATH_COST_COVER_NAME = "Shortest path cost cover";
+const std::string DISJOINT_PATHS_COST_COVER_NAME = "Disjoint paths cost cover";
+const std::string COST_COVER_DESCRIPTION = "Cost cover inequality event handlers are triggered when a new best solution is found.";
+
+SCIP_RETCODE includeCostCoverEventHandler(
+    SCIP* scip,
+    const std::string& name,
+    const std::string& description,
+    std::vector<int>& path_distances
+);
+
+SCIP_RETCODE includeShortestPathCostCover(SCIP* scip, std::vector<int>& path_distances);
+
+SCIP_RETCODE includeDisjointPathsCostCover(SCIP* scip, std::vector<int>& path_distances);
+
+template <typename Graph, typename CostMap>
+SCIP_RETCODE includeShortestPathCostCover(
+    SCIP* scip,
+    Graph& graph,
+    CostMap& cost_map,
+    typename boost::graph_traits<Graph>::vertex_descriptor& source_vertex
+) {
+    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
+    std::vector<Vertex> pred (boost::num_vertices(graph));
+    std::vector<int> distances (boost::num_vertices(graph));
+    dijkstra_shortest_paths(graph, source_vertex, boost::predecessor_map(
+        boost::make_iterator_property_map(
+            pred.begin(), get(boost::vertex_index, graph)
+        )).distance_map(
+            boost::make_iterator_property_map(distances.begin(), get(boost::vertex_index, graph))
+        )
+    );
+    return includeShortestPathCostCover(scip, distances);
+}
 
 #endif
