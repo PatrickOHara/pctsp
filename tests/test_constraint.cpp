@@ -3,6 +3,8 @@
 #include "fixtures.hh"
 #include "pctsp/algorithms.hh"
 
+typedef GraphFixture SuurballeGraphFixture;
+
 TEST(TestConstraint, testAddRootVertexConstraint) {
     SCIP *scip_model = NULL;
     SCIPcreate(&scip_model);
@@ -20,10 +22,10 @@ TEST(TestConstraint, testAddRootVertexConstraint) {
     EXPECT_EQ(SCIPgetNConss(scip_model), 1);
 }
 
-TEST_F(SuurballeGraphFixture, testAddDegreeTwoConstraint) {
-    PCTSPgraph graph = get_suurballe_graph();
+TEST_P(SuurballeGraphFixture, testAddDegreeTwoConstraint) {
+    PCTSPgraph graph = getGraph();
+    auto cost_map = getCostMap(graph);
     addSelfLoopsToGraph(graph);
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
 
     typedef typename PCTSPgraph::edge_descriptor edge_t;
     std::map<edge_t, SCIP_VAR *> edge_variable_map;
@@ -36,3 +38,7 @@ TEST_F(SuurballeGraphFixture, testAddDegreeTwoConstraint) {
     PCTSPaddDegreeTwoConstraint(scip_model, graph, edge_variable_map);
     EXPECT_EQ(SCIPgetNConss(scip_model), boost::num_vertices(graph));
 }
+
+INSTANTIATE_TEST_SUITE_P(TestConstraint, SuurballeGraphFixture,
+    ::testing::Values(GraphType::SUURBALLE)
+);

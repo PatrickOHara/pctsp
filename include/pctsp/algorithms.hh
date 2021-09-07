@@ -18,18 +18,18 @@ using namespace boost;
 using namespace scip;
 using namespace std;
 
-template <typename Edge>
+template <typename TEdge>
 const char*
-getVariableNameFromEdge(std::map<Edge, SCIP_VAR*>& edge_variable_map,
-    Edge edge) {
+getVariableNameFromEdge(std::map<TEdge, SCIP_VAR*>& edge_variable_map,
+    TEdge edge) {
     SCIP_VAR* variable = edge_variable_map[edge];
     const char* variable_name = SCIPvarGetName(variable);
     return variable_name;
 }
 
 /** Add edge variables to the PCTSP SCIP model */
-template <typename Graph, typename CostMap, typename VariableMap>
-SCIP_RETCODE PCTSPaddEdgeVariables(SCIP* scip, Graph& graph, CostMap& cost_map,
+template <typename TGraph, typename TCostMap, typename VariableMap>
+SCIP_RETCODE PCTSPaddEdgeVariables(SCIP* scip, TGraph& graph, TCostMap& cost_map,
     VariableMap& variable_map) {
     for (auto edge : make_iterator_range(edges(graph))) {
         SCIP_VAR* edge_variable;
@@ -52,10 +52,10 @@ SCIP_RETCODE addHeuristicVarsToSolver(
     std::vector<SCIP_VAR*> vars
 );
 
-template <typename Graph, typename EdgeVariableMap, typename EdgeIt>
+template <typename TGraph, typename EdgeVariableMap, typename EdgeIt>
 SCIP_RETCODE addHeuristicEdgesToSolver(
     SCIP* scip,
-    Graph& graph,
+    TGraph& graph,
     SCIP_HEUR* heur,
     EdgeVariableMap& edge_variable_map,
     EdgeIt& first,
@@ -76,10 +76,10 @@ SCIP_RETCODE addHeuristicEdgesToSolver(
     return SCIP_OKAY;
 }
 
-template <typename Graph, typename EdgeVariableMap, typename VertexIt>
+template <typename TGraph, typename EdgeVariableMap, typename VertexIt>
 SCIP_RETCODE addHeuristicTourToSolver(
     SCIP* scip,
-    Graph& graph,
+    TGraph& graph,
     SCIP_HEUR* heur,
     EdgeVariableMap& edge_variable_map,
     VertexIt& first,
@@ -101,11 +101,15 @@ SCIP_RETCODE addHeuristicTourToSolver(
  * This function sets the objective function, adds the variables,
  * and adds the constraints.
  */
-template <typename Graph, typename Vertex, typename CostMap, typename WeightMap>
+template <typename TGraph, typename TCostMap, typename WeightMap>
 SCIP_RETCODE PCTSPmodelWithoutSECs(
-    SCIP* scip, Graph& graph, CostMap& cost_map, WeightMap& weight_map,
-    int quota, Vertex root_vertex,
-    std::map<typename Graph::edge_descriptor, SCIP_VAR*>& variable_map) {
+    SCIP* scip,
+    TGraph& graph,
+    TCostMap& cost_map,
+    WeightMap& weight_map,
+    int& quota,
+    typename TGraph::vertex_descriptor& root_vertex,
+    std::map<typename TGraph::edge_descriptor, SCIP_VAR*>& variable_map) {
     // from the graph, create the variables on edges and nodes
     SCIP_CALL(PCTSPaddEdgeVariables(scip, graph, cost_map, variable_map));
     int nvars = SCIPgetNVars(scip);
@@ -135,14 +139,14 @@ SCIP_RETCODE PCTSPmodelWithoutSECs(
 
 /** Solve the Prize Collecting TSP problem using a branch and cut algorithm
  */
-template <typename Graph, typename CostMap, typename PrizeMap>
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
 SCIP_RETCODE PCTSPbranchAndCut(
-    Graph& graph,
-    std::vector<typename boost::graph_traits<Graph>::edge_descriptor>& solution_edges,
-    CostMap& cost_map,
-    PrizeMap& prize_map,
+    TGraph& graph,
+    std::vector<typename boost::graph_traits<TGraph>::edge_descriptor>& solution_edges,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
     int quota,
-    typename boost::graph_traits<Graph>::vertex_descriptor root_vertex,
+    typename boost::graph_traits<TGraph>::vertex_descriptor root_vertex,
     std::string bounds_csv_filepath = "bounds.csv",
     bool cost_cover_disjoint_paths = false,
     bool cost_cover_shortest_path = true,
@@ -156,8 +160,8 @@ SCIP_RETCODE PCTSPbranchAndCut(
     int sec_maxflow_mincut_freq = 1,
     float time_limit = 14400    //  seconds (default 4 hours)
 ) {
-    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
-    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
+    typedef typename boost::graph_traits<TGraph>::edge_descriptor Edge;
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
 
     // initialise empty model
     SCIP* scip = NULL;

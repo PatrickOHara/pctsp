@@ -31,8 +31,8 @@ py::list pctsp_branch_and_cut_bind(
     PCTSPinitLogging(getBoostLevelFromPyLevel(logging_level_py));
     BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(py_edge_list, vertex_id_map);
-    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
-    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
+    VertexPrizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
+    EdgeCostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     PCTSPvertex boost_root = getNewVertex(vertex_id_map, root_vertex);
 
     std::vector<PCTSPedge> solution_edges;
@@ -87,8 +87,8 @@ bool graph_from_edge_list(py::list& edge_list, py::dict& prize_dict,
     py::dict& cost_dict) {
     BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
-    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
-    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
+    VertexPrizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
+    EdgeCostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     BOOST_ASSERT(boost::num_edges(graph) == py::len(edge_list));
     return true;
 }
@@ -101,8 +101,8 @@ py::list collapse_bind(py::list& edge_list, py::list& py_tour,
     BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
     auto tour = getBoostVertexList(vertex_id_map, py_tour);
-    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
-    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
+    VertexPrizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
+    EdgeCostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     auto root_vertex = getNewVertex(vertex_id_map, py_root);
     auto new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
     return getPyVertexList(vertex_id_map, new_tour);
@@ -113,8 +113,8 @@ py::list extend_bind(py::list& edge_list, py::list& py_tour,
     BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
     auto tour = getBoostVertexList(vertex_id_map, py_tour);
-    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
-    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
+    VertexPrizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
+    EdgeCostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     extend(graph, tour, cost_map, prize_map);
     return getPyVertexList(vertex_id_map, tour);
 }
@@ -123,8 +123,8 @@ py::list extend_until_prize_feasible_bind(py::list& edge_list, py::list& py_tour
     BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
     auto tour = getBoostVertexList(vertex_id_map, py_tour);
-    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
-    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
+    VertexPrizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
+    EdgeCostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
     return getPyVertexList(vertex_id_map, tour);
 }

@@ -4,12 +4,15 @@
 #include "pctsp/preprocessing.hh"
 #include <boost/graph/copy.hpp>
 
-TEST_F(SuurballeGraphFixture, testAddSelfLoopsToGraph) {
+typedef GraphFixture SuurballeGraphFixture;
+
+TEST_P(SuurballeGraphFixture, testAddSelfLoopsToGraph) {
     // strangely the degree of a self loop vertex is two?
-    PCTSPgraph simple_graph = get_suurballe_graph();
+    PCTSPgraph simple_graph = getGraph();
+    auto cost_map = getCostMap(simple_graph);
     PCTSPgraph graph;
     boost::copy_graph(simple_graph, graph);
-    auto cost_map = get(&PCTSPedgeProperties::cost, simple_graph);
+    cost_map = get(edge_weight, simple_graph);
     EXPECT_FALSE(hasSelfLoopsOnAllVertices(simple_graph));
     addSelfLoopsToGraph(graph);
     EXPECT_TRUE(hasSelfLoopsOnAllVertices(graph));
@@ -22,9 +25,9 @@ TEST_F(SuurballeGraphFixture, testAddSelfLoopsToGraph) {
 }
 
 /** test the prize is moved onto weights on the edges */
-TEST_F(SuurballeGraphFixture, testPutPrizeOntoEdgeWeights) {
-    PCTSPgraph graph = get_suurballe_graph();
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
+TEST_P(SuurballeGraphFixture, testPutPrizeOntoEdgeWeights) {
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
 
     int total_prize = 0;
     int i = 0;
@@ -52,3 +55,7 @@ TEST_F(SuurballeGraphFixture, testPutPrizeOntoEdgeWeights) {
     EXPECT_EQ(total_prize, boost::num_vertices(graph));
     EXPECT_EQ(total_prize, total_weight);
 }
+
+INSTANTIATE_TEST_SUITE_P(TestPreprocessing, SuurballeGraphFixture,
+    ::testing::Values(GraphType::SUURBALLE)
+);

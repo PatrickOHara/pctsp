@@ -16,13 +16,13 @@
  * @brief Find vertices that cannot be reached from the source
  * in cost less than or equal to the cost upper bound.
  */
-template <class Graph>
-std::vector<typename boost::graph_traits<Graph>::vertex_descriptor> separateCostCoverPaths(
-    Graph& graph,
+template <typename TGraph>
+std::vector<typename boost::graph_traits<TGraph>::vertex_descriptor> separateCostCoverPaths(
+    TGraph& graph,
     std::vector<int>& path_distances,
     int cost_upper_bound
 ) {
-    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
     std::vector<Vertex> separated_vertices;
     for (auto vertex: boost::make_iterator_range(boost::vertices(graph))) {
         if (path_distances[vertex] > cost_upper_bound) {
@@ -39,12 +39,12 @@ SCIP_RETCODE addCoverInequality(
     SCIP_SOL* sol
 );
 
-template <class UndirectedGraph>
+template <typename TGraph>
 SCIP_RETCODE addCoverInequalityFromVertices(
     SCIP* scip,
-    UndirectedGraph& graph,
-    std::vector<typename boost::graph_traits<UndirectedGraph>::vertex_descriptor>& cover_vertices,
-    std::map<typename boost::graph_traits<UndirectedGraph>::edge_descriptor, SCIP_VAR*>& edge_variable_map,
+    TGraph& graph,
+    std::vector<typename boost::graph_traits<TGraph>::vertex_descriptor>& cover_vertices,
+    std::map<typename boost::graph_traits<TGraph>::edge_descriptor, SCIP_VAR*>& edge_variable_map,
     SCIP_RESULT* result,
     SCIP_SOL* sol
 ) {
@@ -126,14 +126,14 @@ SCIP_RETCODE includeShortestPathCostCover(SCIP* scip, std::vector<int>& path_dis
 
 SCIP_RETCODE includeDisjointPathsCostCover(SCIP* scip, std::vector<int>& path_distances);
 
-template <class Graph, class CostMap>
+template <typename TGraph, typename TCostMap>
 SCIP_RETCODE includeShortestPathCostCover(
     SCIP* scip,
-    Graph& graph,
-    CostMap& cost_map,
-    typename boost::graph_traits<Graph>::vertex_descriptor& source_vertex
+    TGraph& graph,
+    TCostMap& cost_map,
+    typename boost::graph_traits<TGraph>::vertex_descriptor& source_vertex
 ) {
-    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
     std::vector<Vertex> pred (boost::num_vertices(graph));
     std::vector<int> distances (boost::num_vertices(graph));
     auto vindex = get(boost::vertex_index, graph);
@@ -141,13 +141,13 @@ SCIP_RETCODE includeShortestPathCostCover(
     // auto distance_map = boost::distance_map(boost::make_iterator_property_map(distances.begin(), vindex));
     // auto weightmap = get(boost::edge_weight, graph);
 
-    dijkstra_shortest_paths(
-        graph,
-        source_vertex,
-        pred_map.distance_map(boost::make_iterator_property_map(
-            distances.begin(), vindex
-        ))
-    );
+    // dijkstra_shortest_paths(
+    //     graph,
+    //     source_vertex,
+    //     pred_map.distance_map(boost::make_iterator_property_map(
+    //         distances.begin(), vindex
+    //     ))
+    // );
 
     // dijkstra_shortest_paths(
     //     graph,

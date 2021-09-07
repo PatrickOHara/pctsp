@@ -5,12 +5,12 @@
 #include "pctsp/algorithms.hh"
 
 typedef GraphFixture AlgorithmsFixture;
-
+typedef GraphFixture SuurballeGraphFixture;
 
 /** Test edge variables are added to the model */
-TEST_F(SuurballeGraphFixture, testPCTSPaddEdgeVariables) {
-    PCTSPgraph graph = get_suurballe_graph();
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
+TEST_P(SuurballeGraphFixture, testPCTSPaddEdgeVariables) {
+    PCTSPgraph graph = getGraph();
+    auto cost_map = getCostMap(graph);
     SCIP* scip_model = NULL;
     SCIPcreate(&scip_model);
     SCIPincludeDefaultPlugins(scip_model);
@@ -26,13 +26,13 @@ TEST_F(SuurballeGraphFixture, testPCTSPaddEdgeVariables) {
     EXPECT_EQ(add_vars_code, SCIP_OKAY);
 }
 
-TEST_F(SuurballeGraphFixture, testPCTSPwithoutSECs) {
-    PCTSPgraph graph = get_suurballe_graph();
+TEST_P(SuurballeGraphFixture, testPCTSPwithoutSECs) {
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
     addSelfLoopsToGraph(graph);
     int quota = 5;
-    int root_vertex = 0;
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
+    PCTSPgraph::vertex_descriptor root_vertex = 0;
 
     std::map<PCTSPedge, SCIP_VAR*> variable_map;
     std::map<PCTSPedge, int> weight_map;
@@ -51,13 +51,13 @@ TEST_F(SuurballeGraphFixture, testPCTSPwithoutSECs) {
     EXPECT_EQ(code, SCIP_OKAY);
 }
 
-TEST_F(SuurballeGraphFixture, testPCTSPbranchAndCut) {
-    PCTSPgraph graph = get_suurballe_graph();
+TEST_P(SuurballeGraphFixture, testPCTSPbranchAndCut) {
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
     addSelfLoopsToGraph(graph);
     int quota = 6;
     PCTSPvertex root_vertex = boost::vertex(0, graph);
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
     assignZeroCostToSelfLoops(graph, cost_map);
 
     typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor vd;
@@ -113,8 +113,8 @@ TEST_P(AlgorithmsFixture, testAddHeuristicVarsToSolver) {
     addSelfLoopsToGraph(graph);
     int quota = 6;
     PCTSPvertex root_vertex = boost::vertex(0, graph);
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
+    auto cost_map = get(edge_weight, graph);
+    auto prize_map = get(vertex_distance, graph);
     assignZeroCostToSelfLoops(graph, cost_map);
 
     std::vector<PCTSPvertex> tour = { 0, 1, 4, 6, 7, 5, 3, 2, 0 };
@@ -146,4 +146,6 @@ INSTANTIATE_TEST_SUITE_P(
     AlgorithmsFixture,
     ::testing::Values(GraphType::GRID8)
 );
-
+INSTANTIATE_TEST_SUITE_P(TestAlgorithms, SuurballeGraphFixture,
+    ::testing::Values(GraphType::SUURBALLE)
+);

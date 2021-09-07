@@ -5,30 +5,31 @@
 
 using namespace std;
 
+typedef GraphFixture SuurballeGraphFixture;
 typedef GraphFixture WalkFixture;
 
-TEST_F(SuurballeGraphFixture, testTotalPrize) {
-    PCTSPgraph graph = SuurballeGraphFixture::get_suurballe_graph();
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
+TEST_P(SuurballeGraphFixture, testTotalPrize) {
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
     std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
     EXPECT_EQ(total_prize(graph, tour, prize_map), 7);
 }
 
-TEST_F(SuurballeGraphFixture, testTotalPrizeOfTour) {
-    PCTSPgraph graph = SuurballeGraphFixture::get_suurballe_graph();
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
+TEST_P(SuurballeGraphFixture, testTotalPrizeOfTour) {
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
     std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
     EXPECT_EQ(total_prize_of_tour(graph, tour, prize_map), 6);
 }
 
-TEST_P(CompleteGraphParameterizedFixture, testTotalPrize) {
+TEST_P(WalkFixture, testTotalPrize) {
     typedef typename PCTSPgraph::vertex_descriptor Vertex;
-    PCTSPgraph graph = get_complete_PCTSPgraph();
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
 
-    // prize of vertex is equal to its label
+    // prize of vertex is one
     std::list<int> tour = { 1, 2, 3, 1 };
-    int expected_prize = 1 + 2 + 3 + 1;
+    int expected_prize = 4;
     EXPECT_EQ(total_prize(graph, tour, prize_map), expected_prize);
 
     // total prize of empty tour is zero
@@ -40,9 +41,9 @@ TEST_P(CompleteGraphParameterizedFixture, testTotalPrize) {
     EXPECT_EQ(total_prize(graph, one_tour, prize_map), 1);
 }
 
-TEST_F(SuurballeGraphFixture, testTotalCost) {
-    PCTSPgraph graph = SuurballeGraphFixture::get_suurballe_graph();
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
+TEST_P(SuurballeGraphFixture, testTotalCost) {
+    PCTSPgraph graph = getGraph();
+    auto cost_map = getCostMap(graph);
     std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
 
     // expected cost of tour
@@ -107,4 +108,7 @@ INSTANTIATE_TEST_SUITE_P(
     TestWalk,
     WalkFixture,
     ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5)
+);
+INSTANTIATE_TEST_SUITE_P(TestWalk, SuurballeGraphFixture,
+    ::testing::Values(GraphType::SUURBALLE)
 );

@@ -16,10 +16,10 @@ using namespace boost;
 using namespace scip;
 using namespace std;
 
-template <typename Edge>
+template <typename TEdge>
 std::map<const char *, int>
-getVariableNameToWeightMap(std::map<Edge, SCIP_VAR *> &edge_variable_map,
-                           std::map<Edge, int> weight_map) {
+getVariableNameToWeightMap(std::map<TEdge, SCIP_VAR *> &edge_variable_map,
+                           std::map<TEdge, int> weight_map) {
     std::map<const char *, int> variable_name_to_weight_map;
     for (auto it = edge_variable_map.begin(); it != edge_variable_map.end();
          it++) {
@@ -31,10 +31,10 @@ getVariableNameToWeightMap(std::map<Edge, SCIP_VAR *> &edge_variable_map,
     return variable_name_to_weight_map;
 }
 
-template <typename Edge, typename EdgeVariableMap>
+template <typename TEdge, typename EdgeVariableMap>
 SCIP_RETCODE PCTSPaddRootVertexConstraint(SCIP *scip,
                                           EdgeVariableMap edge_variable_map,
-                                          Edge root_self_loop) {
+                                          TEdge root_self_loop) {
     SCIP_VAR *root_variable = edge_variable_map[root_self_loop];
     SCIP_CONS *cons = nullptr;
     SCIP_VAR *vars[1];
@@ -48,8 +48,8 @@ SCIP_RETCODE PCTSPaddRootVertexConstraint(SCIP *scip,
     return SCIP_OKAY;
 }
 
-template <typename Graph, typename EdgeVariableMap>
-SCIP_RETCODE PCTSPaddDegreeTwoConstraint(SCIP *scip, Graph &graph,
+template <typename TGraph, typename EdgeVariableMap>
+SCIP_RETCODE PCTSPaddDegreeTwoConstraint(SCIP *scip, TGraph &graph,
                                          EdgeVariableMap &edge_variable_map) {
     // for each vertex in the graph, get the variable that represents the vertex
     // then add a constraint that sets the sum of the variables of the neighbors

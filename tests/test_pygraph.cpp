@@ -31,7 +31,7 @@ TEST(TestPyGraph, testPrizeMapFromPyDict) {
     vertex_id_map.insert(position(0, 0));
     vertex_id_map.insert(position(1, 2));
 
-    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
+    VertexPrizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
 
     EXPECT_EQ(prize_map[0], 1);
     EXPECT_EQ(prize_map[1], 5);
@@ -60,7 +60,7 @@ TEST(TestPyGraph, testGetCostMapFromPyDict) {
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
 
     // get the std::cost map and check the costs are correct
-    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
+    EdgeCostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
     int one = 1;
     int two = 2;
     int four = 4;

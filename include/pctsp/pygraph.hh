@@ -8,9 +8,9 @@
 // functions for converting between python and boost
 
 PCTSPgraph graphFromPyEdgeList(py::list& edge_list, BoostPyBimap& vertex_id_map);
-PCTSPprizeMap prizeMapFromPyDict(py::dict& prize_dict,
+VertexPrizeMap prizeMapFromPyDict(py::dict& prize_dict,
     BoostPyBimap& vertex_id_map);
-PCTSPcostMap costMapFromPyDict(py::dict& cost_dict, PCTSPgraph& graph,
+EdgeCostMap costMapFromPyDict(py::dict& cost_dict, PCTSPgraph& graph,
     BoostPyBimap& vertex_id_map);
 py::list getPyVertexList(BoostPyBimap& vertex_id_map, std::list<PCTSPvertex>& vertex_list);
 std::list<PCTSPvertex> getBoostVertexList(BoostPyBimap& vertex_id_map, py::list& py_list);

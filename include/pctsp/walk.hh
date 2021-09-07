@@ -40,13 +40,13 @@ std::list<Vertex> ReorderTourFromRoot(std::list<Vertex>& tour,
     return new_tour;
 }
 
-template <typename Graph, typename VertexIt>
-std::vector<typename boost::graph_traits<Graph>::edge_descriptor> getEdgesInWalk(
-    Graph& graph,
+template <typename TGraph, typename VertexIt>
+std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getEdgesInWalk(
+    TGraph& graph,
     VertexIt& first,
     VertexIt& last
 ) {
-    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
+    typedef typename boost::graph_traits<TGraph>::edge_descriptor Edge;
     auto n_vertices = std::distance(first, last);
     if (n_vertices < 2) {
         return std::vector<Edge>();
@@ -66,8 +66,8 @@ std::vector<typename boost::graph_traits<Graph>::edge_descriptor> getEdgesInWalk
     return edges;
 }
 
-template <typename Graph, typename CostMap, typename Vertex>
-int total_cost(Graph& graph, std::list<Vertex>& tour, CostMap cost_map) {
+template <typename TGraph, typename TCostMap, typename Vertex>
+int total_cost(TGraph& graph, std::list<Vertex>& tour, TCostMap cost_map) {
     // if there are no edges in the tour, return zero
     if (tour.size() <= 1) {
         return 0;
@@ -103,8 +103,8 @@ int total_cost(Graph& graph, std::list<Vertex>& tour, CostMap cost_map) {
     return cost;
 }
 
-template <typename Graph, typename PrizeMap, typename Vertex>
-int total_prize(Graph& graph, std::list<Vertex>& tour, PrizeMap& prize_map) {
+template <typename TGraph, typename TPrizeMap, typename Vertex>
+int total_prize(TGraph& graph, std::list<Vertex>& tour, TPrizeMap& prize_map) {
     // calculate the total prize of a tour
     typedef typename std::list<Vertex>::iterator tour_iterator_t;
     int prize = 0;
@@ -117,9 +117,9 @@ int total_prize(Graph& graph, std::list<Vertex>& tour, PrizeMap& prize_map) {
     return prize;
 }
 
-template <typename Graph, typename PrizeMap, typename Vertex>
-int total_prize_of_tour(Graph& graph, std::list<Vertex>& tour,
-    PrizeMap& prize_map) {
+template <typename TGraph, typename TPrizeMap, typename Vertex>
+int total_prize_of_tour(TGraph& graph, std::list<Vertex>& tour,
+    TPrizeMap& prize_map) {
     // total prize of all vertices apart from the last vertex (which is
     // repeated)
     std::list<Vertex> tour_copy(tour.begin(), --tour.end());

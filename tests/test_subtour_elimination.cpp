@@ -11,9 +11,12 @@
 
 #define SCIP_DEBUG
 
-TEST_F(SuurballeGraphFixture, testGetEdgesFromCut) {
-    PCTSPgraph graph = get_suurballe_graph();
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
+typedef GraphFixture SubtourGraphFixture;
+
+
+TEST_P(SubtourGraphFixture, testGetEdgesFromCut) {
+    PCTSPgraph graph = getGraph();
+    auto cost_map = getCostMap(graph);
 
     BOOST_AUTO(parities, boost::make_one_bit_color_map(num_vertices(graph), get(boost::vertex_index, graph)));
     auto cost_of_cut = stoer_wagner_min_cut(graph, cost_map, boost::parity_map(parities));
@@ -34,7 +37,7 @@ TEST(TestSubtourElimination, testDisconnectedCut) {
     add_edge(4, 5, { 1 }, graph);
     add_edge(3, 5, { 1 }, graph);
 
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
+    auto cost_map = get(edge_weight, graph);
     BOOST_AUTO(parities, boost::make_one_bit_color_map(num_vertices(graph), get(boost::vertex_index, graph)));
 
     auto cost_of_cut = stoer_wagner_min_cut(graph, cost_map, boost::parity_map(parities));
@@ -118,7 +121,6 @@ TEST(TestSubtourElimination, testProbDataPCTSP) {
     EXPECT_EQ(SCIPvarGetName(var), SCIPvarGetName(loaded_var));
 }
 
-typedef GraphFixture SubtourGraphFixture;
 
 TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     PCTSPinitLogging(logging::trivial::info);
