@@ -12,60 +12,41 @@
 
 using namespace boost;
 
-struct PCTSPvertexProperties {
-    int prize;
-};
-
-struct PCTSPedgeProperties {
-    int cost;
-};
-
+// attribute types for cost and prize
 typedef int CostNumberType;
 typedef int PrizeNumberType;
 
-typedef boost::adjacency_list<listS, vecS, undirectedS,
-    boost::property<vertex_distance_t, PrizeNumberType>,
-    boost::property<edge_weight_t, CostNumberType>>
-    PCTSPgraph;
+// graph definition
+typedef boost::adjacency_list<
+    listS,
+    vecS,
+    undirectedS,        // graphs are undirected
+    boost::property<vertex_distance_t, PrizeNumberType>,    // prize on vertices
+    boost::property<edge_weight_t, CostNumberType>          // cost on edges
+> PCTSPgraph;
 
+// abbreviations for vertex and edge names
 typedef typename boost::graph_traits<PCTSPgraph>::edge_descriptor PCTSPedge;
 typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor PCTSPvertex;
-// typedef unsigned long PCTSPvertex;
-// typedef typename std::map<PCTSPvertex, int> VertexPrizeMap;
-// typedef typename boost::graph_traits<PCTSPgraph>::vertex_distance_t VertexPrize;
+
+// property maps for prize and cost
 typedef typename boost::property_map<PCTSPgraph, vertex_distance_t>::type VertexPrizeMap;
-// typedef typename std::map<PCTSPedge, int> EdgeCostMap;
 typedef typename boost::property_map<PCTSPgraph, edge_weight_t>::type  EdgeCostMap;
+
+// mapping from edges to SCIP variables
 typedef typename std::map<PCTSPedge, SCIP_VAR*> PCTSPedgeVariableMap;
 
-typedef boost::bimap<PCTSPvertex, int> BoostPyBimap;
-typedef boost::bimap<PCTSPvertex, PCTSPvertex> PCTSPbimap;
-
+// a pair of vertices
 typedef std::pair<PCTSPvertex, PCTSPvertex> VertexPair;
+
+// a vector of vertex pairs
 typedef std::vector<VertexPair> VertexPairVector;
-typedef std::vector<PCTSPvertex> PCTSPvertexVector;
+
+// definitions for capacity graphs
 typedef long CapacityType;
 typedef std::vector<CapacityType> CapacityVector;
-typedef std::map<VertexPair, CapacityType> StdCapacityMap;
-typedef boost::property<boost::edge_weight_t, CapacityType> BoostCapacityMap;
-typedef boost::adjacency_list <
-    boost::vecS,
-    boost::vecS,
-    boost::undirectedS,
-    boost::no_property,
-    BoostCapacityMap
->UndirectedCapacityGraph;
 
-typedef adjacency_list_traits< vecS, vecS, directedS > Traits;
-typedef boost::property< edge_reverse_t, Traits::edge_descriptor > ReverseEdges;
-typedef boost::property< edge_residual_capacity_t, CapacityType, ReverseEdges> ResidualCapacityMap;
-typedef boost::adjacency_list<
-    boost::vecS,
-    boost::vecS,
-    boost::directedS,
-    boost::no_property,
-    property< edge_capacity_t, CapacityType, ResidualCapacityMap>> DirectedCapacityGraph;
-
+// useful generic functions for graphs
 
 template<typename TGraph, typename EdgeIt>
 void addEdgesToGraph(TGraph& graph, EdgeIt& start, EdgeIt& end) {

@@ -138,33 +138,13 @@ SCIP_RETCODE includeShortestPathCostCover(
     std::vector<int> distances (boost::num_vertices(graph));
     auto vindex = get(boost::vertex_index, graph);
     auto pred_map = boost::predecessor_map(boost::make_iterator_property_map(pred.begin(), vindex));
-    // auto distance_map = boost::distance_map(boost::make_iterator_property_map(distances.begin(), vindex));
-    // auto weightmap = get(boost::edge_weight, graph);
-
-    // dijkstra_shortest_paths(
-    //     graph,
-    //     source_vertex,
-    //     pred_map.distance_map(boost::make_iterator_property_map(
-    //         distances.begin(), vindex
-    //     ))
-    // );
-
-    // dijkstra_shortest_paths(
-    //     graph,
-    //     source_vertex,
-    //     weight_map,
-    //     vindex,
-    //     pred_map,
-    //     distance_map
-    // );
-    // dijkstra_shortest_paths(
-    //     graph,
-    //     source_vertex,
-    //     weight_map=weightmap,
-    //     vertex_index_map=vindex,
-    //     predecessor_map=pred_map,
-    //     distance_map=distance_map
-    // );
+    dijkstra_shortest_paths(
+        graph,
+        source_vertex,
+        pred_map.distance_map(boost::make_iterator_property_map(
+            distances.begin(), vindex
+        ))
+    );
     return includeShortestPathCostCover(scip, distances);
 }
 

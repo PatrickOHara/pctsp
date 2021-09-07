@@ -404,6 +404,15 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     int& num_conss_added,
     int freq
 ) {
+    typedef adjacency_list_traits< vecS, vecS, directedS > Traits;
+    typedef boost::property< edge_reverse_t, Traits::edge_descriptor > ReverseEdges;
+    typedef boost::property< edge_residual_capacity_t, CapacityType, ReverseEdges> ResidualCapacityMap;
+    typedef boost::adjacency_list<
+        boost::vecS,
+        boost::vecS,
+        boost::directedS,
+        boost::no_property,
+        property< edge_capacity_t, CapacityType, ResidualCapacityMap>> DirectedCapacityGraph;
     DirectedCapacityGraph support_graph;
     // create a capacity map for the edges
     // the capacity of each edge is the value in the solution given
