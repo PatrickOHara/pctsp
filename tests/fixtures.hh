@@ -17,6 +17,7 @@ public:
   PCTSPgraph getGraph();
   EdgeCostMap getCostMap(PCTSPgraph& graph);
   VertexPrizeMap getPrizeMap(PCTSPgraph& graph);
+  VertexPrizeMap getGenOnePrizeMap(PCTSPgraph& graph);
   std::vector<std::pair<int, int>> getEdgeVector();
   std::vector<int> getVertexVector();
   int getNumVertices();

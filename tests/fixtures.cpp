@@ -84,6 +84,7 @@ EdgeCostMap GraphFixture::getCostMap(PCTSPgraph& graph) {
                 e++;
             }
         }
+        break;
     }
     case GraphType::GRID8: {
         // assign uniform cost to every edge
@@ -117,6 +118,28 @@ EdgeCostMap GraphFixture::getCostMap(PCTSPgraph& graph) {
 }
 
 VertexPrizeMap GraphFixture::getPrizeMap(PCTSPgraph& graph) {
+    VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
+    switch (GetParam()) {
+    case GraphType::COMPLETE4:
+    case GraphType::COMPLETE5:
+        // the prize is the same as the ID of the vertex
+        for (auto vertex: boost::make_iterator_range(boost::vertices(graph))) {
+            prize_map[vertex] = vertex;
+        }
+        break;
+    case GraphType::GRID8:
+    case GraphType::SUURBALLE: {
+        // assign uniform prize to every vertex
+        for (auto vertex : boost::make_iterator_range(boost::vertices(graph))) {
+            prize_map[vertex] = 1;
+        }
+        break;
+    }
+    }
+    return prize_map;
+}
+
+VertexPrizeMap GraphFixture::getGenOnePrizeMap(PCTSPgraph& graph) {
     VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
     switch (GetParam()) {
     case GraphType::COMPLETE4:

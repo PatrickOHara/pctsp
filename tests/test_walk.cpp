@@ -27,9 +27,9 @@ TEST_P(WalkFixture, testTotalPrize) {
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
 
-    // prize of vertex is one
+    // prize of vertex is equal to its ID
     std::list<int> tour = { 1, 2, 3, 1 };
-    int expected_prize = 4;
+    int expected_prize = 1 + 2 + 3 + 1;
     EXPECT_EQ(total_prize(graph, tour, prize_map), expected_prize);
 
     // total prize of empty tour is zero
