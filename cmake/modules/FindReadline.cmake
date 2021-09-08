@@ -7,7 +7,7 @@
 # Variables used by this module, they can change the default behaviour and need
 # to be set before calling find_package:
 #
-#  Readline_ROOT_DIR         Set this variable to the root installation of
+#  Readline_ROOT         Set this variable to the root installation of
 #                            readline if the module has problems finding the
 #                            proper installation path.
 #
@@ -17,18 +17,20 @@
 #  Readline_INCLUDE_DIR      The readline include directories.
 #  Readline_LIBRARY          The readline library.
 
-find_path(Readline_ROOT_DIR
+find_path(Readline_ROOT
     NAMES include/readline/readline.h
+    HINTS CMAKE_SYSTEM_PREFIX_PATH
+    HINTS ENV Readline_ROOT
 )
 
 find_path(Readline_INCLUDE_DIR
     NAMES readline/readline.h
-    HINTS ${Readline_ROOT_DIR}/include
+    HINTS ${Readline_ROOT}/include
 )
 
 find_library(Readline_LIBRARY
     NAMES readline
-    HINTS ${Readline_ROOT_DIR}/lib
+    HINTS ${Readline_ROOT}/lib
 )
 
 if(Readline_INCLUDE_DIR AND Readline_LIBRARY AND Ncurses_LIBRARY)
@@ -41,7 +43,7 @@ else(Readline_INCLUDE_DIR AND Readline_LIBRARY AND Ncurses_LIBRARY)
 endif(Readline_INCLUDE_DIR AND Readline_LIBRARY AND Ncurses_LIBRARY)
 
 mark_as_advanced(
-    Readline_ROOT_DIR
+    Readline_ROOT
     Readline_INCLUDE_DIR
     Readline_LIBRARY
 )

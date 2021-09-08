@@ -27,12 +27,12 @@ Here is a useful example for a conda environment called `pctsp-env`:
 
 ```
 PREFIX=/opt/anaconda3/envs/pctsp-env
-Python3_ROOT_DIR=${PREFIX}
-Python_ROOT_DIR=${PREFIX}
+Python3_ROOT=${PREFIX}
+Python_ROOT=${PREFIX}
 CMAKE_INSTALL_PREFIX=${PREFIX}
 ```
 
-Notice we have set both the `Python3_ROOT_DIR` and `Python_ROOT_DIR` to be the same.
+Notice we have set both the `Python3_ROOT` and `Python_ROOT` to be the same.
 This is because some dependencies (gtest, scikit-build) use the [FindPython](https://cmake.org/cmake/help/latest/module/FindPython.html)
 cmake function instead of [FindPython3](https://cmake.org/cmake/help/latest/module/FindPython3.html?highlight=findpython3) which can cause different versions of python to be found for different dependencies.
 
