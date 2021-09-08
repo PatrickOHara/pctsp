@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # list of modules to find
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules;")
 
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 set(Python_ROOT_DIR $ENV{Python3_ROOT_DIR})
 set(Python3_ROOT_DIR $ENV{Python3_ROOT_DIR})
@@ -17,10 +17,26 @@ message("Python_ROOT_DIR: " ${Python_ROOT_DIR})
 message("Python3_ROOT_DIR: " ${Python3_ROOT_DIR})
 message("SCIP_ROOT: " $ENV{SCIP_ROOT})
 
+# libraries for SCIP dependencies
+if (NOT Readline_ROOT_DIR)
+  set(Readline_ROOT_DIR $ENV{Readline_ROOT_DIR})
+endif()
+if (NOT GMP_ROOT_DIR)
+  set(GMP_ROOT_DIR $ENV{GMP_ROOT_DIR})
+endif()
+if (NOT ZLIB_ROOT_DIR)
+  set(ZLIB_ROOT_DIR $ENV{ZLIB_ROOT_DIR})
+endif()
+
 # dependencies
 find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development REQUIRED)
 find_package(Boost 1.71.0 REQUIRED COMPONENTS python3 graph log log_setup thread filesystem system REQUIRED)
 find_package(SCIP REQUIRED)
+
+# on some systems, SCIP complains if the following packages are not linked
+find_package(Readline)
+find_package(GMP)
+find_package(ZLIB)
 
 # find the python sitelibs
 set(FindSitePkgCommand "import site; print(site.getsitepackages()[0])")
@@ -48,7 +64,6 @@ find_package(PythonExtensions REQUIRED)
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(PCTSP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(PCTSP_LIBRARIES "")
 
 if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )
 set(MACOSX_RPATH TRUE)
