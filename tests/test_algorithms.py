@@ -70,6 +70,7 @@ def test_pctsp_with_heuristic(
         output_dir=logger_dir,
     )
 
+
 def test_pctsp_cost_cover(
     tspwplib_graph, root, logger_dir, metrics_filename, logger_filename
 ):

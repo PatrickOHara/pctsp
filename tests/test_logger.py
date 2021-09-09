@@ -22,7 +22,7 @@ def test_branch_and_cut_logger(
 
     # count number of lines in file. Check it is greater than zero
     line_count = 0
-    with open(logger_path, "r") as log_file:
+    with open(logger_path, "r", encoding="utf-8") as log_file:
         for line in log_file:
             if line != "\n":
                 line_count += 1
