@@ -12,6 +12,8 @@
 #include "pctsp/exception.hh"
 #include "pctsp/graph.hh"
 
+const std::string COST_COVER_CONS_PREFIX = "cost_cover_";
+
 /**
  * @brief Find vertices that cannot be reached from the source
  * in cost less than or equal to the cost upper bound.
@@ -69,6 +71,7 @@ class CostCoverEventHandler : public scip::ObjEventhdlr
 
 private:
     std::vector<int> _path_distances;
+    int _num_conss_added;
 
 public:
    CostCoverEventHandler(SCIP* scip, const std::string& name, const std::string& description)
@@ -85,44 +88,49 @@ public:
     )
       : ObjEventhdlr(scip, name.c_str(), description.c_str())
    {
-       _path_distances = path_distances;
+        _path_distances = path_distances;
+        _num_conss_added = 0;
    }
 
-   /** destructor of event handler to free user data (called when SCIP is exiting) */
-   virtual SCIP_DECL_EVENTFREE(scip_free);
+    int getNumConssAdded();
 
-   /** initialization method of event handler (called after problem was transformed) */
-   virtual SCIP_DECL_EVENTINIT(scip_init);
+    std::vector<int> getPathDistances();
 
-   /** deinitialization method of event handler (called before transformed problem is freed) */
-   virtual SCIP_DECL_EVENTEXIT(scip_exit);
+    /** destructor of event handler to free user data (called when SCIP is exiting) */
+    virtual SCIP_DECL_EVENTFREE(scip_free);
 
-   /** solving process initialization method of event handler (called when branch and bound process is about to begin)
+    /** initialization method of event handler (called after problem was transformed) */
+    virtual SCIP_DECL_EVENTINIT(scip_init);
+
+    /** deinitialization method of event handler (called before transformed problem is freed) */
+    virtual SCIP_DECL_EVENTEXIT(scip_exit);
+
+    /** solving process initialization method of event handler (called when branch and bound process is about to begin)
     *
     *  This method is called when the presolving was finished and the branch and bound process is about to begin.
     *  The event handler may use this call to initialize its branch and bound specific data.
     *
     */
-   virtual SCIP_DECL_EVENTINITSOL(scip_initsol);
+    virtual SCIP_DECL_EVENTINITSOL(scip_initsol);
 
-   /** solving process deinitialization method of event handler (called before branch and bound process data is freed)
+    /** solving process deinitialization method of event handler (called before branch and bound process data is freed)
     *
     *  This method is called before the branch and bound process is freed.
     *  The event handler should use this call to clean up its branch and bound data.
     */
-   virtual SCIP_DECL_EVENTEXITSOL(scip_exitsol);
+    virtual SCIP_DECL_EVENTEXITSOL(scip_exitsol);
 
-   /** frees specific constraint data */
-   virtual SCIP_DECL_EVENTDELETE(scip_delete);
+    /** frees specific constraint data */
+    virtual SCIP_DECL_EVENTDELETE(scip_delete);
 
-   /** execution method of event handler
+    /** execution method of event handler
     *
     *  Processes the event. The method is called every time an event occurs, for which the event handler
     *  is responsible. Event handlers may declare themselves resposible for events by calling the
     *  corresponding SCIPcatch...() method. This method creates an event filter object to point to the
     *  given event handler and event data.
     */
-   virtual SCIP_DECL_EVENTEXEC(scip_exec);
+    virtual SCIP_DECL_EVENTEXEC(scip_exec);
 };
 
 const std::string SHORTEST_PATH_COST_COVER_NAME = "Shortest path cost cover";
@@ -159,6 +167,11 @@ SCIP_RETCODE includeShortestPathCostCover(
             distances.begin(), vindex
         ))
     );
+    // multiply each of the distances by two:
+    // when visiting a vertex, we must return to the root vertex
+    for (int i = 0; i < distances.size(); i++) {
+        distances[i] = distances[i] * 2;
+    }
     return includeShortestPathCostCover(scip, distances);
 }
 

@@ -11,6 +11,7 @@ add_library(${TARGET} SHARED
     "logger.cpp"
     "preprocessing.cpp"
     "pygraph.cpp"
+    "sciputils.cpp"
     "separation.cpp"
     "solution.cpp"
     "stats.cpp"

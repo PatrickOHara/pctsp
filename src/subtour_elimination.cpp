@@ -123,7 +123,6 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     double* vals = var_coefs.data();
     SCIP_VAR** vars = all_variables.data();
     double lhs = -SCIPinfinity(scip);
-    // double rhs = 0;
     double rhs = -1;
 
     SCIP_VAR* transvars[nvars];
@@ -152,7 +151,7 @@ SCIP_RETCODE addSubtourEliminationConstraint(
             *result = SCIP_CUTOFF;
         else
             *result = SCIP_SEPARATED;
-    }
+    } 
     SCIP_CALL(SCIPreleaseRow(scip, &row));
 
     return SCIP_OKAY;

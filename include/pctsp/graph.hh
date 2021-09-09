@@ -110,6 +110,9 @@ std::vector<SCIP_VAR*> getEdgeVariables(
     std::vector<SCIP_VAR*> variables(n_edges);
     for (int i = 0; i < n_edges; i++) {
         SCIP_VAR* var = edge_variable_map[*first];
+        if (var == NULL) {
+            throw VariableIsNullException();
+        }
         variables[i] = var;
         first++;
     }

@@ -41,4 +41,14 @@ public:
 
 };
 
+class VariableIsNullException : public std::exception {
+    private:
+        const std::string message = "SCIP variable pointer is NULL.";
+    public:
+        VariableIsNullException() {};
+        const char* what() const throw() {
+            return message.c_str();
+        }
+};
+
 #endif
