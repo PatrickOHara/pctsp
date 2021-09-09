@@ -69,3 +69,18 @@ def test_pctsp_with_heuristic(
         metrics_filename=metrics_filename,
         output_dir=logger_dir,
     )
+
+def test_pctsp_cost_cover(
+    tspwplib_graph, root, logger_dir, metrics_filename, logger_filename
+):
+    """Test adding an initial solution to solver"""
+    quota = 10  # small quota should promote more cost cover inequalities added
+    pctsp_branch_and_cut(
+        tspwplib_graph,
+        quota,
+        root,
+        cost_cover_shortest_path=True,
+        log_scip_filename=logger_filename,
+        metrics_filename=metrics_filename,
+        output_dir=logger_dir,
+    )
