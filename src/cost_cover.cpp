@@ -12,12 +12,17 @@ SCIP_RETCODE addCoverInequality(
     // x(S) <= |x(S)| - 1 
     int nvars = variables.size();
     std::vector<double> var_coefs(nvars);
+    BOOST_LOG_TRIVIAL(info) << nvars << " variables added to cover inequality.";
+    for (int i = 0; i < nvars; i ++) {
+        std::cout << SCIPvarGetName(variables[i]) << ": " << var_coefs[i] << std::endl;
+        var_coefs[i] = 1;
+    }
     double lhs = -SCIPinfinity(scip);
     double rhs = nvars - 1;
     SCIP_VAR** vars = variables.data();
     double* coefs = var_coefs.data();
-    SCIP_VAR* transvars[nvars];
-    SCIPgetTransformedVars(scip, nvars, vars, transvars);
+    // SCIP_VAR* transvars[nvars];
+    // SCIPgetTransformedVars(scip, nvars, vars, transvars);
 
     SCIP_CONS* cons;
     const char* cons_name = "cost-cover";
@@ -50,10 +55,10 @@ SCIP_RETCODE addCoverInequality(
 
 // Cost cover event handler for new solutions
 
-struct SCIP_EventhdlrData
-{
-    std::vector<int>* path_distances;
-};
+// struct SCIP_EventhdlrData
+// {
+//     std::vector<int>* path_distances;
+// };
 
 SCIP_DECL_EVENTFREE(CostCoverEventHandler::scip_free) {
     return SCIP_OKAY;
@@ -82,7 +87,7 @@ SCIP_DECL_EVENTDELETE(CostCoverEventHandler::scip_delete) {
 }
 
 SCIP_DECL_EVENTEXEC(CostCoverEventHandler::scip_exec) {
-    SCIP_EVENTHDLRDATA* eventhdlrdata = SCIPeventhdlrGetData(eventhdlr);
+    // SCIP_EVENTHDLRDATA* eventhdlrdata = SCIPeventhdlrGetData(eventhdlr);
     double cost_upper_bound = SCIPgetUpperbound(scip);
     SCIP_SOL* sol = SCIPgetBestSol(scip);
     ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
@@ -91,7 +96,8 @@ SCIP_DECL_EVENTEXEC(CostCoverEventHandler::scip_exec) {
     PCTSPvertex root_vertex = *probdata->getRootVertex();
     PCTSPedgeVariableMap edge_variable_map = *probdata->getEdgeVariableMap();
 
-    auto path_distances = *eventhdlrdata->path_distances;
+    // auto path_distances = *eventhdlrdata->path_distances;
+    auto path_distances = _path_distances;
     auto violated_vertices = separateCostCoverPaths(graph, path_distances, cost_upper_bound);
     bool violation_found = violated_vertices.size() > 0;
     for (auto& vertex: violated_vertices) {
@@ -108,14 +114,8 @@ SCIP_RETCODE includeCostCoverEventHandler(
     std::vector<int>& path_distances
 )
 {
-    CostCoverEventHandler* handler = new CostCoverEventHandler(scip, name, description);
-    SCIP_CALL(SCIPincludeObjEventhdlr(scip, handler, true));
-
-    SCIP_EVENTHDLRDATA* eventhdlrdata; 
-    SCIP_EVENTHDLR* eventhdlr = SCIPfindEventhdlr(scip, name.c_str());  
-    SCIP_CALL( SCIPallocBlockMemory(scip, &eventhdlrdata) );
-    eventhdlrdata = SCIPeventhdlrGetData(eventhdlr);
-    eventhdlrdata->path_distances = &path_distances;
+    CostCoverEventHandler* handler = new CostCoverEventHandler(scip, name, description, path_distances);
+    SCIP_CALL(SCIPincludeObjEventhdlr(scip, handler, TRUE));
     return SCIP_OKAY;
 }
 

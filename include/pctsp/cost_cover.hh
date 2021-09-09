@@ -67,11 +67,25 @@ SCIP_RETCODE addCoverInequalityFromVertices(
 class CostCoverEventHandler : public scip::ObjEventhdlr
 {
 
+private:
+    std::vector<int> _path_distances;
+
 public:
    CostCoverEventHandler(SCIP* scip, const std::string& name, const std::string& description)
       : ObjEventhdlr(scip, name.c_str(), description.c_str())
    {
 
+   }
+
+   CostCoverEventHandler(
+       SCIP* scip,
+       const std::string& name,
+       const std::string& description,
+       std::vector<int>& path_distances
+    )
+      : ObjEventhdlr(scip, name.c_str(), description.c_str())
+   {
+       _path_distances = path_distances;
    }
 
    /** destructor of event handler to free user data (called when SCIP is exiting) */

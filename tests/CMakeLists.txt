@@ -30,7 +30,8 @@ enable_testing()
 
 # name of module to test - should only need to change this
 # file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false fixtures.cpp fixtures.hh test_*.cpp)
-file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false fixtures.cpp fixtures.hh test_pctsp.cpp test_algorithms.cpp)
+file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false fixtures.cpp fixtures.hh test_pctsp.cpp test_cost_cover.cpp)
+
 
 set(TARGET "test_pctsp")
 
