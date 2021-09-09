@@ -65,6 +65,12 @@ TEST_P(CostCoverFixture, testPathCostCover) {
     );
     includeShortestPathCostCover(scip, graph, cost_map, root_vertex);
 
+    // add custom message handler
+    SCIP_MESSAGEHDLR* message_handler;
+    std::string log_filepath = ".logs/" + name + ".txt";
+    SCIPcreateMessagehdlrDefault(&message_handler, false, log_filepath.c_str(), true);
+    SCIPsetMessagehdlr(scip, message_handler);
+
     // move prizes of vertices onto the weight of an edge
     putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
 
@@ -83,16 +89,28 @@ TEST_P(CostCoverFixture, testPathCostCover) {
     // solve the model
     SCIPsolve(scip);
 
+    // count the number of shortest path cost cover inequalities added
+    CostCoverEventHandler* cc_handler = dynamic_cast<CostCoverEventHandler*>(SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str()));
+    int num_expected_cc_conss;
+    int num_actual_cc_conss = cc_handler->getNumConssAdded();
     switch (test_case) {
         case GraphType::GRID8: {
-            CostCoverEventHandler* handler = dynamic_cast<CostCoverEventHandler*>(SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str()));
-            int num_expected_cc_conss = 4;
-            int num_actual_cc_conss = handler->getNumConssAdded();
-            EXPECT_EQ(num_expected_cc_conss, num_actual_cc_conss);
+            // vertices 4, 5, 6, 7 are all above the cost limit
+            num_expected_cc_conss = 4;
             break;
         }
-        default: break;
+        case GraphType::SUURBALLE: {
+            // vertex 6 (f) is expected to be above the cost limit
+            num_expected_cc_conss = 1;
+            break;
+        }
+        default: {
+            // on the complete graphs, no vertices are expected to be above the cost limit
+            num_expected_cc_conss = 0;
+            break;
+        }
     }
+    EXPECT_EQ(num_expected_cc_conss, num_actual_cc_conss);
 
     // remember to free memory
     SCIPfree(&scip);
@@ -101,5 +119,5 @@ TEST_P(CostCoverFixture, testPathCostCover) {
 INSTANTIATE_TEST_SUITE_P(
     TestCostCover,
     CostCoverFixture,
-    ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE)
+    ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5, GraphType::GRID8, GraphType::SUURBALLE)
 );
