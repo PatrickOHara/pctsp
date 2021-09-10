@@ -26,6 +26,7 @@ py::list pctsp_branch_and_cut_bind(
     int sec_disjoint_tour_freq,
     bool sec_maxflow_mincut,
     int sec_maxflow_mincut_freq,
+    py::str& summary_yaml_filepath_py,
     float time_limit
 ) {
 
@@ -61,6 +62,7 @@ py::list pctsp_branch_and_cut_bind(
     std::string bounds_csv_filepath = py::extract<std::string>(bounds_csv_filepath_py);
     std::string log_scip_filepath = py::extract<std::string>(log_scip_filepath_py);
     std::string metrics_csv_filepath = py::extract<std::string>(metrics_csv_filepath_py);
+    std::string summary_yaml_filepath = py::extract<std::string>(summary_yaml_filepath_py);
     // run branch and cut algorithm - returns a list of edges in solution
     PCTSPbranchAndCut(
         graph,
@@ -81,6 +83,7 @@ py::list pctsp_branch_and_cut_bind(
         sec_disjoint_tour_freq,
         sec_maxflow_mincut,
         sec_maxflow_mincut_freq,
+        summary_yaml_filepath,
         time_limit
     );
 

@@ -149,7 +149,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     typename boost::graph_traits<TGraph>::vertex_descriptor root_vertex,
     std::string bounds_csv_filepath = "bounds.csv",
     bool cost_cover_disjoint_paths = false,
-    bool cost_cover_shortest_path = true,
+    bool cost_cover_shortest_path = false,
     bool cost_cover_steiner_tree = false,
     std::vector<int> disjoint_paths_distances = std::vector<int>(),
     std::string log_filepath = "scip_logs.txt",
@@ -159,6 +159,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     int sec_disjoint_tour_freq = 1,
     bool sec_maxflow_mincut = true,
     int sec_maxflow_mincut_freq = 1,
+    std::string summary_yaml_filepath = "summary_stats.yaml",
     float time_limit = 14400    //  seconds (default 4 hours)
 ) {
     typedef typename boost::graph_traits<TGraph>::edge_descriptor Edge;
@@ -283,8 +284,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
         num_sec_disjoint_tour,
         num_sec_maxflow_mincut
     );
-    std::string summary_filename = "summary_stats.yaml";
-    writeSummaryStatsToYaml(summary, summary_filename);
+    writeSummaryStatsToYaml(summary, summary_yaml_filepath);
 
     // release handlers and SCIP
     BOOST_LOG_TRIVIAL(debug) << "Releasing constraint handler.";

@@ -21,7 +21,7 @@ TEST(TestYamlCpp, testYamlCppIsFound) {
 
 TEST(TestYamlCpp, testWriteSummaryStatsToYaml) {
     SummaryStats summary = {SCIP_Status::SCIP_STATUS_OPTIMAL, 1.0, 2.0, 2, 0, 5, 0, 8};
-    std::string filename = ".logs/summary.yaml";
+    std::string filename = ".logs/testWriteSummaryStatsToYaml.yaml";
     writeSummaryStatsToYaml(summary, filename);
     EXPECT_TRUE(boost::filesystem::exists(filename));
 }

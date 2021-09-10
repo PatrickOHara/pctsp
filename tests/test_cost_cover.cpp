@@ -52,7 +52,6 @@ TEST_P(CostCoverFixture, testPathCostCover) {
     SCIPincludeDefaultPlugins(scip);
 
     // setup the solver with minimal add ons
-    // PCTSPbranchAndCut(graph, solution_edges, cost_map, prize_map, quota, root_vertex);
     std::vector<NodeStats> node_stats;  // save node statistics
     std::map<PCTSPedge, SCIP_VAR*> edge_variable_map;
     std::map<PCTSPedge, int> weight_map;
