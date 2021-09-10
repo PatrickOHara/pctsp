@@ -14,9 +14,8 @@ PCTSPgraph graphFromPyEdgeList(py::list& edge_list, BoostPyBimap& lookup) {
     return graph;
 }
 
-PCTSPprizeMap prizeMapFromPyDict(py::dict& prize_dict,
+void fillPrizeMapFromPyDict(VertexPrizeMap& prize_map, py::dict& prize_dict,
     BoostPyBimap& vertex_id_map) {
-    PCTSPprizeMap prize_map;
     py::list prize_list = prize_dict.items();
     int n = py::len(prize_list);
     for (int i = 0; i < n; i++) {
@@ -26,12 +25,9 @@ PCTSPprizeMap prizeMapFromPyDict(py::dict& prize_dict,
         int boost_vertex = getNewVertex(vertex_id_map, py_vertex);
         prize_map[boost_vertex] = prize;
     }
-    return prize_map;
 }
 
-PCTSPcostMap costMapFromPyDict(py::dict& cost_dict, PCTSPgraph& graph,
-    BoostPyBimap& vertex_id_map) {
-    PCTSPcostMap cost_map;
+void fillCostMapFromPyDict(PCTSPgraph& graph, EdgeCostMap& cost_map, py::dict& cost_dict, BoostPyBimap& vertex_id_map) {
     py::list cost_list = cost_dict.items();
     int n = py::len(cost_list);
     for (int i = 0; i < n; i++) {
@@ -51,7 +47,6 @@ PCTSPcostMap costMapFromPyDict(py::dict& cost_dict, PCTSPgraph& graph,
         }
         cost_map[boost_edge.first] = cost;
     }
-    return cost_map;
 }
 
 py::list getPyVertexList(BoostPyBimap& vertex_id_map, std::list<PCTSPvertex>& vertex_list) {

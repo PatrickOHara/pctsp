@@ -3,6 +3,7 @@ set(TARGET "pctsp")
 add_library(${TARGET} SHARED 
     "algorithms.cpp"
     "data_structures.cpp"
+    "cost_cover.cpp"
     "event_handlers.cpp"
     "graph.cpp"
     "heuristic.cpp"
@@ -10,6 +11,7 @@ add_library(${TARGET} SHARED
     "logger.cpp"
     "preprocessing.cpp"
     "pygraph.cpp"
+    "sciputils.cpp"
     "separation.cpp"
     "solution.cpp"
     "stats.cpp"

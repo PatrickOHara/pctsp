@@ -17,8 +17,8 @@ endif()
 # settings on Windows
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-if (${Python_ROOT_DIR}=="")
-  message(WARNING "Python_ROOT_DIR is not set. gtest may use the wrong python version")
+if (${Python_ROOT}=="")
+  message(WARNING "Python_ROOT is not set. gtest may use the wrong python version")
 endif()
 # Add googletest directly to our build. This defines
 # the gtest and gtest_main targets.
@@ -30,6 +30,8 @@ enable_testing()
 
 # name of module to test - should only need to change this
 file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false fixtures.cpp fixtures.hh test_*.cpp)
+
+
 set(TARGET "test_pctsp")
 
 # add any test files here
@@ -45,6 +47,9 @@ target_link_libraries(${TARGET} PRIVATE
     gmock
     ${CMAKE_THREAD_LIBS_INIT}   # prevents -pthread issues
     ${SCIP_LIBRARIES}
+    ${Readline_LIBRARY}
+    ${GMP_LIBRARIES}
+    ${ZLIB_LIBRARIES}
     pctsp
 )
 target_include_directories(${TARGET} PUBLIC
@@ -52,5 +57,8 @@ target_include_directories(${TARGET} PUBLIC
     ${Python3_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${SCIP_INCLUDE_DIRS}
+    ${Readline_INCLUDE_DIR}
+    ${GMP_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIRS}
 )
 message("done testing")

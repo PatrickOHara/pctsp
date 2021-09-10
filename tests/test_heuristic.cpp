@@ -16,6 +16,9 @@ int expected_num_edges_in_complete_graph(int n_vertices) {
     return (n_vertices * (n_vertices - 1)) / 2;
 }
 
+typedef GraphFixture CompleteGraphParameterizedFixture;
+typedef GraphFixture SuurballeGraphFixture;
+
 TEST(TestExpandCollapse, testUnitaryGain) {
     EXPECT_EQ(unitary_gain(10, 2, 2, 2), 5);
     EXPECT_EQ(unitary_gain(2, 0, 1, 3), 0.5);
@@ -62,14 +65,14 @@ TEST(TestExpandCollapse, testCalculateAverageGain) {
 
 TEST_P(CompleteGraphParameterizedFixture, testUnitaryGainOfVertex) {
     typedef typename PCTSPgraph::vertex_descriptor Vertex;
-    PCTSPgraph g = get_complete_PCTSPgraph();
+    PCTSPgraph g = getGraph();
     Vertex v0 = boost::vertex(0, g);
     Vertex v1 = boost::vertex(1, g);
     Vertex v2 = boost::vertex(2, g);
     // std::list<Vertex> tour = {v0, v1, v2, v0};
     std::list<int> tour = { 0, 1, 2, 0 };
-    auto prize_map = get(&PCTSPvertexProperties::prize, g);
-    auto cost_map = get(&PCTSPedgeProperties::cost, g);
+    auto prize_map = getPrizeMap(g);
+    auto cost_map = getCostMap(g);
     // Vertex missing_vertex = boost::vertex(3, g);
     int missing_vertex = 3;
     UnitaryGainOfVertex gain =
@@ -84,26 +87,26 @@ TEST_P(CompleteGraphParameterizedFixture, testUnitaryGainOfVertex) {
 
 TEST_P(CompleteGraphParameterizedFixture, test_extend) {
     typedef typename PCTSPgraph::vertex_descriptor Vertex;
-    PCTSPgraph g = get_complete_PCTSPgraph();
+    PCTSPgraph g = getGraph();
+    auto prize_map = getPrizeMap(g);
+    auto cost_map = getCostMap(g);
 
     EXPECT_EQ(expected_num_edges_in_complete_graph(num_vertices(g)),
         num_edges(g));
-    EXPECT_EQ(1, g[1].prize);
+    EXPECT_EQ(1, prize_map[1]);
     PCTSPgraph::edge_descriptor e0 = *out_edges(0, g).first;
     Vertex v0 = boost::vertex(0, g);
     Vertex v1 = boost::vertex(1, g);
     Vertex v2 = boost::vertex(2, g);
     PCTSPgraph::edge_descriptor e1 = edge(v0, v2, g).first;
-    EXPECT_EQ(0, g[e0].cost);
-    EXPECT_EQ(1, g[e1].cost);
+    EXPECT_EQ(0, cost_map[e0]);
+    EXPECT_EQ(1, cost_map[e1]);
 
     // get the edge property map from bundled internal property
-    auto prize_map = get(&PCTSPvertexProperties::prize, g);
-    auto cost_map = get(&PCTSPedgeProperties::cost, g);
     int prize0 = get(prize_map, 0);
     ASSERT_EQ(prize0, 0);
     int cost0 = get(cost_map, e0);
-    EXPECT_EQ(g[e0].cost, cost0);
+    EXPECT_EQ(cost_map[e0], cost0);
 
     // other parameters
     int root = 0;
@@ -115,14 +118,14 @@ TEST_P(CompleteGraphParameterizedFixture, test_extend) {
     EXPECT_EQ(tour.size(), num_vertices(g));
 }
 
-TEST_F(SuurballeGraphFixture, test_extend) {
-    PCTSPgraph graph = get_suurballe_graph();
+TEST_P(SuurballeGraphFixture, test_extend) {
+    PCTSPgraph graph = getGraph();
     std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
     int tour_size_before_extend = tour.size();
 
     // get the edge property map from bundled internal property
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
     extend(graph, tour, cost_map, prize_map);
 
     // we expect that vertex e (index 5) has been added, but not vertex d
@@ -141,12 +144,12 @@ TEST_F(SuurballeGraphFixture, test_extend) {
     EXPECT_EQ(e_index, 5);
 }
 
-TEST_F(SuurballeGraphFixture, testExtendUntilPrizeFeasible) {
-    PCTSPgraph graph = get_suurballe_graph();
+TEST_P(SuurballeGraphFixture, testExtendUntilPrizeFeasible) {
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
     std::list<int> tour = { 0, 1, 5, 2, 0 };
     int quota = 5;
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
 
     // run the algorithm
     extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
@@ -162,20 +165,20 @@ TEST_F(SuurballeGraphFixture, testExtendUntilPrizeFeasible) {
     EXPECT_EQ(g_index, 3);
 }
 
-TEST_F(SuurballeGraphFixture, testExtendUntilPrizeFeasibleSegFault) {
-    PCTSPgraph graph = get_suurballe_graph();
+TEST_P(SuurballeGraphFixture, testExtendUntilPrizeFeasibleSegFault) {
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
     std::list<int> tour = { 0, 4, 1, 3, 6, 7, 5, 2, 0 };
     int quota = 10;
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
     extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
 }
 
-TEST_F(SuurballeGraphFixture, testCollapse) {
+TEST_P(SuurballeGraphFixture, testCollapse) {
     // get graphs with property maps
-    PCTSPgraph graph = get_suurballe_graph();
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
 
     // this tour can be collapsed to {0, 1, 5, 2, 0}
     std::list<int> tour = { 0, 1, 4, 6, 7, 2, 0 };
@@ -205,9 +208,9 @@ TEST_F(SuurballeGraphFixture, testCollapse) {
 }
 
 TEST_P(CompleteGraphParameterizedFixture, testCollapse) {
-    PCTSPgraph graph = get_complete_PCTSPgraph();
-    auto prize_map = get(&PCTSPvertexProperties::prize, graph);
-    auto cost_map = get(&PCTSPedgeProperties::cost, graph);
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
 
     // test the tour that is returned is the same as the input tour
     std::list<int> tour = { 0, 1, 2, 0 };
@@ -241,4 +244,9 @@ TEST(TestExpandCollapse, testIndexOfReverseIterator) {
 }
 
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
-    ::testing::Values(4, 5));
+    ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5)
+);
+
+INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, SuurballeGraphFixture,
+    ::testing::Values(GraphType::SUURBALLE)
+);

@@ -4,18 +4,17 @@
 #  SCIP_INCLUDE_DIRS - The SCIP include directories
 # User can set SCIP_ROOT to the preferred installation prefix
 
-# We only need headers, since we always compile SCIP as a plugin
-# set(SCIP_HINTS "$ENV{SCIP_DIR}/build $ENV{SCIP_DIR}/src")
-message("hints: " ${SCIP_HINTS})
 find_path(SCIP_INCLUDE scip/scip.h
-          HINTS ENV CMAKE_SYSTEM_PREFIX_ROOT
           HINTS SCIP_ROOT
+          HINTS ENV SCIP_ROOT
+          HINTS ENV CMAKE_SYSTEM_PREFIX_PATH
           PATH_SUFFIXES include)
 
 find_library(SCIP_LIBRARIES
           NAMES libscip scip
-          HINTS ENV CMAKE_SYSTEM_PREFIX_ROOT
           HINTS SCIP_ROOT
+          HINTS ENV SCIP_ROOT
+          HINTS ENV CMAKE_SYSTEM_PREFIX_PATH
           PATH_SUFFIXES lib
 )
 

@@ -22,13 +22,12 @@ struct UnitaryGainOfVertex {
     float gain_of_vertex;
 };
 
-template <typename Graph, typename CostMap, typename PrizeMap, typename T>
-UnitaryGainOfVertex unitaryGainOfVertex(Graph& g, std::list<T>& tour,
-    CostMap& cost_map,
-    PrizeMap& prize_map, T vertex) {
-    // typedef typename Graph::edge_descriptor Edge;
+template <typename TGraph, typename TCostMap, typename TPrizeMap, typename T>
+UnitaryGainOfVertex unitaryGainOfVertex(TGraph& g, std::list<T>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map, T vertex) {
     typedef
-        typename boost::graph_traits<Graph>::vertex_descriptor VertexDescriptor;
+        typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
     typedef typename std::list<T>::iterator tour_iterator_t;
     tour_iterator_t tour_iterator = tour.begin();
     T prev_vertex_id = *tour_iterator;
@@ -94,14 +93,14 @@ float calculateAverageGain(VertexSet& vertices_in_tour, GainMap& gain_map) {
     return avg_gain;
 }
 
-template <typename Graph, typename Vertex, typename CostMap, typename PrizeMap,
+template <typename TGraph, typename Vertex, typename TCostMap, typename TPrizeMap,
     typename GainMap, typename VertexSet>
-    Vertex findVertexWithBiggestGain(Graph& graph, std::list<Vertex>& tour,
-        CostMap& cost_map, PrizeMap& prize_map,
+    Vertex findVertexWithBiggestGain(TGraph& graph, std::list<Vertex>& tour,
+        TCostMap& cost_map, TPrizeMap& prize_map,
         GainMap& gain_map,
         VertexSet& vertices_in_tour) {
     // iterator over vertices in the graph
-    typedef typename graph_traits<Graph>::vertex_iterator vertex_iter;
+    typedef typename graph_traits<TGraph>::vertex_iterator vertex_iter;
     std::pair<vertex_iter, vertex_iter> vp;
 
     float biggest_gain = 0.0;
@@ -143,9 +142,9 @@ void insertBiggestGainVertexIntoTour(Tour& tour,
 }
 
 // Extend a tour by adding vertices according to the unitary gain operation
-template <typename Graph, typename Vertex, typename CostMap, typename PrizeMap>
-void extend(Graph& g, std::list<Vertex>& tour, CostMap& cost_map,
-    PrizeMap& prize_map) {
+template <typename TGraph, typename Vertex, typename TCostMap, typename TPrizeMap>
+void extend(TGraph& g, std::list<Vertex>& tour, TCostMap& cost_map,
+    TPrizeMap& prize_map) {
     // we assume that the first and last vertex in the tour are the same
 
     // map vertices to the unitary gain
@@ -186,9 +185,9 @@ void extend(Graph& g, std::list<Vertex>& tour, CostMap& cost_map,
     }
 }
 
-template <typename Graph, typename Vertex, typename CostMap, typename PrizeMap>
-void extendUntilPrizeFeasible(Graph& g, std::list<Vertex>& tour,
-    CostMap& cost_map, PrizeMap& prize_map,
+template <typename TGraph, typename Vertex, typename TCostMap, typename TPrizeMap>
+void extendUntilPrizeFeasible(TGraph& g, std::list<Vertex>& tour,
+    TCostMap& cost_map, TPrizeMap& prize_map,
     int quota) {
     // Run the extension algorithm until the total prize of the tour is greater
     // than the quota. We don't calculate the average gain, the only termination
@@ -244,10 +243,10 @@ template <typename Vertex> struct SubPathOverTour {
     bool feasible_path_found;
 };
 
-template <typename Vertex, typename PrizeMap>
+template <typename Vertex, typename TPrizeMap>
 SubPathOverTour<Vertex>
 getSubPathOverTour(std::list<Vertex>& tour, int index_of_first_vertex,
-    PrizeMap& prize_map, int quota, Vertex root_vertex) {
+    TPrizeMap& prize_map, int quota, Vertex root_vertex) {
     // create an iterator over the tour to create a path
     typedef typename std::list<Vertex>::iterator tour_iterator_t;
     tour_iterator_t path_iterator = tour.begin();
@@ -302,9 +301,9 @@ getSubPathOverTour(std::list<Vertex>& tour, int index_of_first_vertex,
     return sub_path;
 }
 
-template <typename Graph, typename Vertex, typename CostMap, typename PrizeMap>
-std::list<Vertex> collapse(Graph& graph, std::list<Vertex>& tour,
-    CostMap& cost_map, PrizeMap& prize_map, int quota,
+template <typename TGraph, typename Vertex, typename TCostMap, typename TPrizeMap>
+std::list<Vertex> collapse(TGraph& graph, std::list<Vertex>& tour,
+    TCostMap& cost_map, TPrizeMap& prize_map, int quota,
     Vertex root_vertex) {
 
     typedef

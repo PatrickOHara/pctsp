@@ -55,7 +55,7 @@ bool isSolSimpleCycle(SCIP* scip, SCIP_SOL* sol, SCIP_RESULT* result) {
 }
 
 SCIP_RETCODE addSubtourEliminationConstraint(
-    SCIP* mip,
+    SCIP* scip,
     SCIP_CONSHDLR* conshdlr,
     PCTSPgraph& graph,
     std::vector<PCTSPvertex>& vertex_set,
@@ -122,40 +122,37 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     // create the subtour elimination constraint
     double* vals = var_coefs.data();
     SCIP_VAR** vars = all_variables.data();
-    double lhs = -SCIPinfinity(mip);
-    // double rhs = 0;
+    double lhs = -SCIPinfinity(scip);
     double rhs = -1;
-
-    SCIP_CONS* cons;
 
     SCIP_VAR* transvars[nvars];
 
     for (int i = 0; i < nvars; i++) {
         SCIP_VAR* transvar;
-        SCIP_CALL(SCIPgetTransformedVar(mip, vars[i], &transvar));
+        SCIP_CALL(SCIPgetTransformedVar(scip, vars[i], &transvar));
         transvars[i] = transvar;
     }
 
     SCIP_ROW* row;
-    SCIP_CALL(SCIPcreateEmptyRowConshdlr(mip, &row, conshdlr, cons_name.c_str(), lhs, rhs, false, false, true));
-    SCIP_CALL(SCIPcacheRowExtensions(mip, row));
+    SCIP_CALL(SCIPcreateEmptyRowConshdlr(scip, &row, conshdlr, cons_name.c_str(), lhs, rhs, false, false, true));
+    SCIP_CALL(SCIPcacheRowExtensions(scip, row));
 
     for (int i = 0; i < nvars; i++) {
         auto transvar = transvars[i];
-        SCIPaddVarToRow(mip, row, transvar, vals[i]);
+        SCIPaddVarToRow(scip, row, transvar, vals[i]);
     }
-    SCIP_CALL(SCIPflushRowExtensions(mip, row));
+    SCIP_CALL(SCIPflushRowExtensions(scip, row));
 
-    if (SCIPisCutEfficacious(mip, sol, row)) {
+    if (SCIPisCutEfficacious(scip, sol, row)) {
         SCIP_Bool infeasible;
-        SCIP_CALL(SCIPaddRow(mip, row, false, &infeasible));
-        SCIPprintRow(mip, row, NULL);
+        SCIP_CALL(SCIPaddRow(scip, row, false, &infeasible));
+        SCIPprintRow(scip, row, NULL);
         if (infeasible)
             *result = SCIP_CUTOFF;
         else
             *result = SCIP_SEPARATED;
-    }
-    SCIP_CALL(SCIPreleaseRow(mip, &row));
+    } 
+    SCIP_CALL(SCIPreleaseRow(scip, &row));
 
     return SCIP_OKAY;
 }
@@ -178,7 +175,7 @@ void insertEdgeVertexVariables(VarVector& edge_variables,
 }
 
 SCIP_RETCODE PCTSPcreateConsSubtour(
-    SCIP* mip,
+    SCIP* scip,
     SCIP_CONS** cons,
     std::string& name,
     PCTSPgraph& graph,
@@ -197,28 +194,28 @@ SCIP_RETCODE PCTSPcreateConsSubtour(
     SCIP_CONSDATA* consdata;
 
     /* find the subtour constraint handler */
-    conshdlr = SCIPfindConshdlr(mip, "subtour");
+    conshdlr = SCIPfindConshdlr(scip, "subtour");
     if (conshdlr == NULL)
     {
         SCIPerrorMessage("subtour constraint handler not found\n");
         return SCIP_PLUGINNOTFOUND;
     }
     /* create constraint */
-    SCIP_CALL(SCIPcreateCons(mip, cons, name.c_str(), conshdlr, consdata, initial, separate, enforce, check, propagate,
+    SCIP_CALL(SCIPcreateCons(scip, cons, name.c_str(), conshdlr, consdata, initial, separate, enforce, check, propagate,
         local, modifiable, dynamic, removable, FALSE));
 
     return SCIP_OKAY;
 }
 
 SCIP_RETCODE PCTSPcreateBasicConsSubtour(
-    SCIP* mip,
+    SCIP* scip,
     SCIP_CONS** cons,
     std::string& name,
     PCTSPgraph& graph,
     PCTSPvertex& root_vertex
 ) {
     SCIP_CALL(PCTSPcreateConsSubtour(
-        mip,
+        scip,
         cons,
         name,
         graph,
@@ -406,6 +403,15 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     int& num_conss_added,
     int freq
 ) {
+    typedef adjacency_list_traits< vecS, vecS, directedS > Traits;
+    typedef boost::property< edge_reverse_t, Traits::edge_descriptor > ReverseEdges;
+    typedef boost::property< edge_residual_capacity_t, CapacityType, ReverseEdges> ResidualCapacityMap;
+    typedef boost::adjacency_list<
+        boost::vecS,
+        boost::vecS,
+        boost::directedS,
+        boost::no_property,
+        property< edge_capacity_t, CapacityType, ResidualCapacityMap>> DirectedCapacityGraph;
     DirectedCapacityGraph support_graph;
     // create a capacity map for the edges
     // the capacity of each edge is the value in the solution given

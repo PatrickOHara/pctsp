@@ -6,16 +6,16 @@
 using namespace scip;
 
 
-std::vector<PCTSPvertex> getSolutionVertices(SCIP* mip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map);
+std::vector<PCTSPvertex> getSolutionVertices(SCIP* scip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map);
 std::vector<PCTSPedge> getSolutionEdges(
-    SCIP* mip,
+    SCIP* scip,
     PCTSPgraph& graph,
     SCIP_SOL* sol,
     std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map,
     bool add_self_loops = false
 );
 void getSolutionGraph(
-    SCIP* mip,
+    SCIP* scip,
     PCTSPgraph& graph,
     PCTSPgraph& solution_graph,
     SCIP_SOL* sol,
@@ -24,7 +24,7 @@ void getSolutionGraph(
 );
 
 void logSolutionEdges(
-    SCIP* mip,
+    SCIP* scip,
     PCTSPgraph& graph,
     SCIP_SOL* sol,
     PCTSPedgeVariableMap& edge_variable_map

@@ -6,6 +6,7 @@
 #include "scip/message_default.h"
 
 #include "constraint.hh"
+#include "cost_cover.hh"
 #include "event_handlers.hh"
 #include "heuristic.hh"
 #include "logger.hh"
@@ -17,30 +18,30 @@ using namespace boost;
 using namespace scip;
 using namespace std;
 
-template <typename Edge>
+template <typename TEdge>
 const char*
-getVariableNameFromEdge(std::map<Edge, SCIP_VAR*>& edge_variable_map,
-    Edge edge) {
+getVariableNameFromEdge(std::map<TEdge, SCIP_VAR*>& edge_variable_map,
+    TEdge edge) {
     SCIP_VAR* variable = edge_variable_map[edge];
     const char* variable_name = SCIPvarGetName(variable);
     return variable_name;
 }
 
 /** Add edge variables to the PCTSP SCIP model */
-template <typename Graph, typename CostMap, typename VariableMap>
-SCIP_RETCODE PCTSPaddEdgeVariables(SCIP* mip, Graph& graph, CostMap& cost_map,
+template <typename TGraph, typename TCostMap, typename VariableMap>
+SCIP_RETCODE PCTSPaddEdgeVariables(SCIP* scip, TGraph& graph, TCostMap& cost_map,
     VariableMap& variable_map) {
     for (auto edge : make_iterator_range(edges(graph))) {
         SCIP_VAR* edge_variable;
         int cost_of_edge = cost_map[edge];
-        SCIP_CALL(SCIPcreateVar(mip, &edge_variable, NULL, 0.0, 1.0,
+        SCIP_CALL(SCIPcreateVar(scip, &edge_variable, NULL, 0.0, 1.0,
             cost_of_edge, SCIP_VARTYPE_BINARY, TRUE, FALSE,
             NULL, NULL, NULL, NULL, NULL));
 
-        SCIP_CALL(SCIPaddVar(mip, edge_variable));
+        SCIP_CALL(SCIPaddVar(scip, edge_variable));
         variable_map[edge] = edge_variable;
         // release variable after adding it to model
-        // SCIP_CALL(SCIPreleaseVar(mip, &edge_variable));
+        // SCIP_CALL(SCIPreleaseVar(scip, &edge_variable));
     }
     return SCIP_OKAY;
 }
@@ -51,10 +52,10 @@ SCIP_RETCODE addHeuristicVarsToSolver(
     std::vector<SCIP_VAR*> vars
 );
 
-template <typename Graph, typename EdgeVariableMap, typename EdgeIt>
+template <typename TGraph, typename EdgeVariableMap, typename EdgeIt>
 SCIP_RETCODE addHeuristicEdgesToSolver(
     SCIP* scip,
-    Graph& graph,
+    TGraph& graph,
     SCIP_HEUR* heur,
     EdgeVariableMap& edge_variable_map,
     EdgeIt& first,
@@ -75,10 +76,10 @@ SCIP_RETCODE addHeuristicEdgesToSolver(
     return SCIP_OKAY;
 }
 
-template <typename Graph, typename EdgeVariableMap, typename VertexIt>
+template <typename TGraph, typename EdgeVariableMap, typename VertexIt>
 SCIP_RETCODE addHeuristicTourToSolver(
     SCIP* scip,
-    Graph& graph,
+    TGraph& graph,
     SCIP_HEUR* heur,
     EdgeVariableMap& edge_variable_map,
     VertexIt& first,
@@ -100,20 +101,24 @@ SCIP_RETCODE addHeuristicTourToSolver(
  * This function sets the objective function, adds the variables,
  * and adds the constraints.
  */
-template <typename Graph, typename Vertex, typename CostMap, typename WeightMap>
+template <typename TGraph, typename TCostMap, typename WeightMap>
 SCIP_RETCODE PCTSPmodelWithoutSECs(
-    SCIP* mip, Graph& graph, CostMap& cost_map, WeightMap& weight_map,
-    int quota, Vertex root_vertex,
-    std::map<typename Graph::edge_descriptor, SCIP_VAR*>& variable_map) {
+    SCIP* scip,
+    TGraph& graph,
+    TCostMap& cost_map,
+    WeightMap& weight_map,
+    int& quota,
+    typename TGraph::vertex_descriptor& root_vertex,
+    std::map<typename TGraph::edge_descriptor, SCIP_VAR*>& variable_map) {
     // from the graph, create the variables on edges and nodes
-    SCIP_CALL(PCTSPaddEdgeVariables(mip, graph, cost_map, variable_map));
-    int nvars = SCIPgetNVars(mip);
+    SCIP_CALL(PCTSPaddEdgeVariables(scip, graph, cost_map, variable_map));
+    int nvars = SCIPgetNVars(scip);
 
     // add objective function
-    SCIP_CALL(SCIPsetObjsense(mip, SCIP_OBJSENSE_MINIMIZE));
+    SCIP_CALL(SCIPsetObjsense(scip, SCIP_OBJSENSE_MINIMIZE));
     // add the prize constraint to the solver
     SCIP_CALL(
-        PCTSPaddPrizeConstraint(mip, variable_map, weight_map, quota, nvars));
+        PCTSPaddPrizeConstraint(scip, variable_map, weight_map, quota, nvars));
 
     // add constraint that the root vertex must be visited
     auto root_vd = vertex(root_vertex, graph); // get vertex descriptor
@@ -123,26 +128,29 @@ SCIP_RETCODE PCTSPmodelWithoutSECs(
             std::to_string(root_vd));
     }
     SCIP_CALL(
-        PCTSPaddRootVertexConstraint(mip, variable_map, root_self_loop.first));
+        PCTSPaddRootVertexConstraint(scip, variable_map, root_self_loop.first));
 
     // add constraint to ensure a vertex is adjacent to exactly two edges in
     // the tour
-    SCIP_CALL(PCTSPaddDegreeTwoConstraint(mip, graph, variable_map));
+    SCIP_CALL(PCTSPaddDegreeTwoConstraint(scip, graph, variable_map));
 
     return SCIP_OKAY;
 }
 
 /** Solve the Prize Collecting TSP problem using a branch and cut algorithm
  */
-template <typename Graph, typename CostMap, typename PrizeMap>
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
 SCIP_RETCODE PCTSPbranchAndCut(
-    Graph& graph,
-    std::vector<typename boost::graph_traits<Graph>::edge_descriptor>& solution_edges,
-    CostMap& cost_map,
-    PrizeMap& prize_map,
+    TGraph& graph,
+    std::vector<typename boost::graph_traits<TGraph>::edge_descriptor>& solution_edges,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
     int quota,
-    typename boost::graph_traits<Graph>::vertex_descriptor root_vertex,
+    typename boost::graph_traits<TGraph>::vertex_descriptor root_vertex,
     std::string bounds_csv_filepath = "bounds.csv",
+    bool cost_cover_disjoint_paths = false,
+    bool cost_cover_shortest_path = true,
+    bool cost_cover_steiner_tree = false,
     std::string log_filepath = "scip_logs.txt",
     std::string metrics_csv_filepath = "metrics.csv",
     std::string name = "pctsp",
@@ -152,13 +160,13 @@ SCIP_RETCODE PCTSPbranchAndCut(
     int sec_maxflow_mincut_freq = 1,
     float time_limit = 14400    //  seconds (default 4 hours)
 ) {
-    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
-    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
+    typedef typename boost::graph_traits<TGraph>::edge_descriptor Edge;
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
 
     // initialise empty model
-    SCIP* mip = NULL;
-    SCIP_CALL(SCIPcreate(&mip));
-    SCIP_CALL(SCIPincludeDefaultPlugins(mip));
+    SCIP* scip = NULL;
+    SCIP_CALL(SCIPcreate(&scip));
+    SCIP_CALL(SCIPincludeDefaultPlugins(scip));
 
     // datastructures needed for the MIP solver
     std::vector<NodeStats> node_stats;  // save node statistics
@@ -166,7 +174,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     std::map<Edge, int> weight_map;
     ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota, &node_stats);
     SCIPcreateObjProb(
-        mip,
+        scip,
         name.c_str(),
         probdata,
         true
@@ -175,15 +183,25 @@ SCIP_RETCODE PCTSPbranchAndCut(
     // add custom message handler
     SCIP_MESSAGEHDLR* handler;
     SCIP_CALL(SCIPcreateMessagehdlrDefault(&handler, false, log_filepath.c_str(), true));
-    SCIP_CALL(SCIPsetMessagehdlr(mip, handler));
+    SCIP_CALL(SCIPsetMessagehdlr(scip, handler));
 
     // add custom cutting plane handlers
-    SCIP_CALL(SCIPincludeObjConshdlr(mip, new PCTSPconshdlrSubtour(mip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE));
+    SCIP_CALL(SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE));
 
     // add event handlers
-    SCIP_CALL( SCIPincludeObjEventhdlr(mip, new NodeEventhdlr(mip), TRUE) );
-    BoundsEventHandler* bounds_handler = new BoundsEventHandler(mip);
-    SCIP_CALL( SCIPincludeObjEventhdlr(mip, bounds_handler, TRUE));
+    SCIP_CALL( SCIPincludeObjEventhdlr(scip, new NodeEventhdlr(scip), TRUE) );
+    BoundsEventHandler* bounds_handler = new BoundsEventHandler(scip);
+    SCIP_CALL( SCIPincludeObjEventhdlr(scip, bounds_handler, TRUE));
+
+    // add the cost cover inequalities when a new solution is found
+    if (cost_cover_disjoint_paths) {
+        std::vector<int> disjoint_paths_distances (boost::num_vertices(graph));
+        SCIP_CALL(includeDisjointPathsCostCover(scip, disjoint_paths_distances));
+    }
+    if (cost_cover_shortest_path) {
+        SCIP_CALL(includeShortestPathCostCover(scip, graph, cost_map, root_vertex));
+    }
+
 
     BOOST_LOG_TRIVIAL(info) << "Created SCIP program. Adding constraints and variables.";
 
@@ -191,24 +209,22 @@ SCIP_RETCODE PCTSPbranchAndCut(
     putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
 
     // add variables and constraints to SCIP model
-    SCIP_CALL(PCTSPmodelWithoutSECs(mip, graph, cost_map, weight_map, quota,
+    SCIP_CALL(PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota,
         root_vertex, edge_variable_map));
-    int nvars = SCIPgetNVars(mip);
+    int nvars = SCIPgetNVars(scip);
 
     // turn off presolving
-    SCIPsetIntParam(mip, "presolving/maxrounds", 0);
+    SCIPsetIntParam(scip, "presolving/maxrounds", 0);
 
     // time limit
-    SCIPsetRealParam(mip, "limits/time", time_limit);
+    SCIPsetRealParam(scip, "limits/time", time_limit);
 
     // add the subtour elimination constraints as cutting planes
     SCIP_CONS* cons;
     std::string cons_name("subtour-constraint");
-    PCTSPcreateBasicConsSubtour(mip, &cons, cons_name, graph, root_vertex);
-    SCIPaddCons(mip, cons);
-    SCIPreleaseCons(mip, &cons);
-
-    // TODO add the cost cover inequalities as cutting planes
+    PCTSPcreateBasicConsSubtour(scip, &cons, cons_name, graph, root_vertex);
+    SCIPaddCons(scip, cons);
+    SCIPreleaseCons(scip, &cons);
 
     // add selected heuristics to reduce the upper bound on the optimal
     if (solution_edges.size() > 0) {
@@ -216,24 +232,24 @@ SCIP_RETCODE PCTSPbranchAndCut(
         auto last = solution_edges.end();
         BOOST_LOG_TRIVIAL(info) << "Adding starting solution to solver.";
         SCIP_HEUR* heur = NULL;
-        addHeuristicEdgesToSolver(mip, graph, heur, edge_variable_map, first, last);
+        addHeuristicEdgesToSolver(scip, graph, heur, edge_variable_map, first, last);
     }
 
     // TODO adjust parameters for the branching strategy
 
     BOOST_LOG_TRIVIAL(info) << "Added contraints and variables. Solving model.";
     // Solve the model
-    SCIP_CALL(SCIPsolve(mip));
+    SCIP_CALL(SCIPsolve(scip));
     BOOST_LOG_TRIVIAL(info) << "Model solved. Getting edge list of best solution.";
 
     // Get the solution
-    SCIP_SOL* sol = SCIPgetBestSol(mip);
-    solution_edges = getSolutionEdges(mip, graph, sol, edge_variable_map);
+    SCIP_SOL* sol = SCIPgetBestSol(scip);
+    solution_edges = getSolutionEdges(scip, graph, sol, edge_variable_map);
     BOOST_LOG_TRIVIAL(info) << "Saving SCIP logs to: " << log_filepath;
     FILE* log_file = fopen(log_filepath.c_str(), "w");
-    SCIP_CALL(SCIPprintOrigProblem(mip, log_file, NULL, true));
-    SCIP_CALL(SCIPprintBestSol(mip, log_file, true));
-    SCIP_CALL(SCIPprintStatistics(mip, log_file));
+    SCIP_CALL(SCIPprintOrigProblem(scip, log_file, NULL, true));
+    SCIP_CALL(SCIPprintBestSol(scip, log_file, true));
+    SCIP_CALL(SCIPprintStatistics(scip, log_file));
 
     // Write the bounds to file
     std::vector<Bounds> bounds_vector = bounds_handler->getBoundsVector();
@@ -245,7 +261,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     BOOST_LOG_TRIVIAL(debug) << "Releasing constraint handler.";
     SCIP_CALL(SCIPmessagehdlrRelease(&handler));
     BOOST_LOG_TRIVIAL(debug) << "Releasing SCIP model.";
-    SCIP_CALL(SCIPfree(&mip));
+    SCIP_CALL(SCIPfree(&scip));
     BOOST_LOG_TRIVIAL(debug) << "Done releasing model. Returning status SCIP_OKAY.";
     return SCIP_OKAY;
 }

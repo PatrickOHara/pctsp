@@ -12,56 +12,44 @@
 
 using namespace boost;
 
-struct PCTSPvertexProperties {
-    int prize;
-};
+// attribute types for cost and prize
+typedef int CostNumberType;
+typedef int PrizeNumberType;
 
-struct PCTSPedgeProperties {
-    int cost;
-};
+// graph definition
+typedef boost::adjacency_list<
+    listS,
+    vecS,
+    undirectedS,        // graphs are undirected
+    boost::property<vertex_distance_t, PrizeNumberType>,    // prize on vertices
+    boost::property<edge_weight_t, CostNumberType>          // cost on edges
+> PCTSPgraph;
 
-typedef boost::adjacency_list<listS, vecS, undirectedS, PCTSPvertexProperties,
-    PCTSPedgeProperties>
-    PCTSPgraph;
-
+// abbreviations for vertex and edge names
 typedef typename boost::graph_traits<PCTSPgraph>::edge_descriptor PCTSPedge;
 typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor PCTSPvertex;
-// typedef unsigned long PCTSPvertex;
-typedef typename std::map<PCTSPvertex, int> PCTSPprizeMap;
-typedef typename std::map<PCTSPedge, int> PCTSPcostMap;
+
+// property maps for prize and cost
+typedef typename boost::property_map<PCTSPgraph, vertex_distance_t>::type VertexPrizeMap;
+typedef typename boost::property_map<PCTSPgraph, edge_weight_t>::type  EdgeCostMap;
+
+// mapping from edges to SCIP variables
 typedef typename std::map<PCTSPedge, SCIP_VAR*> PCTSPedgeVariableMap;
 
-typedef boost::bimap<PCTSPvertex, int> BoostPyBimap;
-typedef boost::bimap<PCTSPvertex, PCTSPvertex> PCTSPbimap;
-
+// a pair of vertices
 typedef std::pair<PCTSPvertex, PCTSPvertex> VertexPair;
+
+// a vector of vertex pairs
 typedef std::vector<VertexPair> VertexPairVector;
-typedef std::vector<PCTSPvertex> PCTSPvertexVector;
+
+// definitions for capacity graphs
 typedef long CapacityType;
 typedef std::vector<CapacityType> CapacityVector;
-typedef std::map<VertexPair, CapacityType> StdCapacityMap;
-typedef boost::property<boost::edge_weight_t, CapacityType> BoostCapacityMap;
-typedef boost::adjacency_list <
-    boost::vecS,
-    boost::vecS,
-    boost::undirectedS,
-    boost::no_property,
-    BoostCapacityMap
->UndirectedCapacityGraph;
 
-typedef adjacency_list_traits< vecS, vecS, directedS > Traits;
-typedef boost::property< edge_reverse_t, Traits::edge_descriptor > ReverseEdges;
-typedef boost::property< edge_residual_capacity_t, CapacityType, ReverseEdges> ResidualCapacityMap;
-typedef boost::adjacency_list<
-    boost::vecS,
-    boost::vecS,
-    boost::directedS,
-    boost::no_property,
-    property< edge_capacity_t, CapacityType, ResidualCapacityMap>> DirectedCapacityGraph;
+// useful generic functions for graphs
 
-
-template<typename Graph, typename EdgeIt>
-void addEdgesToGraph(Graph& graph, EdgeIt& start, EdgeIt& end) {
+template<typename TGraph, typename EdgeIt>
+void addEdgesToGraph(TGraph& graph, EdgeIt& start, EdgeIt& end) {
     while (std::distance(start, end) > 0) {
         auto edge = *(start);
         boost::add_edge(edge.first, edge.second, graph);
@@ -70,8 +58,8 @@ void addEdgesToGraph(Graph& graph, EdgeIt& start, EdgeIt& end) {
 }
 
 
-template<typename Graph>
-VertexPairVector getVertexPairVectorFromGraph(Graph& graph) {
+template<typename TGraph>
+VertexPairVector getVertexPairVectorFromGraph(TGraph& graph) {
     auto edges = getEdgeVectorOfGraph(graph);
     return getVertexPairVectorFromEdgeSubset(graph, edges);
 }
@@ -84,13 +72,13 @@ VertexPairVector getVertexPairVectorFromEdgeSubset(
     std::vector < PCTSPedge> edge_subset_vector
 );
 
-template< typename Graph, typename PairIt>
-std::vector<typename boost::graph_traits<Graph>::edge_descriptor> edgesFromVertexPairs(
-    Graph& graph,
+template< typename TGraph, typename PairIt>
+std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> edgesFromVertexPairs(
+    TGraph& graph,
     PairIt& first,
     PairIt& last
 ) {
-    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
+    typedef typename boost::graph_traits<TGraph>::edge_descriptor Edge;
     auto n_edges = std::distance(first, last);
     std::vector<Edge> edge_vector(n_edges);
     for (int i = 0; i < n_edges; i++) {
@@ -110,10 +98,10 @@ std::vector<typename boost::graph_traits<Graph>::edge_descriptor> edgesFromVerte
 /**
  * @brief Get the variables associated with each edge in the iterator
  */
-template <typename Graph, typename EdgeVariableMap, typename EdgeIt>
+template <typename TGraph, typename EdgeVariableMap, typename EdgeIt>
 std::vector<SCIP_VAR*> getEdgeVariables(
     SCIP* scip,
-    Graph& graph,
+    TGraph& graph,
     EdgeVariableMap& edge_variable_map,
     EdgeIt& first,
     EdgeIt& last
@@ -122,19 +110,22 @@ std::vector<SCIP_VAR*> getEdgeVariables(
     std::vector<SCIP_VAR*> variables(n_edges);
     for (int i = 0; i < n_edges; i++) {
         SCIP_VAR* var = edge_variable_map[*first];
+        if (var == NULL) {
+            throw VariableIsNullException();
+        }
         variables[i] = var;
         first++;
     }
     return variables;
 }
 
-template <typename Graph, typename EdgeIt>
-std::vector<typename boost::graph_traits< Graph >::vertex_descriptor> getVerticesOfEdges(
-    Graph& graph,
+template <typename TGraph, typename EdgeIt>
+std::vector<typename boost::graph_traits< TGraph >::vertex_descriptor> getVerticesOfEdges(
+    TGraph& graph,
     EdgeIt& first,
     EdgeIt& last
 ) {
-    typedef typename boost::graph_traits< Graph >::vertex_descriptor Vertex;
+    typedef typename boost::graph_traits< TGraph >::vertex_descriptor Vertex;
     std::set<Vertex> vertex_set;
     while (first != last) {
         auto edge = *first;
@@ -156,11 +147,11 @@ std::vector<typename boost::graph_traits< Graph >::vertex_descriptor> getVertice
     return vertex_vector;
 }
 
-template <typename Graph, typename VertexIt>
-std::vector<typename boost::graph_traits<Graph>::edge_descriptor> getSelfLoops(
-    Graph& graph, VertexIt& first, VertexIt& last
+template <typename TGraph, typename VertexIt>
+std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getSelfLoops(
+    TGraph& graph, VertexIt& first, VertexIt& last
 ) {
-    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
+    typedef typename boost::graph_traits<TGraph>::edge_descriptor Edge;
     auto n_vertices = std::distance(first, last);
     std::vector<Edge> edges(n_vertices);
     for (int i = 0; i < n_vertices; i++) {

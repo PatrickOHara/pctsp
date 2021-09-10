@@ -5,13 +5,16 @@
 #include "pyutils.hh"
 #include "renaming.hh"
 
+
+// mapping from boost vertices to python vertices
+typedef boost::bimap<PCTSPvertex, int> BoostPyBimap;
+
 // functions for converting between python and boost
 
 PCTSPgraph graphFromPyEdgeList(py::list& edge_list, BoostPyBimap& vertex_id_map);
-PCTSPprizeMap prizeMapFromPyDict(py::dict& prize_dict,
+void fillPrizeMapFromPyDict(VertexPrizeMap& prize_map, py::dict& prize_dict,
     BoostPyBimap& vertex_id_map);
-PCTSPcostMap costMapFromPyDict(py::dict& cost_dict, PCTSPgraph& graph,
-    BoostPyBimap& vertex_id_map);
+void fillCostMapFromPyDict(PCTSPgraph& graph, EdgeCostMap& cost_map, py::dict& cost_dict, BoostPyBimap& vertex_id_map);
 py::list getPyVertexList(BoostPyBimap& vertex_id_map, std::list<PCTSPvertex>& vertex_list);
 std::list<PCTSPvertex> getBoostVertexList(BoostPyBimap& vertex_id_map, py::list& py_list);
 

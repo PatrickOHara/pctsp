@@ -27,11 +27,14 @@ TEST(TestPyGraph, testPrizeMapFromPyDict) {
     py::dict prize_dict(prize_list);
     EXPECT_EQ(py::len(prize_list), py::len(prize_list));
 
+    // get the graph and vertex lookup
+    py::list edge_list;
+    edge_list.append(py::make_tuple(0,2));
     BoostPyBimap vertex_id_map;
-    vertex_id_map.insert(position(0, 0));
-    vertex_id_map.insert(position(1, 2));
+    PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
 
-    PCTSPprizeMap prize_map = prizeMapFromPyDict(prize_dict, vertex_id_map);
+    VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
+    fillPrizeMapFromPyDict(prize_map, prize_dict, vertex_id_map);
 
     EXPECT_EQ(prize_map[0], 1);
     EXPECT_EQ(prize_map[1], 5);
@@ -60,7 +63,8 @@ TEST(TestPyGraph, testGetCostMapFromPyDict) {
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
 
     // get the std::cost map and check the costs are correct
-    PCTSPcostMap cost_map = costMapFromPyDict(cost_dict, graph, vertex_id_map);
+    EdgeCostMap cost_map = boost::get(edge_weight, graph);
+    fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
     int one = 1;
     int two = 2;
     int four = 4;

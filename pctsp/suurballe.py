@@ -20,7 +20,7 @@ def find_parents_in_shortest_path_tree(
     shortest_path_from_source: Dict[Vertex, VertexList]
 ) -> VertexLookup:
     """For each vertex v, find the parent of v in the shortest path tree"""
-    parents: VertexLookup = dict()
+    parents: VertexLookup = {}
     for vertex, path in shortest_path_from_source.items():
         num_vertices_in_path = len(path)
         if num_vertices_in_path <= 1:
@@ -180,9 +180,9 @@ def adjust_edge_cost_for_graph(
         Transformed cost for every edge in the graph. Adjacency list format.
     """
     # transform the cost of edges from u to v
-    adjusted_cost: EdgeFunction = dict()
+    adjusted_cost: EdgeFunction = {}
     for u in G:
-        adjusted_cost[u] = dict()
+        adjusted_cost[u] = {}
         for v in G[u]:
             adjusted_cost[u][v] = adjust_edge_cost(
                 G[u][v][weight], distance_from_source[u], distance_from_source[v]

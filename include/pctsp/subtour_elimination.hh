@@ -9,9 +9,9 @@
 #include <boost/graph/filtered_graph.hpp>
 #include <objscip/objscip.h>
 
-template <class UndirectedGraph, class ParityMap>
-std::vector<typename boost::graph_traits<UndirectedGraph>::edge_descriptor> getEdgesFromCut(UndirectedGraph& graph, ParityMap& parity_map) {
-    typedef typename boost::graph_traits<UndirectedGraph>::edge_descriptor Edge;
+template <typename TGraph, typename TParityMap>
+std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getEdgesFromCut(TGraph& graph, TParityMap& parity_map) {
+    typedef typename boost::graph_traits<TGraph>::edge_descriptor Edge;
     std::vector<Edge> edges;
     for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
         // get edges where the endpoints lie in different cut sets
@@ -27,7 +27,7 @@ std::vector<typename boost::graph_traits<UndirectedGraph>::edge_descriptor> getE
 typedef typename std::vector<SCIP_VAR*> VarVector;
 
 SCIP_RETCODE addSubtourEliminationConstraint(
-    SCIP* mip,
+    SCIP* scip,
     SCIP_CONSHDLR* conshdlr,
     PCTSPgraph& graph,
     std::vector<PCTSPvertex>& vertex_set,
@@ -52,29 +52,29 @@ SCIP_RETCODE PCTSPseparateSubtour(
     int sec_maxflow_mincut_freq
 );
 
-template <typename EdgeWeightMap>
+template <typename TEdgeWeightMap>
 struct positive_edge_weight {
     positive_edge_weight() { }
-    positive_edge_weight(EdgeWeightMap weight) : m_weight(weight) { }
-    template <typename Edge>
-    bool operator()(const Edge& e) const {
+    positive_edge_weight(TEdgeWeightMap weight) : m_weight(weight) { }
+    template <typename TEdge>
+    bool operator()(const TEdge& e) const {
         return 0 < get(m_weight, e);
     }
-    EdgeWeightMap m_weight;
+    TEdgeWeightMap m_weight;
 };
 
-template<typename Graph, typename Weight>
-std::vector<typename boost::graph_traits<Graph>::vertex_descriptor> getUnreachableVertices(
-    Graph& graph,
-    typename boost::graph_traits<Graph>::vertex_descriptor& source_vertex,
-    Weight& weight
+template<typename TGraph, typename TWeight>
+std::vector<typename boost::graph_traits<TGraph>::vertex_descriptor> getUnreachableVertices(
+    TGraph& graph,
+    typename boost::graph_traits<TGraph>::vertex_descriptor& source_vertex,
+    TWeight& weight
 ) {
-    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
     std::vector<Vertex> unreachable_vertices;
 
     // filter the graph to get edges that have positive weight
-    positive_edge_weight<Weight> filter(weight);
-    boost::filtered_graph<Graph, positive_edge_weight<Weight> > f_graph(graph, filter);
+    positive_edge_weight<TWeight> filter(weight);
+    boost::filtered_graph<TGraph, positive_edge_weight<TWeight> > f_graph(graph, filter);
 
     // create a colour map
     auto indexmap = boost::get(boost::vertex_index, f_graph);
@@ -148,13 +148,13 @@ public:
 
     /** default constructor */
     PCTSPconshdlrSubtour(
-        SCIP* mip,
+        SCIP* scip,
         bool _sec_disjoint_tour,
         int _sec_disjoint_tour_freq,
         bool _sec_maxflow_mincut,
         int _sec_maxflow_mincut_freq
     )
-        : ObjConshdlr(mip, "subtour", "PCTSP subtour elimination constraints",
+        : ObjConshdlr(scip, "subtour", "PCTSP subtour elimination constraints",
             1000000, -2000000, -2000000, 1, -1, 1, 0,
             FALSE, FALSE, TRUE, SCIP_PROPTIMING_BEFORELP, SCIP_PRESOLTIMING_FAST)
     {
@@ -180,7 +180,7 @@ public:
  * of the SCIP solver.
  */
 SCIP_RETCODE PCTSPcreateConsSubtour(
-    SCIP* mip,
+    SCIP* scip,
     SCIP_CONS** cons,
     std::string& name,
     PCTSPgraph& graph,
@@ -197,7 +197,7 @@ SCIP_RETCODE PCTSPcreateConsSubtour(
 );
 
 SCIP_RETCODE PCTSPcreateBasicConsSubtour(
-    SCIP* mip,
+    SCIP* scip,
     SCIP_CONS** cons,
     std::string& name,
     PCTSPgraph& graph,

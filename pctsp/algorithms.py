@@ -105,7 +105,7 @@ def pctsp_branch_and_cut(
     log_boost_filepath = output_dir / log_boost_filename
     log_scip_filepath = output_dir / log_scip_filename
     print("Log scip filepath python:", str(log_scip_filepath))
-    initial_yes_instance = list()
+    initial_yes_instance = []
     if initial_solution and is_pctsp_yes_instance(
         graph, quota, root_vertex, initial_solution
     ):

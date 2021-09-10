@@ -46,7 +46,7 @@ def undirected_vertex_disjoint_paths_map(
     Returns:
         Mapping from vertices to disjoint paths
     """
-    vertex_disjoint_paths_map = dict()
+    vertex_disjoint_paths_map = {}
     for vertex in tree:
         if is_vertex_split_tail(biggest_vertex_id, vertex) and tree.labeled[vertex]:
             original_vertex = get_original_from_split_vertex(biggest_vertex_id, vertex)
@@ -75,7 +75,7 @@ def vertex_disjoint_cost_map(
     Returns:
         Mapping from vertices to cost of disjoint paths
     """
-    cost_map = dict()
+    cost_map = {}
     for vertex in tree:
         # get the cost and store in map
         if is_vertex_split_tail(biggest_vertex_id, vertex) and tree.labeled[vertex]:

@@ -13,6 +13,14 @@ bool isSimpleCycle(PCTSPgraph& graph, std::vector<PCTSPedge>& edge_vector);
 /** Returns true if the graph is a simple cycle */
 bool isGraphSimpleCycle(PCTSPgraph& graph, std::vector<int>& component_vector);
 
+typedef boost::property<boost::edge_weight_t, CapacityType> BoostCapacityMap;
+typedef boost::adjacency_list <
+    boost::vecS,
+    boost::vecS,
+    boost::undirectedS,
+    boost::no_property,
+    BoostCapacityMap
+>UndirectedCapacityGraph;
 
 UndirectedCapacityGraph capacityGraphFromEdgeVector(
     VertexPairVector& edge_vector,
