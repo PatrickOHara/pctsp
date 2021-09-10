@@ -23,7 +23,8 @@ SCIP_RETCODE addCoverInequality(
     double* coefs = var_coefs.data();
 
     SCIP_CONS* cons;
-    const char* cons_name = (COST_COVER_CONS_PREFIX + joinVariableNames(variables)).c_str();
+    std::string cons_name_str = COST_COVER_CONS_PREFIX + joinVariableNames(variables);
+    const char* cons_name = cons_name_str.c_str();
     SCIP_CALL( SCIPcreateConsLinear(scip, &cons, cons_name, nvars, vars, coefs, lhs, rhs,
          TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE) );
     SCIPaddCons(scip, cons);

@@ -7,37 +7,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # list of modules to find
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules;")
 
-# not sure if this is needed?
-# set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# needed for dynamic lookup when installing
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# root directories - recommended to set
-# if (NOT Python_ROOT)
-#   set(Python_ROOT $ENV{Python_ROOT})
-# endif()
-# if (NOT Python3_ROOT)
-#   set(Python3_ROOT $ENV{Python3_ROOT})
-# endif()
 if (NOT CMAKE_SYSTEM_PREFIX_PATH)
   set(CMAKE_SYSTEM_PREFIX_PATH $ENV{CMAKE_SYSTEM_PREFIX_PATH})
 endif()
-
-# libraries for SCIP dependencies (optional on most systems)
-# if (NOT Readline_ROOT)
-#   set(Readline_ROOT $ENV{Readline_ROOT})
-# endif()
-# if (NOT ZLIB_ROOT)
-#   set(ZLIB_ROOT $ENV{ZLIB_ROOT})
-# endif()
 
 # required dependencies
 find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development REQUIRED)
 find_package(Boost 1.71.0 REQUIRED COMPONENTS python3 graph log log_setup thread filesystem system REQUIRED)
 find_package(SCIP REQUIRED)
-
-# optional dependencies - on some systems, SCIP complains if the following packages are not linked
-find_package(Readline)
-find_package(GMP)
-find_package(ZLIB)
+find_package(Readline REQUIRED)
+find_package(GMP REQUIRED)
+find_package(ZLIB REQUIRED)
 
 # find the python sitelibs
 set(FindSitePkgCommand "import site; print(site.getsitepackages()[0])")
