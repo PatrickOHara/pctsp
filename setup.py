@@ -10,6 +10,7 @@ setup(
     author_email="patrick.h.o-hara@warwick.ac.uk",
     description="pctsp",
     install_requires=[
+        "pyscipopt>=3.3.0",
         "tspwplib>=0.5.15",
     ],
     name="pctsp",

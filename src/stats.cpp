@@ -1,4 +1,56 @@
 #include "pctsp/stats.hh"
+#include <yaml-cpp/yaml.h>
+
+void writeSummaryStatsToYaml(SummaryStats& summary, std::string& filename) {
+    YAML::Node node;
+    node["status"] = enum_as_integer(summary.status);
+    node["lower_bound"] = summary.lower_bound;
+    node["upper_bound"] = summary.upper_bound;
+    node["num_cost_cover_disjoint_paths"] = summary.num_cost_cover_disjoint_paths;
+    node["num_cost_cover_shortest_paths"] = summary.num_cost_cover_shortest_paths;
+    node["num_nodes"] = summary.num_nodes;
+    node["num_sec_disjoint_tour"] = summary.num_sec_disjoint_tour;
+    node["num_sec_maxflow_mincut"] = summary.num_sec_maxflow_mincut;
+    std::ofstream fout(filename);
+    fout << node;
+}
+
+SummaryStats getSummaryStatsFromSCIP(
+    SCIP* scip,
+    unsigned int& num_cost_cover_disjoint_paths,
+    unsigned int& num_cost_cover_shortest_paths,
+    unsigned int& num_sec_disjoint_tour,
+    unsigned int& num_sec_maxflow_mincut
+) {
+
+    SummaryStats summary = {
+        SCIPgetStatus(scip),
+        SCIPgetLowerbound(scip),
+        SCIPgetUpperbound(scip),
+        num_cost_cover_disjoint_paths,
+        num_cost_cover_shortest_paths,
+        SCIPgetNNodes(scip),
+        num_sec_disjoint_tour,
+        num_sec_maxflow_mincut
+    };
+    return summary;
+}
+
+unsigned int numDisjointTourSECs(std::vector<NodeStats>& node_stats) {
+    unsigned int total = 0;
+    for (NodeStats& stat : node_stats) {
+        total += stat.num_sec_disjoint_tour;
+    }
+    return total;
+}
+
+unsigned int numMaxflowMincutSECs(std::vector<NodeStats>& node_stats) {
+    unsigned int total = 0;
+    for (NodeStats& stat : node_stats) {
+        total += stat.num_sec_maxflow_mincut;
+    }
+    return total;
+}
 
 void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_path) {
     std::ofstream csv_file(file_path);

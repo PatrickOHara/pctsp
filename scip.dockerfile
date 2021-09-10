@@ -25,13 +25,19 @@ ENV SOPLEX_DIR /app/soplex-${SOPLEX_VERSION}
 ENV SOPLEX_FILENAME soplex-${SOPLEX_VERSION}.tgz
 ENV SOPLEX_URL https://soplex.zib.de/download/release
 
-# download and extract boost, soplex and scip
+# yaml-cpp variables
+ENV YAML_CPP_DIR /app/yaml-cpp
+ENV YAML_CPP_URL https://github.com/jbeder/yaml-cpp.git
+
+# download and extract boost, soplex, scip and yaml-cpp
 ADD ${BOOST_URL} ${BOOST_FILENAME}
 ADD ${SOPLEX_URL}/${SOPLEX_FILENAME} ${SOPLEX_FILENAME}
 ADD ${SCIP_URL}/${SCIP_FILENAME} ${SCIP_FILENAME}
+ADD https://api.github.com/repos/jbeder/yaml-cpp/compare/master...HEAD /dev/null
 RUN tar --bzip2 -xf ${BOOST_FILENAME}
 RUN tar zxvf ${SOPLEX_FILENAME}
 RUN tar zxvf ${SCIP_FILENAME}
+RUN git clone ${YAML_CPP_URL} ${YAML_CPP_DIR}
 
 # install build dependencies with pip
 RUN pip3 install cmake ninja
@@ -55,5 +61,16 @@ RUN cmake -GNinja .. -DSOPLEX_DIR=${SOPLEX_DIR}/build
 RUN cmake --build .
 RUN cmake --install .
 
+# download, build and install yaml-cpp
+RUN mkdir ${YAML_CPP_DIR}/build
+WORKDIR ${YAML_CPP_DIR}/build
+RUN cmake -GNinja -DYAML_BUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DYAML_CPP_BUILD_TESTS=0 ..
+RUN cmake --build .
+RUN cmake --install .
+
 # install location of SCIP
 ENV SCIP_ROOT /usr/local
+
+# set so that pyscipopt can find the scip install
+ENV SCIPOPTDIR=${SCIP_ROOT}
+RUN pip install pyscipopt

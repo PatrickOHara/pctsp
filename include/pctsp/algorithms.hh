@@ -258,6 +258,35 @@ SCIP_RETCODE PCTSPbranchAndCut(
     // Get the metrics and statistics of the solver
     writeNodeStatsToCSV(node_stats, metrics_csv_filepath);
 
+    // Get the summary statistics
+    unsigned int num_cost_cover_disjoint_paths = 0;
+    if (cost_cover_disjoint_paths) {
+        CostCoverEventHandler* disjoint_paths_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(
+            SCIPfindObjEventhdlr(scip, DISJOINT_PATHS_COST_COVER_NAME.c_str())
+        );
+        num_cost_cover_disjoint_paths = disjoint_paths_cc_hdlr->getNumConssAdded();
+    }
+    unsigned int num_cost_cover_shortest_paths = 0;
+    if (cost_cover_shortest_path) {
+        CostCoverEventHandler* shortest_path_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(
+            SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str())
+        );
+        num_cost_cover_shortest_paths = shortest_path_cc_hdlr->getNumConssAdded();
+    }
+
+    unsigned int num_sec_disjoint_tour = numDisjointTourSECs(node_stats);
+    unsigned int num_sec_maxflow_mincut = numMaxflowMincutSECs(node_stats);
+    auto summary = getSummaryStatsFromSCIP(
+        scip,
+        num_cost_cover_disjoint_paths,
+        num_cost_cover_shortest_paths,
+        num_sec_disjoint_tour,
+        num_sec_maxflow_mincut
+    );
+    std::string summary_filename = "summary_stats.yaml";
+    writeSummaryStatsToYaml(summary, summary_filename);
+
+    // release handlers and SCIP
     BOOST_LOG_TRIVIAL(debug) << "Releasing constraint handler.";
     SCIP_CALL(SCIPmessagehdlrRelease(&handler));
     BOOST_LOG_TRIVIAL(debug) << "Releasing SCIP model.";

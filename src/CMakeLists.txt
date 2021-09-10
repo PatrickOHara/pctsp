@@ -28,10 +28,12 @@ target_include_directories(${TARGET} PRIVATE
     ${Boost_INCLUDE_DIRS}
     ${Python3_INCLUDE_DIRS}
     ${SCIP_INCLUDE_DIRS}
+    ${YAML_CPP_INCLUDE_DIRS}
 )
 target_link_libraries(${TARGET} PRIVATE
     ${Boost_LIBRARIES}
     ${SCIP_LIBRARIES}
+    ${YAML_CPP_LIBRARIES}
 )
 
 file(GLOB_RECURSE PCTSP_HEADER_FILES "${PCTSP_INCLUDE_DIRS}/${TARGET}/*.hh")

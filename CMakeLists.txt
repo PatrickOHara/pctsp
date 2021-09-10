@@ -21,6 +21,9 @@ find_package(SCIP REQUIRED)
 find_package(Readline REQUIRED)
 find_package(GMP REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(YAML_CPP REQUIRED FOUND_VAR YAML_CPP_FOUND)
+message(YAML_CPP_INCLUDE_DIRS: ${YAML_CPP_INCLUDE_DIRS})
+message(YAML_CPP_LIBRARIES: ${YAML_CPP_LIBRARIES})
 
 # find the python sitelibs
 set(FindSitePkgCommand "import site; print(site.getsitepackages()[0])")
@@ -30,7 +33,6 @@ execute_process ( COMMAND ${Python3_EXECUTABLE} -c "${FindSitePkgCommand}"
 set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
 # depends upon scikit-build being installed
 list(APPEND CMAKE_MODULE_PATH "${Python3_SITE_PACKAGES}/skbuild/resources/cmake;")
-message("cmake module path: " ${CMAKE_MODULE_PATH})
 
 find_package(PythonExtensions REQUIRED)
 
