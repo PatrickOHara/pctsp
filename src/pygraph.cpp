@@ -67,3 +67,13 @@ std::list<PCTSPvertex> getBoostVertexList(BoostPyBimap& vertex_id_map, py::list&
     }
     return vertex_list;
 }
+
+std::vector<int> getVertexPropertyVectorFromPyDict(
+    py::dict& py_property_map,
+    PCTSPgraph& graph,
+    BoostPyBimap& vertex_id_map
+) {
+    PCTSPgraph::vertex_iterator v, vend;
+    boost::tie(v, vend) = boost::vertices(graph);
+    return getVertexPropertyVectorFromPyDict<int>(py_property_map, v, vend, vertex_id_map);
+}

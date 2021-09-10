@@ -7,6 +7,7 @@ import networkx as nx
 from tspwplib import (
     EdgeFunctionName,
     Vertex,
+    VertexFunction,
     VertexFunctionName,
     EdgeList,
     is_pctsp_yes_instance,
@@ -56,6 +57,7 @@ def pctsp_branch_and_cut(
     cost_cover_disjoint_paths: bool = False,
     cost_cover_shortest_path: bool = False,
     cost_cover_steiner_tree: bool = False,
+    disjoint_paths_cost: VertexFunction = None,
     initial_solution: Optional[EdgeList] = None,
     log_boost_filename: str = "boost_logs.txt",
     log_scip_filename: str = "scip_logs.txt",
@@ -77,7 +79,7 @@ def pctsp_branch_and_cut(
         root_vertex: The tour must start and end at the root vertex
         bounds_csv_filename: Name of the csv file to save upper and lower bounds
         cost_cover_disjoint_paths: True if disjoint paths cost cover inequality is used
-        cost_cover_shortest_paths: True if shortest paths cost cover inequality is used
+        cost_cover_shortest_path: True if shortest paths cost cover inequality is used
         cost_cover_steiner_tree: True if Steiner tree cost cover inequality is used
         initial_solution: Edges of a feasible solution found by a heuristic
         log_boost_filename: Name of file to store the logs of algorithms
@@ -104,12 +106,16 @@ def pctsp_branch_and_cut(
     metrics_filepath = output_dir / metrics_filename
     log_boost_filepath = output_dir / log_boost_filename
     log_scip_filepath = output_dir / log_scip_filename
-    print("Log scip filepath python:", str(log_scip_filepath))
     initial_yes_instance = []
     if initial_solution and is_pctsp_yes_instance(
         graph, quota, root_vertex, initial_solution
     ):
         initial_yes_instance = initial_solution
+
+    # only use disjoint paths cost cover if the path costs mapping is non-empty
+    if not disjoint_paths_cost:
+        cost_cover_disjoint_paths = False
+        disjoint_paths_cost = {}
 
     optimal_edges: EdgeList = pctsp_branch_and_cut_bind(
         edges,
@@ -121,6 +127,7 @@ def pctsp_branch_and_cut(
         cost_cover_disjoint_paths,
         cost_cover_shortest_path,
         cost_cover_steiner_tree,
+        disjoint_paths_cost,
         initial_yes_instance,
         str(log_boost_filepath),
         str(log_scip_filepath),
