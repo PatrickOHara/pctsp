@@ -149,7 +149,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     typename boost::graph_traits<TGraph>::vertex_descriptor root_vertex,
     std::string bounds_csv_filepath = "bounds.csv",
     bool cost_cover_disjoint_paths = false,
-    bool cost_cover_shortest_path = true,
+    bool cost_cover_shortest_path = false,
     bool cost_cover_steiner_tree = false,
     std::vector<int> disjoint_paths_distances = std::vector<int>(),
     std::string log_filepath = "scip_logs.txt",
@@ -159,6 +159,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     int sec_disjoint_tour_freq = 1,
     bool sec_maxflow_mincut = true,
     int sec_maxflow_mincut_freq = 1,
+    std::string summary_yaml_filepath = "summary_stats.yaml",
     float time_limit = 14400    //  seconds (default 4 hours)
 ) {
     typedef typename boost::graph_traits<TGraph>::edge_descriptor Edge;
@@ -258,6 +259,34 @@ SCIP_RETCODE PCTSPbranchAndCut(
     // Get the metrics and statistics of the solver
     writeNodeStatsToCSV(node_stats, metrics_csv_filepath);
 
+    // Get the summary statistics
+    unsigned int num_cost_cover_disjoint_paths = 0;
+    if (cost_cover_disjoint_paths) {
+        CostCoverEventHandler* disjoint_paths_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(
+            SCIPfindObjEventhdlr(scip, DISJOINT_PATHS_COST_COVER_NAME.c_str())
+        );
+        num_cost_cover_disjoint_paths = disjoint_paths_cc_hdlr->getNumConssAdded();
+    }
+    unsigned int num_cost_cover_shortest_paths = 0;
+    if (cost_cover_shortest_path) {
+        CostCoverEventHandler* shortest_path_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(
+            SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str())
+        );
+        num_cost_cover_shortest_paths = shortest_path_cc_hdlr->getNumConssAdded();
+    }
+
+    unsigned int num_sec_disjoint_tour = numDisjointTourSECs(node_stats);
+    unsigned int num_sec_maxflow_mincut = numMaxflowMincutSECs(node_stats);
+    auto summary = getSummaryStatsFromSCIP(
+        scip,
+        num_cost_cover_disjoint_paths,
+        num_cost_cover_shortest_paths,
+        num_sec_disjoint_tour,
+        num_sec_maxflow_mincut
+    );
+    writeSummaryStatsToYaml(summary, summary_yaml_filepath);
+
+    // release handlers and SCIP
     BOOST_LOG_TRIVIAL(debug) << "Releasing constraint handler.";
     SCIP_CALL(SCIPmessagehdlrRelease(&handler));
     BOOST_LOG_TRIVIAL(debug) << "Releasing SCIP model.";

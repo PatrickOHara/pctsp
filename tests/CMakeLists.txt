@@ -50,6 +50,7 @@ target_link_libraries(${TARGET} PRIVATE
     ${Readline_LIBRARY}
     ${GMP_LIBRARIES}
     ${ZLIB_LIBRARIES}
+    ${YAML_CPP_LIBRARIES}
     pctsp
 )
 target_include_directories(${TARGET} PUBLIC
@@ -60,5 +61,6 @@ target_include_directories(${TARGET} PUBLIC
     ${Readline_INCLUDE_DIR}
     ${GMP_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
+    ${YAML_CPP_INCLUDE_DIRS}
 )
 message("done testing")

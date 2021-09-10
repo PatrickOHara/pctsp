@@ -12,7 +12,14 @@ from tspwplib import (
     EdgeList,
     is_pctsp_yes_instance,
 )
-from .constants import FOUR_HOURS
+from .constants import (
+    BOOST_LOGS_TXT,
+    FOUR_HOURS,
+    PCTSP_SUMMARY_STATS_YAML,
+    SCIP_BOUNDS_CSV,
+    SCIP_LOGS_TXT,
+    SCIP_METRICS_CSV,
+)
 
 # pylint: disable=import-error
 from .libpypctsp import pctsp_branch_and_cut_bind
@@ -48,27 +55,28 @@ def pctsp_disjoint_tours_relaxation(
     # )
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-locals
 def pctsp_branch_and_cut(
     graph: nx.Graph,
     quota: int,
     root_vertex: Vertex,
-    bounds_csv_filename: str = "scip_bounds.csv",
+    bounds_csv_filename: str = SCIP_BOUNDS_CSV,
     cost_cover_disjoint_paths: bool = False,
     cost_cover_shortest_path: bool = False,
     cost_cover_steiner_tree: bool = False,
     disjoint_paths_cost: VertexFunction = None,
     initial_solution: Optional[EdgeList] = None,
-    log_boost_filename: str = "boost_logs.txt",
-    log_scip_filename: str = "scip_logs.txt",
+    log_boost_filename: str = BOOST_LOGS_TXT,
+    log_scip_filename: str = SCIP_LOGS_TXT,
     logging_level: int = logging.INFO,
-    metrics_filename: str = "scip_metrics.csv",
+    metrics_filename: str = SCIP_METRICS_CSV,
     name: str = "pctsp",
     output_dir: Optional[Path] = None,
     sec_disjoint_tour: bool = True,
     sec_disjoint_tour_freq: int = 1,
     sec_maxflow_mincut: bool = True,
     sec_maxflow_mincut_freq: int = 1,
+    summary_yaml_filename: str = PCTSP_SUMMARY_STATS_YAML,
     time_limit: float = FOUR_HOURS,
 ) -> EdgeList:
     """Branch and cut algorithm for the prize collecting travelling salesman problem
@@ -91,6 +99,7 @@ def pctsp_branch_and_cut(
         sec_disjoint_tour_freq: How often should disjoint tour SECs be added as cutting planes
         sec_maxflow_mincut: True if using the maxflow mincut SEC separation algorithm
         sec_maxflow_mincut_freq: How frequently to add maxflow mincut SECs.
+        summary_yaml_filename: Name of the yaml file to save summary stats to
         time_limit: Stop searching after this many seconds
 
     Returns:
@@ -106,6 +115,7 @@ def pctsp_branch_and_cut(
     metrics_filepath = output_dir / metrics_filename
     log_boost_filepath = output_dir / log_boost_filename
     log_scip_filepath = output_dir / log_scip_filename
+    summary_yaml_filepath = output_dir / summary_yaml_filename
     initial_yes_instance = []
     if initial_solution and is_pctsp_yes_instance(
         graph, quota, root_vertex, initial_solution
@@ -138,6 +148,7 @@ def pctsp_branch_and_cut(
         sec_disjoint_tour_freq,
         sec_maxflow_mincut,
         sec_maxflow_mincut_freq,
+        str(summary_yaml_filepath),
         time_limit,
     )
     return optimal_edges

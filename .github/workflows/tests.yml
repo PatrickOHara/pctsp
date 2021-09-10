@@ -21,7 +21,9 @@ jobs:
         cmake -GNinja ..
         cmake --build .
     - name: Test
-      run: ./build/tests/test_pctsp
+      run: |
+        mkdir .logs
+        ./build/tests/test_pctsp
 
   test-python:
     runs-on: ubuntu-latest

@@ -6,6 +6,35 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <objscip/objscip.h>
+
+struct SummaryStats {
+    SCIP_Status status;
+    double lower_bound;
+    double upper_bound;
+    unsigned int num_cost_cover_disjoint_paths; // num CC disjoint tour added
+    unsigned int num_cost_cover_shortest_paths; // num CC shortest paths added
+    long long num_nodes;
+    unsigned int num_sec_disjoint_tour;         // number of SECs added with disjoint tour separation
+    unsigned int num_sec_maxflow_mincut;        // number of SECs added with max flow
+};
+
+void writeSummaryStatsToYaml(SummaryStats& summary, std::string& filename);
+
+SummaryStats getSummaryStatsFromSCIP(
+    SCIP* scip,
+    unsigned int& num_cost_cover_disjoint_paths,
+    unsigned int& num_cost_cover_shortest_paths,
+    unsigned int& num_sec_disjoint_tour,
+    unsigned int& num_sec_maxflow_mincut
+);
+
+template <typename Enumeration>
+auto enum_as_integer(Enumeration const value)
+    -> typename std::underlying_type<Enumeration>::type
+{
+    return static_cast<typename std::underlying_type<Enumeration>::type>(value);
+}
 
 const std::vector<std::string> NODE_STATS_COL_NAMES = {
     "lower_bound",
@@ -33,6 +62,10 @@ struct NodeStats {
     unsigned int parent_id;                     // ID of parent node
     double upper_bound;                         // lower bound of LP
 };
+
+unsigned int numDisjointTourSECs(std::vector<NodeStats>& node_stats);
+
+unsigned int numMaxflowMincutSECs(std::vector<NodeStats>& node_stats);
 
 void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_path);
 
