@@ -1,14 +1,22 @@
 """Tests for exact algorithms for PCTSP"""
 
 from tspwplib import (
+    asymmetric_from_undirected,
+    biggest_vertex_id_from_graph,
     edge_list_from_walk,
     order_edge_list,
     reorder_edge_list_from_root,
     total_cost_networkx,
     is_pctsp_yes_instance,
+    split_head,
     walk_from_edge_list,
 )
-from pctsp import pctsp_branch_and_cut, random_tour_complete_graph
+from pctsp import (
+    pctsp_branch_and_cut,
+    random_tour_complete_graph,
+    suurballe_shortest_vertex_disjoint_paths,
+    vertex_disjoint_cost_map,
+)
 
 
 def test_pctsp_on_suurballes_graph(
@@ -71,16 +79,46 @@ def test_pctsp_with_heuristic(
     )
 
 
-def test_pctsp_cost_cover(
+def test_pctsp_cost_cover_shortest_path(
     tspwplib_graph, root, logger_dir, metrics_filename, logger_filename
 ):
-    """Test adding an initial solution to solver"""
+    """Test adding shortest path cost cover inequalities"""
     quota = 10  # small quota should promote more cost cover inequalities added
     pctsp_branch_and_cut(
         tspwplib_graph,
         quota,
         root,
         cost_cover_shortest_path=True,
+        log_scip_filename=logger_filename,
+        metrics_filename=metrics_filename,
+        output_dir=logger_dir,
+    )
+
+
+def test_pctsp_cost_cover_disjoint_paths(
+    tspwplib_graph, root, logger_dir, metrics_filename, logger_filename
+):
+    """Test adding disjoint path cost cover inequalities"""
+    quota = 10  # small quota should promote more cost cover inequalities added
+
+    biggest_vertex = biggest_vertex_id_from_graph(tspwplib_graph)
+    # convert to asymmetric graph and run Suurballe's
+    asymmetric_graph = asymmetric_from_undirected(tspwplib_graph)
+    tree = suurballe_shortest_vertex_disjoint_paths(
+        asymmetric_graph,
+        split_head(biggest_vertex, root),
+        weight="cost",
+    )
+    # get mappings from vertex to cost (of vertex-disjoint path)
+    cost_map = vertex_disjoint_cost_map(tree, biggest_vertex)
+
+    pctsp_branch_and_cut(
+        tspwplib_graph,
+        quota,
+        root,
+        cost_cover_disjoint_paths=True,
+        cost_cover_shortest_path=False,
+        disjoint_paths_cost=cost_map,
         log_scip_filename=logger_filename,
         metrics_filename=metrics_filename,
         output_dir=logger_dir,

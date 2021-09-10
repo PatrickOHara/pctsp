@@ -151,6 +151,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     bool cost_cover_disjoint_paths = false,
     bool cost_cover_shortest_path = true,
     bool cost_cover_steiner_tree = false,
+    std::vector<int> disjoint_paths_distances = std::vector<int>(),
     std::string log_filepath = "scip_logs.txt",
     std::string metrics_csv_filepath = "metrics.csv",
     std::string name = "pctsp",
@@ -195,7 +196,6 @@ SCIP_RETCODE PCTSPbranchAndCut(
 
     // add the cost cover inequalities when a new solution is found
     if (cost_cover_disjoint_paths) {
-        std::vector<int> disjoint_paths_distances (boost::num_vertices(graph));
         SCIP_CALL(includeDisjointPathsCostCover(scip, disjoint_paths_distances));
     }
     if (cost_cover_shortest_path) {

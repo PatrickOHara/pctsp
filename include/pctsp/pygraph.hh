@@ -34,4 +34,29 @@ py::list getPyEdgeList(PCTSPgraph& graph, BoostPyBimap& vertex_id_map,
     return py_list;
 }
 
+template<typename T, typename NewVertexIt, typename OldVertex, typename NewVertex>
+std::vector<T> getVertexPropertyVectorFromPyDict(
+    py::dict& py_property_map,
+    NewVertexIt& first,
+    NewVertexIt& last,
+    boost::bimap<NewVertex, OldVertex>& vertex_id_map
+) {
+    auto num_vertices = std::distance(first, last);
+    std::vector<T> property_vector (num_vertices);
+    for (int i = 0; i < num_vertices; i++) {
+        NewVertex new_vertex = *first;
+        OldVertex old_vertex = getOldVertex(vertex_id_map, new_vertex);
+        T value = py::extract<T>(py_property_map.get(old_vertex));
+        property_vector[i] = value;
+        first++;
+    }
+    return property_vector;
+}
+
+std::vector<int> getVertexPropertyVectorFromPyDict(
+    py::dict& py_property_map,
+    PCTSPgraph& graph,
+    BoostPyBimap& vertex_id_map
+);
+
 #endif

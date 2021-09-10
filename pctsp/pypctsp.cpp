@@ -15,6 +15,7 @@ py::list pctsp_branch_and_cut_bind(
     bool cost_cover_disjoint_paths,
     bool cost_cover_shortest_path,
     bool cost_cover_steiner_tree,
+    py::dict& disjoint_paths_cost,
     py::list& initial_solution_py,
     py::str& log_boost_filepath_py,
     py::str& log_scip_filepath_py,
@@ -36,6 +37,9 @@ py::list pctsp_branch_and_cut_bind(
     EdgeCostMap cost_map = boost::get(edge_weight, graph);
     fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
     PCTSPvertex boost_root = getNewVertex(vertex_id_map, root_vertex);
+    std::vector<int> disjoint_paths_distances;
+    if (cost_cover_disjoint_paths)
+        disjoint_paths_distances = getVertexPropertyVectorFromPyDict(disjoint_paths_cost, graph, vertex_id_map);
 
     std::vector<PCTSPedge> solution_edges;
     if (py::len(initial_solution_py) > 0) {
@@ -69,6 +73,7 @@ py::list pctsp_branch_and_cut_bind(
         cost_cover_disjoint_paths,
         cost_cover_shortest_path,
         cost_cover_steiner_tree,
+        disjoint_paths_distances,
         log_scip_filepath,
         metrics_csv_filepath,
         name,
