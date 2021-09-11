@@ -248,8 +248,8 @@ SCIP_RETCODE PCTSPbranchAndCut(
     solution_edges = getSolutionEdges(scip, graph, sol, edge_variable_map);
     BOOST_LOG_TRIVIAL(info) << "Saving SCIP logs to: " << log_filepath;
     FILE* log_file = fopen(log_filepath.c_str(), "w");
-    SCIP_CALL(SCIPprintOrigProblem(scip, log_file, NULL, true));
-    SCIP_CALL(SCIPprintBestSol(scip, log_file, true));
+    // SCIP_CALL(SCIPprintOrigProblem(scip, log_file, NULL, true));
+    // SCIP_CALL(SCIPprintBestSol(scip, log_file, true));
     SCIP_CALL(SCIPprintStatistics(scip, log_file));
 
     // Write the bounds to file

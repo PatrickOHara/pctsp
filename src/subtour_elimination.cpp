@@ -146,7 +146,6 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     if (SCIPisCutEfficacious(scip, sol, row)) {
         SCIP_Bool infeasible;
         SCIP_CALL(SCIPaddRow(scip, row, false, &infeasible));
-        SCIPprintRow(scip, row, NULL);
         if (infeasible)
             *result = SCIP_CUTOFF;
         else

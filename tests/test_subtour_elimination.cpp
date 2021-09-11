@@ -167,12 +167,9 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     PCTSPcreateBasicConsSubtour(scip, &cons, cons_name, graph, root_vertex);
     SCIPaddCons(scip, cons);
     SCIPreleaseCons(scip, &cons);
-    SCIPprintOrigProblem(scip, NULL, NULL, false);
 
     SCIPsolve(scip);
     auto sol = SCIPgetBestSol(scip);
-    SCIPprintSol(scip, sol, NULL, false);
-
     auto solution_edges = getSolutionEdges(scip, graph, sol, variable_map);
     auto first_edge = boost::edge(3, 5, graph).first;
     auto second_edge = boost::edge(1, 4, graph).first;
