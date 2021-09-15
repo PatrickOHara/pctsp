@@ -66,41 +66,29 @@ std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getEdgesInWal
     return edges;
 }
 
-template <typename TGraph, typename TCostMap, typename Vertex>
-int total_cost(TGraph& graph, std::list<Vertex>& tour, TCostMap cost_map) {
-    // if there are no edges in the tour, return zero
-    if (tour.size() <= 1) {
-        return 0;
-    }
-    // calculate the total cost of edges in a tour
-    typedef typename std::list<Vertex>::iterator tour_iterator_t;
-    tour_iterator_t tour_iterator = tour.begin();
-
-    // keep track of the previous vertex
-    Vertex prev_vertex = *tour_iterator;
-    auto prev_vertex_descriptor = boost::vertex(prev_vertex, graph);
-    // move to the next vertex in the tour
-    ++tour_iterator;
-
-    // keep track of the total cost
+template <typename TEdgeIt, typename TCostMap>
+int total_cost(TEdgeIt& first, TEdgeIt& last, TCostMap& cost_map) {
     int cost = 0;
-    for (; tour_iterator != tour.end(); ++tour_iterator) {
-        Vertex current_vertex = *tour_iterator;
-        auto current_vertex_descriptor = boost::vertex(current_vertex, graph);
-        auto edge = boost::edge(prev_vertex_descriptor,
-            current_vertex_descriptor, graph);
-        bool edge_exists = edge.second;
-        if (edge_exists) {
-            cost += cost_map[edge.first];
-        }
-        else {
-            throw EdgeNotFoundException(std::to_string(prev_vertex),
-                std::to_string(current_vertex));
-        }
-        prev_vertex = current_vertex;
-        prev_vertex_descriptor = boost::vertex(prev_vertex, graph);
+    for (; first != last; first++) {
+        auto edge = *first;
+        cost += cost_map[edge];
     }
     return cost;
+}
+
+template <typename TGraph, typename TVertexIt, typename TCostMap>
+int total_cost(TGraph& graph, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it, TCostMap& cost_map) {
+    auto edges = getEdgesInWalk(graph, first_vertex_it, last_vertex_it);
+    auto first_edge_it = edges.begin();
+    auto last_edge_it = edges.end();
+    return total_cost(first_edge_it, last_edge_it, cost_map);
+}
+
+template <typename TGraph, typename TCostMap>
+int total_cost(TGraph& graph, std::list<typename TGraph::vertex_descriptor>& tour, TCostMap& cost_map) {
+    auto first = tour.begin();
+    auto last = tour.end();
+    return total_cost(graph, first, last, cost_map);
 }
 
 template <typename TGraph, typename TPrizeMap, typename Vertex>

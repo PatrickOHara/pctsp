@@ -14,6 +14,9 @@ if (NOT CMAKE_SYSTEM_PREFIX_PATH)
   set(CMAKE_SYSTEM_PREFIX_PATH $ENV{CMAKE_SYSTEM_PREFIX_PATH})
 endif()
 
+# option to turn of building the tests
+option(PCTSP_BUILD_TESTS "Turn on/off building the tests." ON)
+
 # required dependencies
 find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development REQUIRED)
 find_package(Boost 1.71.0 REQUIRED COMPONENTS python3 graph log log_setup thread filesystem system REQUIRED)
@@ -52,4 +55,6 @@ message("PYTHON_MODULE_EXTENSION: " ${PYTHON_MODULE_EXTENSION})
 
 add_subdirectory(src)
 add_subdirectory(pctsp)
-add_subdirectory(tests)
+if (${PCTSP_BUILD_TESTS})
+  add_subdirectory(tests)
+endif()

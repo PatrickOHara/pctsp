@@ -186,6 +186,69 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     }
 }
 
+TEST_P(SubtourGraphFixture, testSubtourParams) {
+    PCTSPinitLogging(logging::trivial::warning);
+    bool sec_disjoint_tour = true;
+    bool sec_maxflow_mincut = true;
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
+    addSelfLoopsToGraph(graph);
+    int quota = 3;
+    PCTSPvertex root_vertex = boost::vertex(0, graph);
+    assignZeroCostToSelfLoops(graph, cost_map);
+
+    // get filenames
+    std::string name = "test-subtour-with-params";
+    std::string bounds_filepath = ".logs/" + name + "-bounds.csv";
+    std::string log_filepath = ".logs/" + name + ".txt";
+    std::string metrics_csv_filepath = ".logs/" + name + "-metrics.csv";
+    std::string summary_yaml_filepath = ".logs/" + name + "-summary-stats.yaml";
+    std::vector<PCTSPedge> solution_edges;
+    SCIP_RETCODE code = PCTSPbranchAndCut(
+        graph,
+        solution_edges,
+        cost_map,
+        prize_map,
+        quota,
+        root_vertex,
+        bounds_filepath,
+        false,
+        false,
+        false,
+        {},
+        log_filepath,
+        metrics_csv_filepath,
+        name,
+        sec_disjoint_tour,
+        1,
+        sec_maxflow_mincut,
+        1,
+        summary_yaml_filepath,
+        60
+    );
+    auto first = solution_edges.begin();
+    auto last = solution_edges.end();
+    int actual_cost = total_cost(first, last, cost_map);
+    int expected_cost;
+    switch (GetParam()) {
+        case GraphType::GRID8: {
+            expected_cost = 4;
+            break;
+        }
+        case GraphType::SUURBALLE: {
+            expected_cost = 15;
+            break;
+        }
+        default: {
+            // on the complete graphs, no vertices are expected to be above the cost limit
+            expected_cost = 0;
+            break;
+        }
+    }
+    EXPECT_EQ(expected_cost, actual_cost);
+}
+
 TEST(TestSubtourElimination, testGetUnreachableVertices) {
     typedef boost::property<boost::edge_weight_t, int> DiEdgeWeight;
     typedef boost::adjacency_list<

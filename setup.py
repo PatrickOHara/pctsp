@@ -10,6 +10,7 @@ setup(
     author_email="patrick.h.o-hara@warwick.ac.uk",
     description="pctsp",
     install_requires=[
+        "pydantic>=1.8.0",
         "pyscipopt>=3.3.0",
         "tspwplib>=0.5.15",
     ],
@@ -27,5 +28,6 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Operating System :: OS Independent",
     ],
+    cmake_args=['-DPCTSP_BUILD_TESTS:BOOL=OFF'],
     cmake_source_dir=".",
 )

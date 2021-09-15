@@ -22,15 +22,17 @@ struct UnitaryGainOfVertex {
     float gain_of_vertex;
 };
 
-template <typename TGraph, typename TCostMap, typename TPrizeMap, typename T>
-UnitaryGainOfVertex unitaryGainOfVertex(TGraph& g, std::list<T>& tour,
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+UnitaryGainOfVertex unitaryGainOfVertex(
+    TGraph& g,
+    std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
-    TPrizeMap& prize_map, T vertex) {
-    typedef
-        typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
-    typedef typename std::list<T>::iterator tour_iterator_t;
+    TPrizeMap& prize_map, typename TGraph::vertex_descriptor vertex
+) {
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
+    typedef typename std::list<VertexDescriptor>::iterator tour_iterator_t;
     tour_iterator_t tour_iterator = tour.begin();
-    T prev_vertex_id = *tour_iterator;
+    VertexDescriptor prev_vertex_id = *tour_iterator;
     VertexDescriptor u = boost::vertex(prev_vertex_id, g);
     VertexDescriptor v = boost::vertex(vertex, g);
 
@@ -93,23 +95,27 @@ float calculateAverageGain(VertexSet& vertices_in_tour, GainMap& gain_map) {
     return avg_gain;
 }
 
-template <typename TGraph, typename Vertex, typename TCostMap, typename TPrizeMap,
-    typename GainMap, typename VertexSet>
-    Vertex findVertexWithBiggestGain(TGraph& graph, std::list<Vertex>& tour,
-        TCostMap& cost_map, TPrizeMap& prize_map,
-        GainMap& gain_map,
-        VertexSet& vertices_in_tour) {
+template <typename TGraph, typename TCostMap, typename TPrizeMap, typename GainMap, typename VertexSet>
+typename TGraph::vertex_descriptor findVertexWithBiggestGain(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    GainMap& gain_map,
+    VertexSet& vertices_in_tour)
+{
     // iterator over vertices in the graph
+    typedef typename graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
     typedef typename graph_traits<TGraph>::vertex_iterator vertex_iter;
     std::pair<vertex_iter, vertex_iter> vp;
 
     float biggest_gain = 0.0;
-    Vertex biggest_gain_vertex;
+    VertexDescriptor biggest_gain_vertex;
     bool found_biggest_gain = false;
     // for each vertex not in the tour, calculate the unitary gain
     for (vp = vertices(graph); vp.first != vp.second; ++vp.first) {
         // only look at vertices not in the tour
-        Vertex vertex = *vp.first;
+        VertexDescriptor vertex = *vp.first;
         if (vertices_in_tour.count(vertex) == 0) {
             UnitaryGainOfVertex gain = unitaryGainOfVertex(
                 graph, tour, cost_map, prize_map, vertex);
@@ -128,9 +134,11 @@ template <typename TGraph, typename Vertex, typename TCostMap, typename TPrizeMa
 }
 
 template <typename GainMap, typename Tour, typename Vertex>
-void insertBiggestGainVertexIntoTour(Tour& tour,
+void insertBiggestGainVertexIntoTour(
+    Tour& tour,
     Vertex& biggest_gain_vertex,
-    GainMap& gain_map) {
+    GainMap& gain_map
+) {
     // initializing list iterator to beginning
     typedef typename Tour::iterator tour_iterator_t;
     tour_iterator_t tour_iterator = tour.begin();
@@ -142,17 +150,22 @@ void insertBiggestGainVertexIntoTour(Tour& tour,
 }
 
 // Extend a tour by adding vertices according to the unitary gain operation
-template <typename TGraph, typename Vertex, typename TCostMap, typename TPrizeMap>
-void extend(TGraph& g, std::list<Vertex>& tour, TCostMap& cost_map,
-    TPrizeMap& prize_map) {
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+void extend(
+    TGraph& g,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map
+) {
+    typedef typename TGraph::vertex_descriptor VertexDescriptor;
     // we assume that the first and last vertex in the tour are the same
 
     // map vertices to the unitary gain
-    typedef std::map<Vertex, UnitaryGainOfVertex> UnitaryGainMap;
+    typedef std::map<VertexDescriptor, UnitaryGainOfVertex> UnitaryGainMap;
     UnitaryGainMap gain_map;
 
     // create a set of vertices in tour
-    std::unordered_set<Vertex> vertices_in_tour(std::begin(tour),
+    std::unordered_set<VertexDescriptor> vertices_in_tour(std::begin(tour),
         std::end(tour));
 
     bool exists_vertices_with_above_avg_gain = true;
@@ -161,7 +174,7 @@ void extend(TGraph& g, std::list<Vertex>& tour, TCostMap& cost_map,
 
     while (exists_vertices_with_above_avg_gain) {
         try {
-            Vertex biggest_gain_vertex = findVertexWithBiggestGain(
+            VertexDescriptor biggest_gain_vertex = findVertexWithBiggestGain(
                 g, tour, cost_map, prize_map, gain_map, vertices_in_tour);
             float biggest_gain = gain_map[biggest_gain_vertex].gain_of_vertex;
             // only calculate the average gain once
@@ -185,21 +198,26 @@ void extend(TGraph& g, std::list<Vertex>& tour, TCostMap& cost_map,
     }
 }
 
-template <typename TGraph, typename Vertex, typename TCostMap, typename TPrizeMap>
-void extendUntilPrizeFeasible(TGraph& g, std::list<Vertex>& tour,
-    TCostMap& cost_map, TPrizeMap& prize_map,
-    int quota) {
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+void extendUntilPrizeFeasible(
+    TGraph& g,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    int quota
+) {
     // Run the extension algorithm until the total prize of the tour is greater
     // than the quota. We don't calculate the average gain, the only termination
     // criteria of the algorithm is that the tour has sufficient prize.
     // NOTE: there is no gaurantee that a prize feasible tour is found!
 
     // define a mapping from vertices to the unitary gain data structure
-    typedef std::map<Vertex, UnitaryGainOfVertex> UnitaryGainMap;
+    typedef typename TGraph::vertex_descriptor VertexDescriptor;
+    typedef std::map<VertexDescriptor, UnitaryGainOfVertex> UnitaryGainMap;
     UnitaryGainMap gain_map;
 
     // create a set of vertices in tour
-    std::unordered_set<Vertex> vertices_in_tour(std::begin(tour),
+    std::unordered_set<VertexDescriptor> vertices_in_tour(std::begin(tour),
         std::end(tour));
 
     // keep track of the total prize of the tour
@@ -221,7 +239,7 @@ void extendUntilPrizeFeasible(TGraph& g, std::list<Vertex>& tour,
         }
         catch (NoGainVertexFoundException e) {
             insert_a_vertex = false;
-            cerr << "Did not extend tour to be above quota";
+            BOOST_LOG_TRIVIAL(info) << "Did not extend tour to be above quota";
         }
     }
 }
@@ -233,27 +251,27 @@ int indexOfReverseIterator(std::list<ListType>& my_list,
     return std::distance(std::begin(my_list), reverse_it.base()) - 1;
 }
 
-template <typename Vertex> struct SubPathOverTour {
-    std::list<Vertex> path;
+template <typename TVertex> struct SubPathOverTour {
+    std::list<TVertex> path;
     int prize_of_path;
-    Vertex feasibility_vertex;
-    Vertex first_vertex;
-    Vertex predecessor_vertex; // predecessor of the feasibility vertex in tour
+    TVertex feasibility_vertex;
+    TVertex first_vertex;
+    TVertex predecessor_vertex; // predecessor of the feasibility vertex in tour
     bool root_vertex_seen;
     bool feasible_path_found;
 };
 
-template <typename Vertex, typename TPrizeMap>
-SubPathOverTour<Vertex>
-getSubPathOverTour(std::list<Vertex>& tour, int index_of_first_vertex,
-    TPrizeMap& prize_map, int quota, Vertex root_vertex) {
+template <typename TVertex, typename TPrizeMap>
+SubPathOverTour<TVertex>
+getSubPathOverTour(std::list<TVertex>& tour, int index_of_first_vertex,
+    TPrizeMap& prize_map, int quota, TVertex root_vertex) {
     // create an iterator over the tour to create a path
-    typedef typename std::list<Vertex>::iterator tour_iterator_t;
+    typedef typename std::list<TVertex>::iterator tour_iterator_t;
     tour_iterator_t path_iterator = tour.begin();
     std::advance(path_iterator, index_of_first_vertex);
 
     // store variables in a struct
-    SubPathOverTour<Vertex> sub_path = SubPathOverTour<Vertex>();
+    SubPathOverTour<TVertex> sub_path = SubPathOverTour<TVertex>();
     sub_path.first_vertex = *path_iterator;
     sub_path.path = { sub_path.first_vertex };
 
@@ -263,7 +281,7 @@ getSubPathOverTour(std::list<Vertex>& tour, int index_of_first_vertex,
     sub_path.prize_of_path = prize_map[sub_path.first_vertex];
 
     // keep track of important vertices
-    Vertex prev_vertex = sub_path.first_vertex;
+    TVertex prev_vertex = sub_path.first_vertex;
     sub_path.feasible_path_found = false;
     path_iterator = std::next(path_iterator);
     sub_path.root_vertex_seen = sub_path.first_vertex == root_vertex;
@@ -280,7 +298,7 @@ getSubPathOverTour(std::list<Vertex>& tour, int index_of_first_vertex,
             path_iterator = tour.begin(); // loop back to start of tour
             ++path_iterator; // first vertex is the same as last vertex
         }
-        Vertex current_vertex = *path_iterator;
+        TVertex current_vertex = *path_iterator;
         int prize_of_current_vertex = prize_map[current_vertex];
         if (sub_path.prize_of_path + prize_of_current_vertex >= quota) {
             sub_path.feasibility_vertex = current_vertex;
@@ -301,17 +319,21 @@ getSubPathOverTour(std::list<Vertex>& tour, int index_of_first_vertex,
     return sub_path;
 }
 
-template <typename TGraph, typename Vertex, typename TCostMap, typename TPrizeMap>
-std::list<Vertex> collapse(TGraph& graph, std::list<Vertex>& tour,
-    TCostMap& cost_map, TPrizeMap& prize_map, int quota,
-    Vertex root_vertex) {
-
-    typedef
-        typename std::list<Vertex>::reverse_iterator reverse_tour_iterator_t;
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+std::list<typename TGraph::vertex_descriptor> collapse(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    int quota,
+    typename TGraph::vertex_descriptor root_vertex
+) {
+    typedef typename TGraph::vertex_descriptor VertexDescriptor;
+    typedef typename std::list<VertexDescriptor>::reverse_iterator reverse_tour_iterator_t;
 
     // store the least-cost prize-feasible tour
     int cost_of_best_tour = total_cost(graph, tour, cost_map);
-    std::list<Vertex> best_tour(tour);
+    std::list<VertexDescriptor> best_tour(tour);
 
     // loop over the tour in reverse
     for (reverse_tour_iterator_t first_vertex_iterator = tour.rbegin();
@@ -344,12 +366,12 @@ std::list<Vertex> collapse(TGraph& graph, std::list<Vertex>& tour,
                 total_cost(graph, sub_path_over_tour.path, cost_map);
 
             // keep set of vertices in path
-            std::unordered_set<Vertex> vertices_in_path(
+            std::unordered_set<VertexDescriptor> vertices_in_path(
                 std::begin(sub_path_over_tour.path),
                 std::end(sub_path_over_tour.path));
 
             // for each neighbour v of the predecessor vertex
-            for (Vertex collapse_vertex :
+            for (VertexDescriptor collapse_vertex :
             make_iterator_range(boost::adjacent_vertices(
                 sub_path_over_tour.predecessor_vertex, graph))) {
                 auto collapse_vertex_descriptor =

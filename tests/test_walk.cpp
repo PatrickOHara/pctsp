@@ -44,18 +44,18 @@ TEST_P(WalkFixture, testTotalPrize) {
 TEST_P(SuurballeGraphFixture, testTotalCost) {
     PCTSPgraph graph = getGraph();
     auto cost_map = getCostMap(graph);
-    std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
+    std::list<PCTSPvertex> tour = { 0, 1, 3, 6, 7, 2, 0 };
 
     // expected cost of tour
     int expected_cost = 21;
     EXPECT_EQ(total_cost(graph, tour, cost_map), expected_cost);
 
     // empty tour expected to have zero cost
-    std::list<int> empty_tour = {};
+    std::list<PCTSPvertex> empty_tour = {};
     EXPECT_EQ(total_cost(graph, empty_tour, cost_map), 0);
 
     // expect edge exception if edge not in graph
-    std::list<int> invalid_tour = { 0, 1, 2, 0 };
+    std::list<PCTSPvertex> invalid_tour = { 0, 1, 2, 0 };
     EXPECT_THROW(total_cost(graph, invalid_tour, cost_map),
         EdgeNotFoundException);
 }

@@ -16,6 +16,8 @@ from pctsp import (
     random_tour_complete_graph,
     suurballe_shortest_vertex_disjoint_paths,
     vertex_disjoint_cost_map,
+    SummaryStats,
+    PCTSP_SUMMARY_STATS_YAML,
 )
 
 
@@ -95,15 +97,13 @@ def test_pctsp_cost_cover_shortest_path(
     )
 
 
-def test_pctsp_cost_cover_disjoint_paths(
-    tspwplib_graph, root, logger_dir, metrics_filename, logger_filename
+def run_cost_cover_disjoint_path(
+    graph, quota, root, logger_dir, metrics_filename, logger_filename
 ):
-    """Test adding disjoint path cost cover inequalities"""
-    quota = 10  # small quota should promote more cost cover inequalities added
-
-    biggest_vertex = biggest_vertex_id_from_graph(tspwplib_graph)
+    """Run all the tests for the cost cover disjoint paths"""
+    biggest_vertex = biggest_vertex_id_from_graph(graph)
     # convert to asymmetric graph and run Suurballe's
-    asymmetric_graph = asymmetric_from_undirected(tspwplib_graph)
+    asymmetric_graph = asymmetric_from_undirected(graph)
     tree = suurballe_shortest_vertex_disjoint_paths(
         asymmetric_graph,
         split_head(biggest_vertex, root),
@@ -111,15 +111,55 @@ def test_pctsp_cost_cover_disjoint_paths(
     )
     # get mappings from vertex to cost (of vertex-disjoint path)
     cost_map = vertex_disjoint_cost_map(tree, biggest_vertex)
-
-    pctsp_branch_and_cut(
-        tspwplib_graph,
+    optimal_tour = pctsp_branch_and_cut(
+        graph,
         quota,
         root,
         cost_cover_disjoint_paths=True,
-        cost_cover_shortest_path=False,
+        cost_cover_shortest_path=True,
         disjoint_paths_cost=cost_map,
         log_scip_filename=logger_filename,
         metrics_filename=metrics_filename,
         output_dir=logger_dir,
+        sec_disjoint_tour=True,
+        sec_maxflow_mincut=True,
     )
+    summary_path = logger_dir / PCTSP_SUMMARY_STATS_YAML
+    assert summary_path.exists()
+    summary = SummaryStats.from_yaml(summary_path)
+    assert (
+        summary.num_cost_cover_shortest_paths <= summary.num_cost_cover_disjoint_paths
+    )
+    return optimal_tour
+
+
+def test_cost_cover_disjoint_paths_tspwplib(
+    tspwplib_graph, root, logger_dir, metrics_filename, logger_filename
+):
+    """Test adding disjoint path cost cover inequalities"""
+    quota = 10  # small quota should promote more cost cover inequalities added
+    run_cost_cover_disjoint_path(
+        tspwplib_graph, quota, root, logger_dir, metrics_filename, logger_filename
+    )
+
+
+def test_cost_cover_disjoint_paths_suurballes(
+    suurballes_undirected_graph, root, logger_dir, metrics_filename, logger_filename
+):
+    """Test adding disjoint path  cost covers on suurballes graph"""
+    quota = 1  # optimal solution is a triangle
+    edge_list = run_cost_cover_disjoint_path(
+        suurballes_undirected_graph,
+        quota,
+        root,
+        logger_dir,
+        metrics_filename,
+        logger_filename,
+    )
+    ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
+    optimal_tour = walk_from_edge_list(ordered_edges)
+    summary_path = logger_dir / PCTSP_SUMMARY_STATS_YAML
+    summary = SummaryStats.from_yaml(summary_path)
+    assert total_cost_networkx(suurballes_undirected_graph, optimal_tour) == 15
+    assert summary.num_cost_cover_disjoint_paths == 5
+    assert summary.num_cost_cover_shortest_paths == 1
