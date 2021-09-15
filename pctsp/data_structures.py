@@ -1,11 +1,12 @@
 """Data structures for Prize-collecting TSP"""
 
 from pathlib import Path
-from pydantic import BaseModel
+from pydantic import BaseModel  #pylint: disable=no-name-in-module
 import yaml
 
 
-class SummaryStats(BaseModel):
+class SummaryStats(BaseModel):  #pylint: disable=too-few-public-methods
+    """Summary statistics for PCTSP branch and cut"""
 
     status: int
     lower_bound: float
