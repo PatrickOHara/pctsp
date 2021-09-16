@@ -11,6 +11,7 @@ from .constants import (
     SCIP_LOGS_TXT,
     SCIP_METRICS_CSV,
 )
+from .data_structures import SummaryStats
 from .heuristic import (
     collapse,
     extend,
@@ -69,6 +70,7 @@ __all__ = [
     "remove_components_disconnected_from_vertex",
     "suurballes_heuristic",
     "suurballe_shortest_vertex_disjoint_paths",
+    "SummaryStats",
     "SuurballeTree",
     "tour_from_vertex_disjoint_paths",
     "undirected_vertex_disjoint_paths_map",

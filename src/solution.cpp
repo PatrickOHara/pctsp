@@ -49,12 +49,9 @@ void getSolutionGraph(
     bool self_loops
 ) {
     auto solution_edges = getSolutionEdges(scip, graph, sol, edge_variable_map, self_loops);
-    // auto solution_vertices = getSolutionVertices(scip, graph, sol, edge_variable_map);
-    // PCTSPgraph solution_graph;
     for (auto const& edge : solution_edges) {
         auto source = boost::source(edge, graph);
         auto target = boost::target(edge, graph);
-        BOOST_LOG_TRIVIAL(debug) << "Adding " << source << "-" << target;
         if (source != target)
             boost::add_edge(source, target, solution_graph);
     }

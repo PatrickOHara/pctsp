@@ -50,7 +50,6 @@ bool isSolSimpleCycle(SCIP* scip, SCIP_SOL* sol, SCIP_RESULT* result) {
     auto& graph = *probdata->getInputGraph();
     auto& edge_variable_map = *probdata->getEdgeVariableMap();
     auto solution_edges = getSolutionEdges(scip, graph, sol, edge_variable_map);
-    logSolutionEdges(scip, graph, sol, edge_variable_map);
     return isSimpleCycle(graph, solution_edges);
 }
 
@@ -98,18 +97,17 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     // get the variables of the vertices in the vertex set apart from v
     VarVector vertex_variables;
     for (auto const& vertex : vertex_set) {
-        // if (vertex != target_vertex) {  // target vertex not added to constraint
-        auto potential_edge = boost::edge(vertex, vertex, graph);
-        if (!potential_edge.second)
-            throw NoSelfLoopFoundException(std::to_string(vertex));
-        auto var = edge_variable_map[potential_edge.first];
-        vertex_variables.push_back(var);
-        // add the variable name to the constraint name
-        cons_name += "-" + std::to_string(vertex);
-        // }
+        if (vertex != target_vertex) {  // target vertex not added to constraint
+            auto potential_edge = boost::edge(vertex, vertex, graph);
+            if (!potential_edge.second)
+                throw NoSelfLoopFoundException(std::to_string(vertex));
+            auto var = edge_variable_map[potential_edge.first];
+            vertex_variables.push_back(var);
+            // add the variable name to the constraint name
+            cons_name += "-" + std::to_string(vertex);
+        }
     }
     // x(E(S)) <= y(S) - y_v
-    // x(E(S)) <= y(S) - 1
     int nvars = edge_variables.size() + vertex_variables.size();
     BOOST_LOG_TRIVIAL(debug) << edge_variables.size() << " edge variables and " << vertex_variables.size() << " vertex variables added to new constraint " << cons_name;
 
@@ -123,7 +121,7 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     double* vals = var_coefs.data();
     SCIP_VAR** vars = all_variables.data();
     double lhs = -SCIPinfinity(scip);
-    double rhs = -1;
+    double rhs = 0;
 
     SCIP_VAR* transvars[nvars];
 
@@ -146,7 +144,6 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     if (SCIPisCutEfficacious(scip, sol, row)) {
         SCIP_Bool infeasible;
         SCIP_CALL(SCIPaddRow(scip, row, false, &infeasible));
-        SCIPprintRow(scip, row, NULL);
         if (infeasible)
             *result = SCIP_CUTOFF;
         else
@@ -173,7 +170,7 @@ void insertEdgeVertexVariables(VarVector& edge_variables,
     std::fill(var_coefs.begin(), coef_it, 1);
     std::fill(coef_it, var_coefs.end(), -1);
 }
-
+ 
 SCIP_RETCODE PCTSPcreateConsSubtour(
     SCIP* scip,
     SCIP_CONS** cons,
@@ -240,9 +237,11 @@ SCIP_DECL_CONSCHECK(PCTSPconshdlrSubtour::scip_check)
     SCIPgetTransformedVars(scip, nvars, SCIPgetVars(scip), transvars);
     auto nfixed = numFixedOrAggVars(transvars, nvars);
     BOOST_LOG_TRIVIAL(debug) << "scip_check: Checking for subtours. " << nfixed << " fixed/agg vars out of " << nvars;
-    *result = SCIP_FEASIBLE;
-    if (isSolSimpleCycle(scip, sol, result))
+    BOOST_LOG_TRIVIAL(debug) << "LP objective value: " << SCIPgetLPObjval(scip) << ". Solution value: " << SCIPsolGetOrigObj(sol);
+    if (isSolSimpleCycle(scip, sol, result)) {
         BOOST_LOG_TRIVIAL(debug) << "Solution is a simple cycle. No subtour violations found.";
+        *result = SCIP_FEASIBLE;
+    }
     else {
         BOOST_LOG_TRIVIAL(debug) << "Violation: support graph is not a simple cycle. Return Infeasible.";
         *result = SCIP_INFEASIBLE;
@@ -477,7 +476,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
             auto flow = boost::push_relabel_max_flow(support_graph, support_root, target, capacity_property, residual_capacity, reverse_edges, vindex);
 
             if (flow < 2 * FLOW_FLOAT_MULTIPLIER) {
-                BOOST_LOG_TRIVIAL(debug) << "Flow constraint violated: flow from " << support_root << " to " << target << " is: " << flow;
+                BOOST_LOG_TRIVIAL(debug) << "Flow constraint violated: flow from " << getOldVertex(lookup, support_root) << " to " << getOldVertex(lookup, target) << " is: " << flow;
                 // get the flow of each edge
                 // auto eindex = boost::get(boost::edge_index, support_graph);
                 // auto edge_flow = boost::make_vector_property_map<boost::edge_weight_t>(eindex);
@@ -486,24 +485,26 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
                 // all vertices that are reachable on edges that have some flow are on one side of the cut
                 // all edges that are not reachable by the flow are on the other side of the cut
                 auto unreachable = getUnreachableVertices(support_graph, support_root, residual_capacity);
-                BOOST_LOG_TRIVIAL(debug) << unreachable.size() << " vertices are unreachable from root of the residual graph.";
-                auto unreachable_input_vertices = getOldVertices(lookup, unreachable);
-                auto input_target_vertex = getOldVertex(lookup, target);
-                // the component not containing the root violates the subtour elimination constraint
-                SCIP_CALL(addSubtourEliminationConstraint(
-                    scip,
-                    conshdlr,
-                    input_graph,
-                    unreachable_input_vertices,
-                    edge_variable_map,
-                    root_vertex,
-                    input_target_vertex,
-                    sol,
-                    result
-                ));
-                num_conss_added ++;
-                for (auto const& vertex : unreachable) {
-                    added_sec[vertex] = true;
+                if (unreachable.size() >= 3) {   // do not add SEC for small groups of vertices
+                    BOOST_LOG_TRIVIAL(debug) << unreachable.size() << " vertices are unreachable from root of the residual graph.";
+                    auto unreachable_input_vertices = getOldVertices(lookup, unreachable);
+                    auto input_target_vertex = getOldVertex(lookup, target);
+                    // the component not containing the root violates the subtour elimination constraint
+                    SCIP_CALL(addSubtourEliminationConstraint(
+                        scip,
+                        conshdlr,
+                        input_graph,
+                        unreachable_input_vertices,
+                        edge_variable_map,
+                        root_vertex,
+                        input_target_vertex,
+                        sol,
+                        result
+                    ));
+                    num_conss_added ++;
+                    for (auto const& vertex : unreachable) {
+                        added_sec[vertex] = true;
+                    }
                 }
             }
         }

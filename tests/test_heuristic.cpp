@@ -70,7 +70,7 @@ TEST_P(CompleteGraphParameterizedFixture, testUnitaryGainOfVertex) {
     Vertex v1 = boost::vertex(1, g);
     Vertex v2 = boost::vertex(2, g);
     // std::list<Vertex> tour = {v0, v1, v2, v0};
-    std::list<int> tour = { 0, 1, 2, 0 };
+    std::list<PCTSPvertex> tour = { 0, 1, 2, 0 };
     auto prize_map = getPrizeMap(g);
     auto cost_map = getCostMap(g);
     // Vertex missing_vertex = boost::vertex(3, g);
@@ -112,15 +112,14 @@ TEST_P(CompleteGraphParameterizedFixture, test_extend) {
     int root = 0;
     int quota = 2;
 
-    // std::list<Vertex> tour = {v0, v1, v2, v0};
-    std::list<int> tour = { 0, 1, 2, 0 };
+    std::list<Vertex> tour = { 0, 1, 2, 0 };
     extend(g, tour, cost_map, prize_map);
     EXPECT_EQ(tour.size(), num_vertices(g));
 }
 
 TEST_P(SuurballeGraphFixture, test_extend) {
     PCTSPgraph graph = getGraph();
-    std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
+    std::list<PCTSPvertex> tour = { 0, 1, 3, 6, 7, 2, 0 };
     int tour_size_before_extend = tour.size();
 
     // get the edge property map from bundled internal property
@@ -148,7 +147,7 @@ TEST_P(SuurballeGraphFixture, testExtendUntilPrizeFeasible) {
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
     auto cost_map = getCostMap(graph);
-    std::list<int> tour = { 0, 1, 5, 2, 0 };
+    std::list<PCTSPvertex> tour = { 0, 1, 5, 2, 0 };
     int quota = 5;
 
     // run the algorithm
@@ -169,7 +168,7 @@ TEST_P(SuurballeGraphFixture, testExtendUntilPrizeFeasibleSegFault) {
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
     auto cost_map = getCostMap(graph);
-    std::list<int> tour = { 0, 4, 1, 3, 6, 7, 5, 2, 0 };
+    std::list<PCTSPvertex> tour = { 0, 4, 1, 3, 6, 7, 5, 2, 0 };
     int quota = 10;
     extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
 }
@@ -181,12 +180,12 @@ TEST_P(SuurballeGraphFixture, testCollapse) {
     auto cost_map = getCostMap(graph);
 
     // this tour can be collapsed to {0, 1, 5, 2, 0}
-    std::list<int> tour = { 0, 1, 4, 6, 7, 2, 0 };
+    std::list<PCTSPvertex> tour = { 0, 1, 4, 6, 7, 2, 0 };
     int quota = 5;
-    int root_vertex = 0;
+    PCTSPvertex root_vertex = 0;
 
     // run the collapse heuristic
-    std::list<int> new_tour =
+    std::list<PCTSPvertex> new_tour =
         collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
     EXPECT_EQ(total_cost(graph, new_tour, cost_map), 16);
     EXPECT_GE(total_prize_of_tour(graph, new_tour, prize_map), quota);
@@ -213,17 +212,17 @@ TEST_P(CompleteGraphParameterizedFixture, testCollapse) {
     auto cost_map = getCostMap(graph);
 
     // test the tour that is returned is the same as the input tour
-    std::list<int> tour = { 0, 1, 2, 0 };
+    std::list<PCTSPvertex> tour = { 0, 1, 2, 0 };
     int root_vertex = 0;
     int quota = 4;
-    std::list<int> same_tour =
+    std::list<PCTSPvertex> same_tour =
         collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
     ASSERT_THAT(same_tour, testing::ElementsAre(0, 1, 2, 0));
 
     if (boost::num_vertices(graph) == 5) {
         tour = { 0, 1, 2, 3, 4, 0 };
         quota = 5;
-        std::list<int> new_tour =
+        std::list<PCTSPvertex> new_tour =
             collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
         EXPECT_EQ(total_prize_of_tour(graph, new_tour, prize_map), 5);
         EXPECT_EQ(total_cost(graph, new_tour, cost_map), 9);
