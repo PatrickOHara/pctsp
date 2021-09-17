@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 #include <objscip/objscip.h>
+#include "exception.hh"
+
+typedef typename std::vector<SCIP_VAR*> VarVector;
 
 template<typename It>
 std::string joinVariableNames(It& variable_first_it, It& variable_last_it) {
@@ -22,5 +25,24 @@ std::string joinVariableNames(It& variable_first_it, It& variable_last_it) {
 }
 
 std::string joinVariableNames(std::vector<SCIP_VAR*>& vars);
+
+void fillPositiveNegativeVars(
+    VarVector& positive_vars,
+    VarVector& negative_vars,
+    VarVector& all_vars,
+    std::vector<double>& var_coefs
+);
+
+SCIP_RETCODE addRow(
+    SCIP* scip,
+    SCIP_CONSHDLR* conshdlr,
+    SCIP_RESULT* result,
+    SCIP_SOL* sol,
+    VarVector& vars,
+    std::vector<double>& var_coefs,
+    double& lhs,
+    double& rhs,
+    std::string& name
+);
 
 #endif

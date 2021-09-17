@@ -119,6 +119,13 @@ std::vector<SCIP_VAR*> getEdgeVariables(
     return variables;
 }
 
+std::vector<SCIP_VAR*> getEdgeVariables(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    PCTSPedgeVariableMap& edge_variable_map,
+    std::vector<PCTSPedge>& edges
+);
+
 template <typename TGraph, typename EdgeIt>
 std::vector<typename boost::graph_traits< TGraph >::vertex_descriptor> getVerticesOfEdges(
     TGraph& graph,
@@ -165,6 +172,8 @@ std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getSelfLoops(
     }
     return edges;
 }
+
+std::vector<PCTSPedge> getSelfLoops(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
 
 template <typename TGraph, typename TVertexIt>
 std::vector<typename TGraph::edge_descriptor> getEdgesInducedByVertices(

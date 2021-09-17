@@ -2,9 +2,11 @@
 #define __PCTSP_SUBTOUR_ELIMINATION__
 
 #include "data_structures.hh"
-#include "solution.hh"
 #include "graph.hh"
 #include "renaming.hh"
+#include "sciputils.hh"
+#include "solution.hh"
+
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <objscip/objscip.h>
@@ -23,8 +25,6 @@ std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getEdgesFromC
     }
     return edges;
 }
-
-typedef typename std::vector<SCIP_VAR*> VarVector;
 
 SCIP_RETCODE addSubtourEliminationConstraint(
     SCIP* scip,
@@ -124,15 +124,6 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     int& num_conss_added,
     int freq
 );
-
-void insertEdgeVertexVariables(VarVector& edge_variables,
-    VarVector& vertex_variables,
-    VarVector& all_variables,
-    std::vector<double>& var_coefs
-);
-
-std::vector<PCTSPedge> getEdgesInducedByVertices(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
-
 
 class PCTSPconshdlrSubtour : public scip::ObjConshdlr
 {

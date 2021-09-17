@@ -67,17 +67,7 @@ SCIP_RETCODE addSubtourEliminationConstraint(
 
     // get the set of edges contained in the subgraph induced over the vertex set
     std::vector<PCTSPedge> edge_vector = getEdgesInducedByVertices(graph, vertex_set);
-    VarVector edge_variables;
-    std::string debug_message;
-    for (auto const& edge : edge_vector) {
-        edge_variables.push_back(edge_variable_map[edge]);
-        debug_message += std::to_string(boost::source(edge, graph)) + "-" + std::to_string(boost::target(edge, graph)) + " ";
-    }
-    std::string vertex_message;
-    for (auto const& vertex : vertex_set)
-        vertex_message += std::to_string(vertex) + " ";
-    BOOST_LOG_TRIVIAL(debug) << "Vertex " << target_vertex << " in component with vertices " << vertex_message;
-    BOOST_LOG_TRIVIAL(debug) << "Edges to add: " << debug_message;
+    VarVector edge_variables = getEdgeVariables(scip, graph, edge_variable_map, edge_vector);
 
     // get the variables of the vertices in the vertex set apart from v
     VarVector vertex_variables;
@@ -98,62 +88,14 @@ SCIP_RETCODE addSubtourEliminationConstraint(
 
     // create an array of all variables of edges and vertices
     // the edges have positive coefficients and vertices have negative coefficients
-    VarVector all_variables(nvars);
+    VarVector all_vars(nvars);
     std::vector<double> var_coefs(nvars);
-    insertEdgeVertexVariables(edge_variables, vertex_variables, all_variables, var_coefs);
+    fillPositiveNegativeVars(edge_variables, vertex_variables, all_vars, var_coefs);
 
     // create the subtour elimination constraint
-    double* vals = var_coefs.data();
-    SCIP_VAR** vars = all_variables.data();
     double lhs = -SCIPinfinity(scip);
     double rhs = 0;
-
-    SCIP_VAR* transvars[nvars];
-
-    for (int i = 0; i < nvars; i++) {
-        SCIP_VAR* transvar;
-        SCIP_CALL(SCIPgetTransformedVar(scip, vars[i], &transvar));
-        transvars[i] = transvar;
-    }
-
-    SCIP_ROW* row;
-    SCIP_CALL(SCIPcreateEmptyRowConshdlr(scip, &row, conshdlr, cons_name.c_str(), lhs, rhs, false, false, true));
-    SCIP_CALL(SCIPcacheRowExtensions(scip, row));
-
-    for (int i = 0; i < nvars; i++) {
-        auto transvar = transvars[i];
-        SCIPaddVarToRow(scip, row, transvar, vals[i]);
-    }
-    SCIP_CALL(SCIPflushRowExtensions(scip, row));
-
-    if (SCIPisCutEfficacious(scip, sol, row)) {
-        SCIP_Bool infeasible;
-        SCIP_CALL(SCIPaddRow(scip, row, false, &infeasible));
-        if (infeasible)
-            *result = SCIP_CUTOFF;
-        else
-            *result = SCIP_SEPARATED;
-    } 
-    SCIP_CALL(SCIPreleaseRow(scip, &row));
-
-    return SCIP_OKAY;
-}
-
-void insertEdgeVertexVariables(VarVector& edge_variables,
-    VarVector& vertex_variables,
-    VarVector& all_variables,
-    std::vector<double>& var_coefs
-) {
-    BOOST_ASSERT(edge_variables.size() + vertex_variables.size() == all_variables.size());
-    BOOST_ASSERT(all_variables.size() == var_coefs.size());
-    for (int i = 0; i < edge_variables.size(); i++)
-        all_variables[i] = edge_variables[i];
-    for (int i = edge_variables.size(); i < all_variables.size(); i++)
-        all_variables[i] = vertex_variables[i - edge_variables.size()];
-    auto coef_it = var_coefs.begin();
-    std::advance(coef_it, edge_variables.size());
-    std::fill(var_coefs.begin(), coef_it, 1);
-    std::fill(coef_it, var_coefs.end(), -1);
+    return addRow(scip, conshdlr, result, sol, all_vars, var_coefs, lhs, rhs, cons_name);
 }
  
 SCIP_RETCODE PCTSPcreateConsSubtour(
