@@ -166,4 +166,26 @@ std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getSelfLoops(
     return edges;
 }
 
+template <typename TGraph, typename TVertexIt>
+std::vector<typename TGraph::edge_descriptor> getEdgesInducedByVertices(
+    TGraph& graph, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it
+) {
+    typedef typename TGraph::edge_descriptor TEdge;
+    auto n_vertices = std::distance(first_vertex_it, last_vertex_it);
+    std::vector<TEdge> edges;
+    for (; first_vertex_it != last_vertex_it; first_vertex_it++) {
+        for (auto it = std::next(first_vertex_it); it != last_vertex_it; it++) {
+            auto vertex_source = *first_vertex_it;
+            auto vertex_target = *it;
+            auto potential_edge = boost::edge(vertex_source, vertex_target, graph);
+            if (potential_edge.second) {
+                edges.push_back(potential_edge.first);
+            }
+        }
+    }
+    return edges;
+}
+
+std::vector<PCTSPedge> getEdgesInducedByVertices(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
+
 #endif

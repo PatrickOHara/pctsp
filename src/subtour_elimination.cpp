@@ -11,21 +11,6 @@
 #include <objscip/objscip.h>
 #include <objscip/objscipdefplugins.h>
 
-std::vector<PCTSPedge> getInducedEdges(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices) {
-    // assumes the graph is undirected!
-    std::vector<PCTSPedge> edges;
-    for (int i = 0; i < vertices.size(); i++) {
-        for (int j = i + 1; j < vertices.size(); j++) {
-            auto potential_edge = boost::edge(vertices[i], vertices[j], graph);
-            if (potential_edge.second) {
-                edges.push_back(potential_edge.first);
-            }
-        }
-    }
-    return edges;
-}
-
-
 /* Get the number of variables that are fixed or aggregated.
  * You should pass the transformed variables via the array.
  */
@@ -81,7 +66,7 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     std::string cons_name = "sec-" + std::to_string(target_vertex);
 
     // get the set of edges contained in the subgraph induced over the vertex set
-    std::vector<PCTSPedge> edge_vector = getInducedEdges(graph, vertex_set);
+    std::vector<PCTSPedge> edge_vector = getEdgesInducedByVertices(graph, vertex_set);
     VarVector edge_variables;
     std::string debug_message;
     for (auto const& edge : edge_vector) {

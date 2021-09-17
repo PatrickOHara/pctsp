@@ -26,3 +26,9 @@ VertexPairVector getVertexPairVectorFromEdgeSubset(
     }
     return edges;
 }
+
+std::vector<PCTSPedge> getEdgesInducedByVertices(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices) {
+    auto first = vertices.begin();
+    auto last = vertices.end();
+    return getEdgesInducedByVertices(graph, first, last);
+}

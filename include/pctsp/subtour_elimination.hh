@@ -131,7 +131,7 @@ void insertEdgeVertexVariables(VarVector& edge_variables,
     std::vector<double>& var_coefs
 );
 
-std::vector<PCTSPedge> getInducedEdges(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
+std::vector<PCTSPedge> getEdgesInducedByVertices(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
 
 
 class PCTSPconshdlrSubtour : public scip::ObjConshdlr
