@@ -16,9 +16,11 @@ SCIP_RETCODE addCycleCover(
     TVertexIt& last_vertex_it,
     TEdgeVarMap& edge_variable_map,
     SCIP_SOL* sol,
-    SCIP_RESULT* result,
-    std::string& name
+    SCIP_RESULT* result
 ) {
+    // do nothing if there are no vertices to iterate over
+    if (std::distance(first_vertex_it, last_vertex_it) == 0) return SCIP_OKAY;
+
     // get induced edge variables
     auto first_vertex_it_copy1 = first_vertex_it;    // make a copy of the start iterator
     auto induced_edges = getEdgesInducedByVertices(graph, first_vertex_it_copy1, last_vertex_it);
@@ -38,6 +40,7 @@ SCIP_RETCODE addCycleCover(
     fillPositiveNegativeVars(edge_var_vector, vertex_var_vector, all_vars, var_coefs);
     double lhs = -SCIPinfinity(scip);
     double rhs = -1;
+    std::string name = "CycleCover_" + joinVariableNames(all_vars);
 
     // add constraint/row
     return addRow(scip, conshdlr, result, sol, all_vars, var_coefs, lhs, rhs, name);
@@ -50,8 +53,7 @@ SCIP_RETCODE addCycleCover(
     std::vector<PCTSPvertex>& vertices_in_cover,
     PCTSPedgeVariableMap& edge_variable_map,
     SCIP_SOL* sol,
-    SCIP_RESULT* result,
-    std::string& name
+    SCIP_RESULT* result
 );
 
 #endif

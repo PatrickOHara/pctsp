@@ -7,8 +7,7 @@ SCIP_RETCODE addCycleCover(
     std::vector<PCTSPvertex>& vertices_in_cover,
     PCTSPedgeVariableMap& edge_variable_map,
     SCIP_SOL* sol,
-    SCIP_RESULT* result,
-    std::string& name
+    SCIP_RESULT* result
 ) {
     auto first = vertices_in_cover.begin();
     auto last = vertices_in_cover.end();
@@ -20,7 +19,6 @@ SCIP_RETCODE addCycleCover(
         last,
         edge_variable_map,
         sol,
-        result,
-        name
+        result
     );
 }

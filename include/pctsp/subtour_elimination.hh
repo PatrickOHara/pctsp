@@ -63,6 +63,40 @@ struct positive_edge_weight {
     TEdgeWeightMap m_weight;
 };
 
+
+template<typename TGraph, typename TWeight>
+std::vector<typename TGraph::vertex_descriptor> getReachableVertices(
+    TGraph& graph,
+    typename boost::graph_traits<TGraph>::vertex_descriptor& source_vertex,
+    TWeight& weight
+) {
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
+    std::vector<Vertex> reachable_vertices;
+
+    // filter the graph to get edges that have positive weight
+    positive_edge_weight<TWeight> filter(weight);
+    boost::filtered_graph<TGraph, positive_edge_weight<TWeight> > f_graph(graph, filter);
+
+    // create a colour map
+    auto indexmap = boost::get(boost::vertex_index, f_graph);
+    auto colormap = boost::make_vector_property_map<boost::default_color_type>(indexmap);
+
+    // use DFS search to assign colours to vertices
+    boost::default_dfs_visitor visitor;
+    boost::depth_first_visit(f_graph, source_vertex, visitor, colormap);
+
+    // get the colour of the source vertex
+    auto source_color = boost::get(colormap, source_vertex);
+
+    // return all vertices with a different colour to the source vertex
+    for (auto vertex : boost::make_iterator_range(boost::vertices(f_graph))) {
+        if (colormap[vertex] == source_color) {
+            reachable_vertices.push_back(vertex);
+        }
+    }
+    return reachable_vertices;
+}
+
 template<typename TGraph, typename TWeight>
 std::vector<typename boost::graph_traits<TGraph>::vertex_descriptor> getUnreachableVertices(
     TGraph& graph,

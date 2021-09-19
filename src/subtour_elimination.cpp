@@ -49,7 +49,6 @@ SCIP_RETCODE addSubtourEliminationConstraint(
     SCIP_SOL* sol,                /**< primal solution that should be separated */
     SCIP_RESULT* result              /**< pointer to store the result of the separation call */
 ) {
-
     // assert that the root vertex is not in the set of vertices passed
     bool root_found = false;
     bool target_found = false;
@@ -59,38 +58,48 @@ SCIP_RETCODE addSubtourEliminationConstraint(
         if (vertex == target_vertex)
             target_found = true;
     }
-    if (root_found) throw VertexInWrongSetException(std::to_string(root_vertex));
-    if (!target_found) throw VertexInWrongSetException(std::to_string(target_vertex));
-
-    // the name of the constraint contains every vertex in the set
-    std::string cons_name = "sec-" + std::to_string(target_vertex);
+    // either the target or the root vertex should be in the vertex set
+    if (! (root_found || target_found)) {
+        throw VertexNotFoundException(std::to_string(target_vertex));
+    }
+    // but the target and root should not be in the same vertex set
+    if (root_found && target_found) {
+        throw VertexInWrongSetException(std::to_string(target_vertex));
+    }
 
     // get the set of edges contained in the subgraph induced over the vertex set
     std::vector<PCTSPedge> edge_vector = getEdgesInducedByVertices(graph, vertex_set);
     VarVector edge_variables = getEdgeVariables(scip, graph, edge_variable_map, edge_vector);
 
-    // get the variables of the vertices in the vertex set apart from v
-    VarVector vertex_variables;
-    for (auto const& vertex : vertex_set) {
-        if (vertex != target_vertex) {  // target vertex not added to constraint
-            auto potential_edge = boost::edge(vertex, vertex, graph);
-            if (!potential_edge.second)
-                throw NoSelfLoopFoundException(std::to_string(vertex));
-            auto var = edge_variable_map[potential_edge.first];
-            vertex_variables.push_back(var);
-            // add the variable name to the constraint name
-            cons_name += "-" + std::to_string(vertex);
+    // get vertex variables
+    std::vector<PCTSPvertex> vertices_to_find;
+    for (auto const & vertex : vertex_set) {
+        // if the root is found in the vertex set, then add all vertices
+        // if the target is found in the vertex set, then add all vertices except the target vertex
+        if (root_found || (target_found && vertex != target_vertex)) {
+            vertices_to_find.push_back(vertex);
         }
     }
+    // if the root is found, we also need to add the target vertex variable
+    if (root_found) vertices_to_find.push_back(target_vertex);
+    auto self_loops = getSelfLoops(graph, vertices_to_find);
+    auto vertex_variables = getEdgeVariables(scip, graph, edge_variable_map, self_loops);
+
     // x(E(S)) <= y(S) - y_v
     int nvars = edge_variables.size() + vertex_variables.size();
-    BOOST_LOG_TRIVIAL(debug) << edge_variables.size() << " edge variables and " << vertex_variables.size() << " vertex variables added to new constraint " << cons_name;
 
     // create an array of all variables of edges and vertices
     // the edges have positive coefficients and vertices have negative coefficients
     VarVector all_vars(nvars);
     std::vector<double> var_coefs(nvars);
     fillPositiveNegativeVars(edge_variables, vertex_variables, all_vars, var_coefs);
+
+    // if the root vertex is found, then we must change the value of the target coef variable to be positive
+    if (root_found) var_coefs[var_coefs.size()-1] = 1.0;
+
+    // the name of the constraint contains every vertex in the set
+    std::string cons_name = "SubtourElimination_" + joinVariableNames(all_vars);
+    BOOST_LOG_TRIVIAL(debug) << edge_variables.size() << " edge variables and " << vertex_variables.size() << " vertex variables added to new constraint " << cons_name;
 
     // create the subtour elimination constraint
     double lhs = -SCIPinfinity(scip);
@@ -291,7 +300,7 @@ SCIP_RETCODE PCTSPseparateDisjointTour(
 
     for (int component_id = 0; component_id < n_components; component_id++) {
         auto support_vertex_set = component_sets[component_id];
-        if (component_id != root_component && support_vertex_set.size() >= 3) {
+        if (component_id != root_component && support_vertex_set.size() >= 2) {
             std::vector<PCTSPvertex> vertex_set(support_vertex_set.size());
             int i = 0;
             // get the vertex objects from the original graph
@@ -404,24 +413,28 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
 
             if (flow < 2 * FLOW_FLOAT_MULTIPLIER) {
                 BOOST_LOG_TRIVIAL(debug) << "Flow constraint violated: flow from " << getOldVertex(lookup, support_root) << " to " << getOldVertex(lookup, target) << " is: " << flow;
-                // get the flow of each edge
-                // auto eindex = boost::get(boost::edge_index, support_graph);
-                // auto edge_flow = boost::make_vector_property_map<boost::edge_weight_t>(eindex);
-
                 // traverse the residual graph from the root
                 // all vertices that are reachable on edges that have some flow are on one side of the cut
                 // all edges that are not reachable by the flow are on the other side of the cut
+                std::vector<PCTSPvertex> input_vertices;
                 auto unreachable = getUnreachableVertices(support_graph, support_root, residual_capacity);
                 if (unreachable.size() >= 3) {   // do not add SEC for small groups of vertices
-                    BOOST_LOG_TRIVIAL(debug) << unreachable.size() << " vertices are unreachable from root of the residual graph.";
-                    auto unreachable_input_vertices = getOldVertices(lookup, unreachable);
-                    auto input_target_vertex = getOldVertex(lookup, target);
                     // the component not containing the root violates the subtour elimination constraint
+                    BOOST_LOG_TRIVIAL(debug) << unreachable.size() << " vertices are unreachable from root of the residual graph.";
+                    input_vertices = getOldVertices(lookup, unreachable);
+                }
+                else {  // unreachable size is less than 3
+                    auto reachable = getReachableVertices(support_graph, support_root, residual_capacity);
+                    input_vertices = getOldVertices(lookup, reachable);
+                }
+                for (auto &unreachable_vertex: unreachable) {
+                    // for each unreachable vertex add a subtour elimination constraint
+                    auto input_target_vertex = getOldVertex(lookup, unreachable_vertex);
                     SCIP_CALL(addSubtourEliminationConstraint(
                         scip,
                         conshdlr,
                         input_graph,
-                        unreachable_input_vertices,
+                        input_vertices,
                         edge_variable_map,
                         root_vertex,
                         input_target_vertex,
@@ -429,9 +442,8 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
                         result
                     ));
                     num_conss_added ++;
-                    for (auto const& vertex : unreachable) {
-                        added_sec[vertex] = true;
-                    }
+                    // mark the unreachable target vertex to remember we have already added a SEC
+                    added_sec[getNewVertex(lookup, input_target_vertex)] = true;
                 }
             }
         }
