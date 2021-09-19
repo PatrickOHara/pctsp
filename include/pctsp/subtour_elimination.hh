@@ -130,21 +130,49 @@ std::vector<typename boost::graph_traits<TGraph>::vertex_descriptor> getUnreacha
     return unreachable_vertices;
 }
 
+template <typename TGraph, typename TEdgeVariableMap>
 SCIP_RETCODE PCTSPseparateDisjointTour(
     SCIP* scip,
     SCIP_CONSHDLR* conshdlr,
-    PCTSPgraph& input_graph,
-    PCTSPgraph& support_graph,
-    PCTSPedgeVariableMap& edge_variable_map,
-    PCTSPvertex& root_vertex,
+    TGraph& input_graph,
+    TEdgeVariableMap& edge_variable_map,
+    typename TGraph::vertex_descriptor& root_vertex,
+    std::vector<std::vector<typename TGraph::vertex_descriptor>>& component_vectors,
     SCIP_SOL* sol,
     SCIP_RESULT* result,
-    std::vector<int>& component,
-    int& n_components,
-    int& root_component,
-    int& num_conss_added,
-    int freq
-);
+    int& root_component_id,
+    int& num_conss_added
+) {
+    auto n_components = component_vectors.size();
+    if (n_components == 1) return SCIP_OKAY;
+    for (int component_id = 0; component_id < n_components; component_id++) {
+        auto support_vertex_set = component_vectors[component_id];
+        if (component_id != root_component_id && support_vertex_set.size() >= 2) {
+            std::vector<typename TGraph::vertex_descriptor> vertex_set(support_vertex_set.size());
+            int i = 0;
+            // get the vertex objects from the original graph
+            for (auto const& solution_vertex : support_vertex_set) {
+                vertex_set[i] = boost::vertex(solution_vertex, input_graph);
+                i++;
+            }
+            for (auto target_vertex: vertex_set) {
+                SCIP_CALL(addSubtourEliminationConstraint(
+                    scip,
+                    conshdlr,
+                    input_graph,
+                    vertex_set,
+                    edge_variable_map,
+                    root_vertex,
+                    target_vertex,
+                    sol,
+                    result
+                ));
+                num_conss_added ++;
+            }
+        }
+    }
+    return SCIP_OKAY;
+}
 
 SCIP_RETCODE PCTSPseparateMaxflowMincut(
     SCIP* scip,

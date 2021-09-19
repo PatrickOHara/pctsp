@@ -49,4 +49,31 @@ public:
     std::vector<NodeStats>* getNodeStats();
 };
 
+template <typename TGraph>
+std::vector<std::vector<typename TGraph::vertex_descriptor>> getConnectedComponentsVectors(
+    TGraph& graph,
+    int& n_components,
+    std::vector<int>& vertex_component_ids
+) {
+    typedef typename TGraph::vertex_descriptor VertexDescriptor;
+    auto v_index = boost::get(vertex_index, graph);
+    std::vector<std::vector<VertexDescriptor>> component_vectors(n_components);
+    std::vector<int> component_size (n_components);
+    std::vector<int> num_vertices_added (n_components);
+
+    for (auto vertex : boost::make_iterator_range(boost::vertices(graph))) {
+        int component_id = vertex_component_ids[v_index[vertex]];
+        component_size[component_id] ++;
+    }
+
+    for (int i = 0; i < n_components; i++) {
+        component_vectors[i] = std::vector<VertexDescriptor>(component_size[i]);
+    }
+    for (auto vertex: boost::make_iterator_range(boost::vertices(graph))) {
+        int component_id = vertex_component_ids[v_index[vertex]];
+        component_vectors[component_id][num_vertices_added[component_id]++] = vertex;
+    }
+    return component_vectors;
+}
+
 #endif
