@@ -22,3 +22,14 @@ SCIP_RETCODE addCycleCover(
         result
     );
 }
+
+SCIP_DECL_CONSCHECK(CycleCoverConshdlr::scip_check) {
+
+}
+// SCIP_DECL_CONSENFOPS(CycleCoverConshdlr::scip_enfops);
+// SCIP_DECL_CONSENFOLP(CycleCoverConshdlr::scip_enfolp);
+// SCIP_DECL_CONSLOCK(CycleCoverConshdlr::scip_lock);
+
+SCIP_DECL_CONSSEPALP(CycleCoverConshdlr::scip_sepalp) {
+
+}

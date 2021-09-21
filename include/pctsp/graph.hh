@@ -216,4 +216,29 @@ int numEdgesInFilteredGraph(boost::filtered_graph<TGraph, TFilter>& f_graph) {
     return n_edges;
 }
 
+template <typename TPrizeMap, typename TPrizeType, typename TVertexIt>
+bool isPrizeFeasible(
+    TPrizeMap& prize_map,
+    TPrizeType& quota,
+    TVertexIt& first_vertex_it,
+    TVertexIt& last_vertex_it
+) {
+    TPrizeType prize = 0;
+    for (; first_vertex_it != last_vertex_it; first_vertex_it++) {
+        prize += prize_map[*first_vertex_it];
+    }
+    return prize >= quota;
+}
+
+template <typename TPrizeMap, typename TPrizeType, typename TVertex>
+bool isPrizeFeasible(
+    TPrizeMap& prize_map,
+    TPrizeType& quota,
+    std::vector<TVertex>& vertex_vector
+) {
+    auto first = vertex_vector.begin();
+    auto last = vertex_vector.end();
+    return isPrizeFeasible(prize_map, quota, first, last);
+}
+
 #endif

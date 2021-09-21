@@ -1,8 +1,9 @@
 #ifndef __PCTSP_CYCLE_COVER__
 #define __PCTSP_CYCLE_COVER__
 
-#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/connected_components.hpp>
 #include <objscip/objscip.h>
+#include <objscip/objscipdefplugins.h>
 
 #include "graph.hh"
 #include "sciputils.hh"
@@ -55,5 +56,87 @@ SCIP_RETCODE addCycleCover(
     SCIP_SOL* sol,
     SCIP_RESULT* result
 );
+
+template <typename TGraph, typename TEdgeVarMap>
+std::vector<typename TGraph::vertex_descriptor> getRootComponent(
+    SCIP* scip,
+    TGraph& graph,
+    typename TGraph::vertex_descriptor root_vertex,
+    TEdgeVarMap& edge_var_map,
+    SCIP_SOL* sol
+) {
+    // get the connected component of the root
+    auto support_graph = filterGraphByPositiveEdgeVars(scip, graph, sol, edge_var_map);
+    std::vector< int > component(boost::num_vertices(support_graph));
+    int n_components = boost::connected_components(support_graph, &component[0]);
+    auto component_vectors = getConnectedComponentsVectors(support_graph, n_components, component);
+    auto v_index = boost::get(vertex_index, support_graph);
+    int root_component_id = component[v_index[root_vertex]];
+    auto root_component = component_vectors[root_component_id];
+    return root_component;
+}
+
+template <typename TGraph, typename TPrizeMap, typename TPrizeType, typename TEdgeVarMap>
+bool isCycleCoverViolated(
+    SCIP* scip,
+    TGraph& graph,
+    TPrizeMap& prize_map,
+    TPrizeType& quota,
+    typename TGraph::vertex_descriptor root_vertex,
+    TEdgeVarMap& edge_var_map,
+    SCIP_SOL* sol
+) {
+    auto root_component = getRootComponent(scip, graph, root_vertex, edge_var_map, sol);
+
+    // test if the prize of the root component is above the quota
+    return ! isPrizeFeasible(prize_map, quota, root_component);
+}
+
+SCIP_RETCODE separateCycleCover(SCIP* scip, SCIP_CONSHDLR* conshdlr, SCIP_SOL* sol, SCIP_RESULT* result);
+
+template <typename TGraph, typename TPrizeMap, typename TPrizeType, typename TEdgeVarMap>
+SCIP_RETCODE separateCycleCover(
+    SCIP* scip,
+    SCIP_CONSHDLR* conshdlr,
+    SCIP_SOL* sol,
+    SCIP_RESULT* result,
+    TGraph& graph,
+    TPrizeMap& prize_map,
+    TPrize& quota,
+    typename TGraph::vertex_descriptor root_vertex,
+    TEdgeVarMap& edge_var_map
+) {
+    
+    return SCIP_OKAY;
+}
+
+
+const std::string CYCLE_COVER_NAME = "Cycle cover";
+const std::string CYCLE_COVER_DESCRIPTION = "Inequalities are added if a set of vertices cannot contain a feasible cycle";
+
+class CycleCoverConshdlr : public scip::ObjConshdlr {
+private:
+    int _num_conss_added;
+
+public:
+    CycleCoverConshdlr(SCIP* scip, const std::string& name, const std::string& description)
+        : ObjEventhdlr(scip, name.c_str(), description.c_str())
+    {
+        _num_conss_added = 0;
+    }
+
+    CycleCoverConshdlr(SCIP* scip)
+        : ObjEventhdlr(scip, CYCLE_COVER_NAME.c_str(), CYCLE_COVER_DESCRIPTION.c_str())
+    {
+        _num_conss_added = 0;
+    }
+
+    int getNumConssAdded();
+    SCIP_DECL_CONSCHECK(scip_check);
+    // SCIP_DECL_CONSENFOPS(scip_enfops);
+    // SCIP_DECL_CONSENFOLP(scip_enfolp);
+    // SCIP_DECL_CONSLOCK(scip_lock);
+    SCIP_DECL_CONSSEPALP(scip_sepalp);
+};
 
 #endif

@@ -151,6 +151,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     bool cost_cover_disjoint_paths = false,
     bool cost_cover_shortest_path = false,
     bool cost_cover_steiner_tree = false,
+    bool cycle_cover = false,
     std::vector<int> disjoint_paths_distances = std::vector<int>(),
     std::string log_filepath = "scip_logs.txt",
     std::string metrics_csv_filepath = "metrics.csv",
