@@ -163,3 +163,18 @@ def test_cost_cover_disjoint_paths_suurballes(
     assert total_cost_networkx(suurballes_undirected_graph, optimal_tour) == 15
     assert summary.num_cost_cover_disjoint_paths == 5
     assert summary.num_cost_cover_shortest_paths == 1
+
+def test_cycle_cover(
+    tspwplib_graph, root, logger_dir, metrics_filename, logger_filename
+):
+    """Test adding disjoint path cost cover inequalities"""
+    quota = 30  # small quota should promote more cost cover inequalities added
+    pctsp_branch_and_cut(
+        tspwplib_graph,
+        quota,
+        root,
+        cycle_cover=True,
+        log_scip_filename=logger_filename,
+        metrics_filename=metrics_filename,
+        output_dir=logger_dir,
+    )
