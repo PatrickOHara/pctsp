@@ -53,6 +53,12 @@ TEST_P(CycleCoverFixture, testCycleCover) {
     // add variables and constraints to SCIP model
     PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota, root_vertex, edge_variable_map);
 
+    // add basic cycle cover constraint
+    SCIP_CONS* cons;
+    createBasicCycleCoverCons(scip, &cons);
+    SCIPaddCons(scip, cons);
+    SCIPreleaseCons(scip, &cons);
+
     SCIPsetIntParam(scip, "presolving/maxrounds", 0);
 
     // solve the model
