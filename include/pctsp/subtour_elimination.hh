@@ -2,9 +2,11 @@
 #define __PCTSP_SUBTOUR_ELIMINATION__
 
 #include "data_structures.hh"
-#include "solution.hh"
 #include "graph.hh"
 #include "renaming.hh"
+#include "sciputils.hh"
+#include "solution.hh"
+
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <objscip/objscip.h>
@@ -23,8 +25,6 @@ std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getEdgesFromC
     }
     return edges;
 }
-
-typedef typename std::vector<SCIP_VAR*> VarVector;
 
 SCIP_RETCODE addSubtourEliminationConstraint(
     SCIP* scip,
@@ -63,6 +63,40 @@ struct positive_edge_weight {
     TEdgeWeightMap m_weight;
 };
 
+
+template<typename TGraph, typename TWeight>
+std::vector<typename TGraph::vertex_descriptor> getReachableVertices(
+    TGraph& graph,
+    typename boost::graph_traits<TGraph>::vertex_descriptor& source_vertex,
+    TWeight& weight
+) {
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
+    std::vector<Vertex> reachable_vertices;
+
+    // filter the graph to get edges that have positive weight
+    positive_edge_weight<TWeight> filter(weight);
+    boost::filtered_graph<TGraph, positive_edge_weight<TWeight> > f_graph(graph, filter);
+
+    // create a colour map
+    auto indexmap = boost::get(boost::vertex_index, f_graph);
+    auto colormap = boost::make_vector_property_map<boost::default_color_type>(indexmap);
+
+    // use DFS search to assign colours to vertices
+    boost::default_dfs_visitor visitor;
+    boost::depth_first_visit(f_graph, source_vertex, visitor, colormap);
+
+    // get the colour of the source vertex
+    auto source_color = boost::get(colormap, source_vertex);
+
+    // return all vertices with a different colour to the source vertex
+    for (auto vertex : boost::make_iterator_range(boost::vertices(f_graph))) {
+        if (colormap[vertex] == source_color) {
+            reachable_vertices.push_back(vertex);
+        }
+    }
+    return reachable_vertices;
+}
+
 template<typename TGraph, typename TWeight>
 std::vector<typename boost::graph_traits<TGraph>::vertex_descriptor> getUnreachableVertices(
     TGraph& graph,
@@ -96,21 +130,49 @@ std::vector<typename boost::graph_traits<TGraph>::vertex_descriptor> getUnreacha
     return unreachable_vertices;
 }
 
+template <typename TGraph, typename TEdgeVariableMap>
 SCIP_RETCODE PCTSPseparateDisjointTour(
     SCIP* scip,
     SCIP_CONSHDLR* conshdlr,
-    PCTSPgraph& input_graph,
-    PCTSPgraph& support_graph,
-    PCTSPedgeVariableMap& edge_variable_map,
-    PCTSPvertex& root_vertex,
+    TGraph& input_graph,
+    TEdgeVariableMap& edge_variable_map,
+    typename TGraph::vertex_descriptor& root_vertex,
+    std::vector<std::vector<typename TGraph::vertex_descriptor>>& component_vectors,
     SCIP_SOL* sol,
     SCIP_RESULT* result,
-    std::vector<int>& component,
-    int& n_components,
-    int& root_component,
-    int& num_conss_added,
-    int freq
-);
+    int& root_component_id,
+    int& num_conss_added
+) {
+    auto n_components = component_vectors.size();
+    if (n_components == 1) return SCIP_OKAY;
+    for (int component_id = 0; component_id < n_components; component_id++) {
+        auto support_vertex_set = component_vectors[component_id];
+        if (component_id != root_component_id && support_vertex_set.size() >= 2) {
+            std::vector<typename TGraph::vertex_descriptor> vertex_set(support_vertex_set.size());
+            int i = 0;
+            // get the vertex objects from the original graph
+            for (auto const& solution_vertex : support_vertex_set) {
+                vertex_set[i] = boost::vertex(solution_vertex, input_graph);
+                i++;
+            }
+            for (auto target_vertex: vertex_set) {
+                SCIP_CALL(addSubtourEliminationConstraint(
+                    scip,
+                    conshdlr,
+                    input_graph,
+                    vertex_set,
+                    edge_variable_map,
+                    root_vertex,
+                    target_vertex,
+                    sol,
+                    result
+                ));
+                num_conss_added ++;
+            }
+        }
+    }
+    return SCIP_OKAY;
+}
 
 SCIP_RETCODE PCTSPseparateMaxflowMincut(
     SCIP* scip,
@@ -124,15 +186,6 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     int& num_conss_added,
     int freq
 );
-
-void insertEdgeVertexVariables(VarVector& edge_variables,
-    VarVector& vertex_variables,
-    VarVector& all_variables,
-    std::vector<double>& var_coefs
-);
-
-std::vector<PCTSPedge> getInducedEdges(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
-
 
 class PCTSPconshdlrSubtour : public scip::ObjConshdlr
 {

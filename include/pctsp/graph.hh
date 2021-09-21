@@ -4,6 +4,7 @@
 #define __PCTSP_GRAPH__
 #include <boost/bimap.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/filtered_graph.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <objscip/objscip.h>
@@ -119,6 +120,13 @@ std::vector<SCIP_VAR*> getEdgeVariables(
     return variables;
 }
 
+std::vector<SCIP_VAR*> getEdgeVariables(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    PCTSPedgeVariableMap& edge_variable_map,
+    std::vector<PCTSPedge>& edges
+);
+
 template <typename TGraph, typename EdgeIt>
 std::vector<typename boost::graph_traits< TGraph >::vertex_descriptor> getVerticesOfEdges(
     TGraph& graph,
@@ -164,6 +172,48 @@ std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getSelfLoops(
         first++;
     }
     return edges;
+}
+
+std::vector<PCTSPedge> getSelfLoops(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
+
+template <typename TGraph, typename TVertexIt>
+std::vector<typename TGraph::edge_descriptor> getEdgesInducedByVertices(
+    TGraph& graph, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it
+) {
+    typedef typename TGraph::edge_descriptor TEdge;
+    auto n_vertices = std::distance(first_vertex_it, last_vertex_it);
+    std::vector<TEdge> edges;
+    for (; first_vertex_it != last_vertex_it; first_vertex_it++) {
+        for (auto it = std::next(first_vertex_it); it != last_vertex_it; it++) {
+            auto vertex_source = *first_vertex_it;
+            auto vertex_target = *it;
+            auto potential_edge = boost::edge(vertex_source, vertex_target, graph);
+            if (potential_edge.second) {
+                edges.push_back(potential_edge.first);
+            }
+        }
+    }
+    return edges;
+}
+
+std::vector<PCTSPedge> getEdgesInducedByVertices(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
+
+/**
+ * @brief Count how many edges are in the filtered graph by iterating over every edge.
+ * 
+ * @tparam TGraph Graph type.
+ * @tparam TFilter The edge filter
+ * @param f_graph A filtered graph.
+ * @return int Number of edges in the filtered graph.
+ */
+template <typename TGraph, typename TFilter>
+int numEdgesInFilteredGraph(boost::filtered_graph<TGraph, TFilter>& f_graph) {
+    int n_edges = 0;
+    auto edges_it = boost::edges(f_graph);
+    for (auto e : boost::make_iterator_range(boost::edges(f_graph))) {
+        n_edges++;
+    }
+    return n_edges;
 }
 
 #endif

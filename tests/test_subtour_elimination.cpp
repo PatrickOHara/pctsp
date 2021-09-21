@@ -46,51 +46,6 @@ TEST(TestSubtourElimination, testDisconnectedCut) {
     EXPECT_EQ(edges_in_cut.size(), 0);
 }
 
-TEST(TestSubtourElimination, testInsertEdgeVertexVariables) {
-    // create linear program
-    SCIP* scip = NULL;
-    SCIPcreate(&scip);
-    SCIPincludeDefaultPlugins(scip);
-    SCIPcreateProbBasic(scip, "test-insert-edge-vertex-variables");
-
-    int n_edge_vars = 4;
-    int n_vertex_vars = 2;
-    int nvars = n_edge_vars + n_vertex_vars;
-
-    VarVector edge_variables(n_edge_vars);
-    VarVector vertex_variables(n_vertex_vars);
-    VarVector all_variables(nvars);
-    std::vector<double> var_coefs(nvars);
-
-    for (int i = 0; i < n_edge_vars; i++) {
-        SCIP_VAR* var = NULL;
-        SCIPcreateVarBasic(scip, &var, NULL, 0, 1, 1, SCIP_VARTYPE_CONTINUOUS);
-        SCIPaddVar(scip, var);
-        edge_variables[i] = var;
-    }
-    for (int i = 0; i < n_vertex_vars; i++) {
-        SCIP_VAR* var = NULL;
-        SCIPcreateVarBasic(scip, &var, NULL, 0, 1, 1, SCIP_VARTYPE_CONTINUOUS);
-        SCIPaddVar(scip, var);
-        vertex_variables[i] = var;
-    }
-    // run insertion algorithm
-    insertEdgeVertexVariables(edge_variables, vertex_variables, all_variables, var_coefs);
-    EXPECT_EQ(edge_variables.size(), n_edge_vars);
-    EXPECT_EQ(vertex_variables.size(), n_vertex_vars);
-    EXPECT_EQ(all_variables.size(), nvars);
-    EXPECT_EQ(var_coefs.size(), nvars);
-    for (int i = 0; i < n_edge_vars; i++) {
-        EXPECT_EQ(var_coefs[i], 1);
-        EXPECT_EQ(edge_variables[i], all_variables[i]);
-    }
-    for (int i = n_edge_vars; i < nvars; i++) {
-        EXPECT_EQ(var_coefs[i], -1);
-        EXPECT_EQ(vertex_variables[i - n_edge_vars], all_variables[i]);
-    }
-
-}
-
 TEST(TestSubtourElimination, testProbDataPCTSP) {
     PCTSPgraph graph;
     SCIP* scip = NULL;
@@ -259,7 +214,6 @@ TEST(TestSubtourElimination, testGetUnreachableVertices) {
     for (int i = 0; i < n_vertices - 3; i++) {
         int w = 1;
         auto edge = boost::add_edge(i, i + 1, w, graph);
-        // boost::put(weight, edge, w);
     }
     boost::add_edge(n_vertices - 3, n_vertices - 2, 0, graph);
     boost::add_edge(n_vertices - 2, n_vertices - 1, 1, graph);

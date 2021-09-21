@@ -75,10 +75,6 @@ TEST(TestSeparation, testGetSolutionGraph) {
     SCIPreleaseCons(scip, &cons);
     SCIPsolve(scip);
     SCIP_SOL* sol = SCIPgetBestSol(scip);
-    // EXPECT_EQ(SCIPgetSolVal(scip, sol, edge_variable_map[boost::edge(0, 1, graph).first]), 0);
-    // SCIPsetSolVal(scip, sol, edge_variable_map[boost::edge(0, 1, graph).first], 0.1);
-    // EXPECT_EQ(SCIPgetSolVal(scip, sol, edge_variable_map[boost::edge(0, 1, graph).first]), 0.1);
-
     int objective = 0;
     std::list<PCTSPedge> solution_edges;
     for (auto const& [edge, var] : edge_variable_map) {
@@ -89,12 +85,10 @@ TEST(TestSeparation, testGetSolutionGraph) {
         }
     }
     EXPECT_EQ(objective, 2);
+    
+    auto solution_graph = filterGraphByPositiveEdgeVars(scip, graph, sol, edge_variable_map);
 
-    addSelfLoopsToGraph(graph);
-    PCTSPgraph solution_graph;
-    getSolutionGraph(scip, graph, solution_graph, sol, edge_variable_map);
-
-    EXPECT_EQ(boost::num_edges(solution_graph), objective);
+    EXPECT_EQ(numEdgesInFilteredGraph(solution_graph), objective);
     for (auto const& edge : solution_edges) {
         auto source = boost::source(edge, graph);
         auto target = boost::target(edge, graph);

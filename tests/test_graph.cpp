@@ -81,8 +81,37 @@ TEST_P(GraphFix, testGetSelfLoops) {
     }
 }
 
+TEST_P(GraphFix, testGetEdgesInducedByVertices) {
+    auto graph = getGraph();
+    std::vector<PCTSPvertex> inducing_vertices = {0, 1, 2, 3};
+    auto induced_edges = getEdgesInducedByVertices(graph, inducing_vertices);
+    int expected_num_edges;
+    switch (GetParam()) {
+        case GraphType::COMPLETE4:
+            expected_num_edges = boost::num_edges(graph);
+            break;
+        case GraphType::COMPLETE5: {
+            expected_num_edges = boost::num_edges(graph) - 4;
+            break;
+        }
+        case GraphType::GRID8: {
+            expected_num_edges = 4;
+            break;
+        }
+        case GraphType::SUURBALLE: {
+            expected_num_edges = 3;
+            break;
+        }
+        default: {
+            expected_num_edges = 0;
+            break;
+        }
+    }
+    EXPECT_EQ(induced_edges.size(), expected_num_edges);
+}
+
 INSTANTIATE_TEST_SUITE_P(
     TestGraph,
     GraphFix,
-    ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE)
+    ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5, GraphType::GRID8, GraphType::SUURBALLE)
 );

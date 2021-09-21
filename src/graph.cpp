@@ -26,3 +26,26 @@ VertexPairVector getVertexPairVectorFromEdgeSubset(
     }
     return edges;
 }
+
+std::vector<SCIP_VAR*> getEdgeVariables(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    PCTSPedgeVariableMap& edge_variable_map,
+    std::vector<PCTSPedge>& edges
+) {
+    auto first = edges.begin();
+    auto last = edges.end();
+    return getEdgeVariables(scip, graph, edge_variable_map, first, last);
+}
+
+std::vector<PCTSPedge> getEdgesInducedByVertices(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices) {
+    auto first = vertices.begin();
+    auto last = vertices.end();
+    return getEdgesInducedByVertices(graph, first, last);
+}
+
+std::vector<PCTSPedge> getSelfLoops(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices) {
+    auto first = vertices.begin();
+    auto last = vertices.end();
+    return getSelfLoops(graph, first, last);
+}

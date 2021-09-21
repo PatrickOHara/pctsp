@@ -4,6 +4,7 @@ add_library(${TARGET} SHARED
     "algorithms.cpp"
     "data_structures.cpp"
     "cost_cover.cpp"
+    "cycle_cover.cpp"
     "event_handlers.cpp"
     "graph.cpp"
     "heuristic.cpp"

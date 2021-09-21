@@ -5,6 +5,11 @@
 
 using namespace std;
 
+bool isVarPositive(SCIP* scip, SCIP_SOL* sol, SCIP_VAR* var) {
+    auto value = SCIPgetSolVal(scip, sol, var);
+    return (!SCIPisZero(scip, value)) && (value > 0);
+}
+
 std::vector<PCTSPvertex> getSolutionVertices(SCIP* scip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map) {
     std::vector<PCTSPvertex> solution_vertices;
     for (auto vertex : boost::make_iterator_range(boost::vertices(graph))) {
@@ -30,11 +35,8 @@ std::vector<PCTSPedge> getSolutionEdges(SCIP* scip, PCTSPgraph& graph, SCIP_SOL*
         // for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
         auto source = boost::source(edge, graph);
         auto target = boost::target(edge, graph);
-        if (source != target) {
-            auto value = SCIPgetSolVal(scip, sol, var);
-            if (!(SCIPisZero(scip, value)) && (value > 0)) {
-                solution_edges.push_back(edge);
-            }
+        if (source != target && isVarPositive(scip, sol, var)) {
+            solution_edges.push_back(edge);
         }
     }
     return solution_edges;

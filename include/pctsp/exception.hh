@@ -25,6 +25,12 @@ public:
     const char* what() const throw() { return message.c_str(); }
 };
 
+class VertexNotFoundException : public std::exception {
+    std::string message;
+public:
+    VertexNotFoundException(const std::string& vertex_str) : message(std::string("Vertex not found: ") + vertex_str) {}
+};
+
 class NoSelfLoopFoundException : EdgeNotFoundException {
 public:
     NoSelfLoopFoundException(const std::string& vertex_str)
