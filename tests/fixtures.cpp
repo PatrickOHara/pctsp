@@ -178,3 +178,13 @@ PCTSPvertex GraphFixture::getRootVertex() {
     auto graph = getGraph();
     return boost::vertex(0, graph);
 }
+
+std::string GraphFixture::getParamName() {
+    switch (GetParam()) {
+        case GraphType::COMPLETE4: return "COMPLETE4"; break;
+        case GraphType::COMPLETE5: return "COMPLETE5"; break;
+        case GraphType::GRID8: return "GRID8"; break;
+        case GraphType::SUURBALLE: return "SUURBALLE"; break;
+        default: return "UNKNOWN"; break;
+    }
+}

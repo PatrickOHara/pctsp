@@ -7,6 +7,7 @@
 
 #include "constraint.hh"
 #include "cost_cover.hh"
+#include "cycle_cover.hh"
 #include "event_handlers.hh"
 #include "heuristic.hh"
 #include "logger.hh"
@@ -190,6 +191,10 @@ SCIP_RETCODE PCTSPbranchAndCut(
 
     // add custom cutting plane handlers
     SCIP_CALL(SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE));
+    auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
+    if (cycle_cover) {
+        SCIP_CALL(SCIPincludeObjConshdlr(scip, cycle_cover_conshdlr, true));
+    }
 
     // add event handlers
     SCIP_CALL( SCIPincludeObjEventhdlr(scip, new NodeEventhdlr(scip), TRUE) );

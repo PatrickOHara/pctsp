@@ -23,4 +23,5 @@ public:
   int getNumVertices();
   int getQuota();
   PCTSPvertex getRootVertex();
+  std::string getParamName();
 };

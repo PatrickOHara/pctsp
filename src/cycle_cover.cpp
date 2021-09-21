@@ -23,6 +23,57 @@ SCIP_RETCODE addCycleCover(
     );
 }
 
+SCIP_RETCODE createCycleCoverCons(
+    SCIP* scip,
+    SCIP_CONS** cons,
+    const std::string& name,
+    SCIP_Bool initial,
+    SCIP_Bool separate,
+    SCIP_Bool enforce,
+    SCIP_Bool check,
+    SCIP_Bool propagate,
+    SCIP_Bool local,
+    SCIP_Bool modifiable,
+    SCIP_Bool dynamic,
+    SCIP_Bool removable
+) {
+    SCIP_CONSHDLR* conshdlr;
+    SCIP_CONSDATA* consdata;
+
+    /* find the subtour constraint handler */
+    conshdlr = SCIPfindConshdlr(scip, CYCLE_COVER_NAME.c_str());
+    if (conshdlr == NULL)
+    {
+        std::string error_message = CYCLE_COVER_NAME + ": constraint handler not found.";
+        auto cstr_message = error_message.c_str();
+        SCIPmessagePrintError("%s", cstr_message);
+        return SCIP_PLUGINNOTFOUND;
+    }
+    return SCIPcreateCons(scip, cons, name.c_str(), conshdlr, consdata, initial, separate, enforce, check, propagate,
+        local, modifiable, dynamic, removable, FALSE);
+}
+
+SCIP_RETCODE createBasicCycleCoverCons(SCIP* scip, SCIP_CONS** cons) {
+    return createBasicCycleCoverCons(scip, cons, CYCLE_COVER_CONS_PREFIX);
+}
+
+SCIP_RETCODE createBasicCycleCoverCons(SCIP* scip, SCIP_CONS** cons, const std::string& name) {
+    return createCycleCoverCons(
+        scip,
+        cons,
+        name,
+        FALSE,
+        TRUE,
+        TRUE,
+        TRUE,
+        TRUE,
+        FALSE,
+        FALSE,
+        FALSE,
+        TRUE
+    );
+}
+
 bool isCycleCoverViolated(SCIP* scip, SCIP_SOL* sol, ProbDataPCTSP* probdata) {
     auto& input_graph = *(probdata->getInputGraph());
     auto& edge_variable_map = *(probdata->getEdgeVariableMap());
@@ -42,6 +93,10 @@ SCIP_RETCODE separateCycleCover(SCIP* scip, SCIP_CONSHDLR* conshdlr, SCIP_SOL* s
     return separateCycleCover(scip, conshdlr, sol, result, input_graph, prize_map, quota, root_vertex, edge_variable_map);
 }
 
+int CycleCoverConshdlr::getNumConssAdded() {
+    return _num_conss_added;
+}
+
 SCIP_DECL_CONSCHECK(CycleCoverConshdlr::scip_check) {
     ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
     if (isCycleCoverViolated(scip, sol, probdata)) {
@@ -53,9 +108,18 @@ SCIP_DECL_CONSCHECK(CycleCoverConshdlr::scip_check) {
     return SCIP_OKAY;
 }
 
-// SCIP_DECL_CONSENFOPS(CycleCoverConshdlr::scip_enfops);
-// SCIP_DECL_CONSENFOLP(CycleCoverConshdlr::scip_enfolp);
-// SCIP_DECL_CONSLOCK(CycleCoverConshdlr::scip_lock);
+SCIP_DECL_CONSENFOPS(CycleCoverConshdlr::scip_enfops) {
+    return SCIP_OKAY;
+}
+SCIP_DECL_CONSENFOLP(CycleCoverConshdlr::scip_enfolp) {
+    return SCIP_OKAY;
+}
+SCIP_DECL_CONSTRANS(CycleCoverConshdlr::scip_trans) {
+    return SCIP_OKAY;
+}
+SCIP_DECL_CONSLOCK(CycleCoverConshdlr::scip_lock) {
+    return SCIP_OKAY;
+}
 
 SCIP_DECL_CONSSEPALP(CycleCoverConshdlr::scip_sepalp) {
     SCIP_SOL* sol = NULL;
