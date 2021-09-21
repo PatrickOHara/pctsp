@@ -62,6 +62,7 @@ TEST_P(CycleCoverFixture, testCycleCover) {
     SCIPsetIntParam(scip, "presolving/maxrounds", 0);
 
     // solve the model
+    // NOTE no subtour elimination constraints are added!
     SCIPsolve(scip);
 
     int num_expected_cc_conss;
@@ -70,8 +71,10 @@ TEST_P(CycleCoverFixture, testCycleCover) {
     double expected_opt;
     switch (test_case) {
         case GraphType::GRID8: {
+            // only 1 cycle cover added to vertices {0,1,2,3}
+            // this is sufficient to solve the grid8 problem optimally
             num_expected_cc_conss = 1;
-            expected_opt = 6;
+            expected_opt = 14;
             break;
         }
         case GraphType::SUURBALLE: {

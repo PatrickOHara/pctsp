@@ -115,6 +115,15 @@ SCIP_DECL_CONSENFOLP(CycleCoverConshdlr::scip_enfolp) {
     return SCIP_OKAY;
 }
 SCIP_DECL_CONSTRANS(CycleCoverConshdlr::scip_trans) {
+    SCIP_CONSDATA* sourcedata;
+    SCIP_CONSDATA* targetdata = NULL;
+
+    /* create target constraint */
+    SCIP_CALL(SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
+        SCIPconsIsInitial(sourcecons), SCIPconsIsSeparated(sourcecons), SCIPconsIsEnforced(sourcecons),
+        SCIPconsIsChecked(sourcecons), SCIPconsIsPropagated(sourcecons), SCIPconsIsLocal(sourcecons),
+        SCIPconsIsModifiable(sourcecons), SCIPconsIsDynamic(sourcecons), SCIPconsIsRemovable(sourcecons),
+        SCIPconsIsStickingAtNode(sourcecons)));
     return SCIP_OKAY;
 }
 SCIP_DECL_CONSLOCK(CycleCoverConshdlr::scip_lock) {
@@ -123,5 +132,7 @@ SCIP_DECL_CONSLOCK(CycleCoverConshdlr::scip_lock) {
 
 SCIP_DECL_CONSSEPALP(CycleCoverConshdlr::scip_sepalp) {
     SCIP_SOL* sol = NULL;
-    return separateCycleCover(scip, conshdlr, sol, result);
+    SCIP_RETCODE code = separateCycleCover(scip, conshdlr, sol, result);
+    if (*result == SCIP_CUTOFF || *result == SCIP_SEPARATED) _num_conss_added++;
+    return code;
 }
