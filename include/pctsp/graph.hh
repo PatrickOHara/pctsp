@@ -4,6 +4,7 @@
 #define __PCTSP_GRAPH__
 #include <boost/bimap.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/filtered_graph.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <objscip/objscip.h>
@@ -196,5 +197,23 @@ std::vector<typename TGraph::edge_descriptor> getEdgesInducedByVertices(
 }
 
 std::vector<PCTSPedge> getEdgesInducedByVertices(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices);
+
+/**
+ * @brief Count how many edges are in the filtered graph by iterating over every edge.
+ * 
+ * @tparam TGraph Graph type.
+ * @tparam TFilter The edge filter
+ * @param f_graph A filtered graph.
+ * @return int Number of edges in the filtered graph.
+ */
+template <typename TGraph, typename TFilter>
+int numEdgesInFilteredGraph(boost::filtered_graph<TGraph, TFilter>& f_graph) {
+    int n_edges = 0;
+    auto edges_it = boost::edges(f_graph);
+    for (auto e : boost::make_iterator_range(boost::edges(f_graph))) {
+        n_edges++;
+    }
+    return n_edges;
+}
 
 #endif

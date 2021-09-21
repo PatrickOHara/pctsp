@@ -419,11 +419,10 @@ SCIP_RETCODE PCTSPseparateSubtour(
     }
 
     // connected components
-    PCTSPgraph support_graph;
-    getSolutionGraph(scip, input_graph, support_graph, sol, edge_variable_map);
+    auto support_graph = filterGraphByPositiveEdgeVars(scip, input_graph, sol, edge_variable_map);
     std::vector< int > component(boost::num_vertices(support_graph));
     int n_components = boost::connected_components(support_graph, &component[0]);
-    auto component_vectors = getConnectedComponentsVectors(input_graph, n_components, component);
+    auto component_vectors = getConnectedComponentsVectors(support_graph, n_components, component);
     auto v_index = boost::get(vertex_index, support_graph);
     int root_component_id = component[v_index[root_vertex]];
     if (sec_disjoint_tour) {

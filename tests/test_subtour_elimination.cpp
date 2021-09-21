@@ -214,7 +214,6 @@ TEST(TestSubtourElimination, testGetUnreachableVertices) {
     for (int i = 0; i < n_vertices - 3; i++) {
         int w = 1;
         auto edge = boost::add_edge(i, i + 1, w, graph);
-        // boost::put(weight, edge, w);
     }
     boost::add_edge(n_vertices - 3, n_vertices - 2, 0, graph);
     boost::add_edge(n_vertices - 2, n_vertices - 1, 1, graph);
