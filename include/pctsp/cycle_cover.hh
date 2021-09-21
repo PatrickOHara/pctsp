@@ -5,8 +5,10 @@
 #include <objscip/objscip.h>
 #include <objscip/objscipdefplugins.h>
 
+#include "data_structures.hh"
 #include "graph.hh"
 #include "sciputils.hh"
+#include "solution.hh"
 
 template <typename TGraph, typename TVertexIt, typename TEdgeVarMap>
 SCIP_RETCODE addCycleCover(
@@ -61,7 +63,7 @@ template <typename TGraph, typename TEdgeVarMap>
 std::vector<typename TGraph::vertex_descriptor> getRootComponent(
     SCIP* scip,
     TGraph& graph,
-    typename TGraph::vertex_descriptor root_vertex,
+    typename TGraph::vertex_descriptor& root_vertex,
     TEdgeVarMap& edge_var_map,
     SCIP_SOL* sol
 ) {
@@ -82,7 +84,7 @@ bool isCycleCoverViolated(
     TGraph& graph,
     TPrizeMap& prize_map,
     TPrizeType& quota,
-    typename TGraph::vertex_descriptor root_vertex,
+    typename TGraph::vertex_descriptor& root_vertex,
     TEdgeVarMap& edge_var_map,
     SCIP_SOL* sol
 ) {
@@ -92,9 +94,11 @@ bool isCycleCoverViolated(
     return ! isPrizeFeasible(prize_map, quota, root_component);
 }
 
+bool isCycleCoverViolated(SCIP* scip, SCIP_SOL* sol, ProbDataPCTSP* probdata);
+
 SCIP_RETCODE separateCycleCover(SCIP* scip, SCIP_CONSHDLR* conshdlr, SCIP_SOL* sol, SCIP_RESULT* result);
 
-template <typename TGraph, typename TPrizeMap, typename TPrizeType, typename TEdgeVarMap>
+template <typename TGraph, typename TPrizeMap, typename TPrize, typename TEdgeVarMap>
 SCIP_RETCODE separateCycleCover(
     SCIP* scip,
     SCIP_CONSHDLR* conshdlr,
@@ -103,10 +107,15 @@ SCIP_RETCODE separateCycleCover(
     TGraph& graph,
     TPrizeMap& prize_map,
     TPrize& quota,
-    typename TGraph::vertex_descriptor root_vertex,
+    typename TGraph::vertex_descriptor& root_vertex,
     TEdgeVarMap& edge_var_map
 ) {
-    
+    auto root_component = getRootComponent(scip, graph, root_vertex, edge_var_map, sol);
+    if (! isPrizeFeasible(prize_map, quota, root_component)) {
+        auto first = root_component.begin();
+        auto last = root_component.end();
+        addCycleCover(scip, conshdlr, graph, first, last, edge_var_map, sol, result);
+    }
     return SCIP_OKAY;
 }
 
@@ -120,13 +129,14 @@ private:
 
 public:
     CycleCoverConshdlr(SCIP* scip, const std::string& name, const std::string& description)
-        : ObjEventhdlr(scip, name.c_str(), description.c_str())
-    {
+        : ObjConshdlr(scip, name.c_str(), description.c_str(), 1000000, -2000000, -2000000, 1, -1, 1, 0,
+            FALSE, FALSE, TRUE, SCIP_PROPTIMING_BEFORELP, SCIP_PRESOLTIMING_FAST)
+    { 
         _num_conss_added = 0;
     }
 
     CycleCoverConshdlr(SCIP* scip)
-        : ObjEventhdlr(scip, CYCLE_COVER_NAME.c_str(), CYCLE_COVER_DESCRIPTION.c_str())
+        : CycleCoverConshdlr(scip, CYCLE_COVER_NAME.c_str(), CYCLE_COVER_DESCRIPTION.c_str())
     {
         _num_conss_added = 0;
     }
