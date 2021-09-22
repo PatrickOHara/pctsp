@@ -162,7 +162,7 @@ public:
         _num_conss_added = 0;
     }
 
-    int getNumConssAdded();
+    unsigned int getNumConssAdded();
     SCIP_DECL_CONSCHECK(scip_check);
     SCIP_DECL_CONSENFOPS(scip_enfops);
     SCIP_DECL_CONSENFOLP(scip_enfolp);

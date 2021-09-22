@@ -34,7 +34,7 @@ SCIP_RETCODE addCoverInequality(
 
 // Cost cover event handler for new solutions
 
-int CostCoverEventHandler::getNumConssAdded() {
+unsigned int CostCoverEventHandler::getNumConssAdded() {
     return _num_conss_added;
 }
 

@@ -91,7 +91,7 @@ public:
         _path_distances = path_distances;
         _num_conss_added = 0;
     }
-    int getNumConssAdded();
+    unsigned int getNumConssAdded();
     std::vector<int> getPathDistances();
     virtual SCIP_DECL_EVENTFREE(scip_free);
     virtual SCIP_DECL_EVENTINIT(scip_init);

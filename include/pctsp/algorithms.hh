@@ -191,10 +191,6 @@ SCIP_RETCODE PCTSPbranchAndCut(
 
     // add custom cutting plane handlers
     SCIP_CALL(SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE));
-    auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
-    if (cycle_cover) {
-        SCIP_CALL(SCIPincludeObjConshdlr(scip, cycle_cover_conshdlr, true));
-    }
 
     // add event handlers
     SCIP_CALL( SCIPincludeObjEventhdlr(scip, new NodeEventhdlr(scip), TRUE) );
@@ -233,6 +229,15 @@ SCIP_RETCODE PCTSPbranchAndCut(
     SCIPaddCons(scip, cons);
     SCIPreleaseCons(scip, &cons);
 
+    // add cycle cover constraint
+    auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
+    if (cycle_cover) {
+        SCIP_CALL(SCIPincludeObjConshdlr(scip, cycle_cover_conshdlr, true));
+        SCIP_CONS* cycle_cover_cons;
+        createBasicCycleCoverCons(scip, &cycle_cover_cons);
+        SCIPaddCons(scip, cycle_cover_cons);
+        SCIPreleaseCons(scip, &cycle_cover_cons);
+    }
     // add selected heuristics to reduce the upper bound on the optimal
     if (solution_edges.size() > 0) {
         auto first = solution_edges.begin();
@@ -280,15 +285,13 @@ SCIP_RETCODE PCTSPbranchAndCut(
         );
         num_cost_cover_shortest_paths = shortest_path_cc_hdlr->getNumConssAdded();
     }
-
-    unsigned int num_sec_disjoint_tour = numDisjointTourSECs(node_stats);
-    unsigned int num_sec_maxflow_mincut = numMaxflowMincutSECs(node_stats);
     auto summary = getSummaryStatsFromSCIP(
         scip,
         num_cost_cover_disjoint_paths,
         num_cost_cover_shortest_paths,
-        num_sec_disjoint_tour,
-        num_sec_maxflow_mincut
+        cycle_cover_conshdlr->getNumConssAdded(),
+        numDisjointTourSECs(node_stats),
+        numMaxflowMincutSECs(node_stats)
     );
     writeSummaryStatsToYaml(summary, summary_yaml_filepath);
 

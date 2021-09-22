@@ -93,7 +93,7 @@ SCIP_RETCODE separateCycleCover(SCIP* scip, SCIP_CONSHDLR* conshdlr, SCIP_SOL* s
     return separateCycleCover(scip, conshdlr, sol, result, input_graph, prize_map, quota, root_vertex, edge_variable_map);
 }
 
-int CycleCoverConshdlr::getNumConssAdded() {
+unsigned int CycleCoverConshdlr::getNumConssAdded() {
     return _num_conss_added;
 }
 

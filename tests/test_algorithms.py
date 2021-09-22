@@ -164,10 +164,11 @@ def test_cost_cover_disjoint_paths_suurballes(
     assert summary.num_cost_cover_disjoint_paths == 5
     assert summary.num_cost_cover_shortest_paths == 1
 
-def test_cycle_cover(
+
+def test_cycle_cover_tspwplib(
     tspwplib_graph, root, logger_dir, metrics_filename, logger_filename
 ):
-    """Test adding disjoint path cost cover inequalities"""
+    """Test adding cycle cover inequalities on tspwplib graphs"""
     quota = 30  # small quota should promote more cost cover inequalities added
     pctsp_branch_and_cut(
         tspwplib_graph,
@@ -178,3 +179,31 @@ def test_cycle_cover(
         metrics_filename=metrics_filename,
         output_dir=logger_dir,
     )
+
+
+def test_cycle_cover_grid8(grid8, root, logger_dir, metrics_filename, logger_filename):
+    """Test adding cycle cover inequalities on grid8 graph"""
+    quota = 6  # expect exactly one cycle cover inquality to be added
+
+    # ONLY cycle cover inequalities are added
+    # turn off SEC - a feasible solution is still returned for this instance
+    edge_list = pctsp_branch_and_cut(
+        grid8,
+        quota,
+        root,
+        cost_cover_disjoint_paths=False,
+        cost_cover_shortest_path=False,
+        cost_cover_steiner_tree=False,
+        cycle_cover=True,
+        log_scip_filename=logger_filename,
+        metrics_filename=metrics_filename,
+        output_dir=logger_dir,
+        sec_disjoint_tour=False,
+        sec_maxflow_mincut=False,
+    )
+    # load statistics - check number of cycle cover inequalities added
+    summary_path = logger_dir / PCTSP_SUMMARY_STATS_YAML
+    summary = SummaryStats.from_yaml(summary_path)
+    ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
+    assert summary.num_cycle_cover == 1
+    assert is_pctsp_yes_instance(grid8, quota, root, ordered_edges)

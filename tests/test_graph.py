@@ -16,3 +16,10 @@ def test_graph_from_edge_list(suurballes_undirected_graph):
     assert len(edge_list) > 0
     assert len(prize_map) > 0
     assert graph_from_edge_list(edge_list, prize_map, cost_map)
+
+
+def test_grid8(grid8):
+    """Read grid8 graph from dot file"""
+    assert grid8.number_of_edges() == 10
+    print(grid8.edges(data=True))
+    assert grid8[1][4]["cost"] == 5

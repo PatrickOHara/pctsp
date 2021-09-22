@@ -8,6 +8,7 @@ void writeSummaryStatsToYaml(SummaryStats& summary, std::string& filename) {
     node["upper_bound"] = summary.upper_bound;
     node["num_cost_cover_disjoint_paths"] = summary.num_cost_cover_disjoint_paths;
     node["num_cost_cover_shortest_paths"] = summary.num_cost_cover_shortest_paths;
+    node["num_cycle_cover"] = summary.num_cycle_cover;
     node["num_nodes"] = summary.num_nodes;
     node["num_sec_disjoint_tour"] = summary.num_sec_disjoint_tour;
     node["num_sec_maxflow_mincut"] = summary.num_sec_maxflow_mincut;
@@ -17,10 +18,11 @@ void writeSummaryStatsToYaml(SummaryStats& summary, std::string& filename) {
 
 SummaryStats getSummaryStatsFromSCIP(
     SCIP* scip,
-    unsigned int& num_cost_cover_disjoint_paths,
-    unsigned int& num_cost_cover_shortest_paths,
-    unsigned int& num_sec_disjoint_tour,
-    unsigned int& num_sec_maxflow_mincut
+    unsigned int num_cost_cover_disjoint_paths,
+    unsigned int num_cost_cover_shortest_paths,
+    unsigned int num_cycle_cover,
+    unsigned int num_sec_disjoint_tour,
+    unsigned int num_sec_maxflow_mincut
 ) {
 
     SummaryStats summary = {
@@ -29,6 +31,7 @@ SummaryStats getSummaryStatsFromSCIP(
         SCIPgetUpperbound(scip),
         num_cost_cover_disjoint_paths,
         num_cost_cover_shortest_paths,
+        num_cycle_cover,
         SCIPgetNNodes(scip),
         num_sec_disjoint_tour,
         num_sec_maxflow_mincut
