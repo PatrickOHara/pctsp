@@ -92,7 +92,7 @@ def dataset_root(request) -> Path:
 def grid8(dataset_root) -> nx.Graph:
     """Undirected grid graph with 8 vertices"""
     filepath = dataset_root / "grid8.dot"
-    G = nx.drawing.nx_agraph.read_dot(filepath)
+    G = nx.Graph(nx.drawing.nx_pydot.read_dot(filepath))
     G = nx.relabel.convert_node_labels_to_integers(G)
     for u, v, data in G.edges(data=True):
         G[u][v]["cost"] = int(data["cost"])
