@@ -85,6 +85,7 @@ TEST_P(SuurballeGraphFixture, testPCTSPbranchAndCut) {
         false,
         false,
         false,
+        false,
         {},
         log_filepath,
         metrics_csv_filepath,

@@ -70,6 +70,36 @@ def suurballes_edges() -> Set[Tuple[int, int, int]]:
     ]
 
 
+def pytest_addoption(parser):
+    """Options for filepaths for pytest-tspwplib"""
+    group = parser.getgroup("pctsp")
+    group.addoption(
+        "--datasets-root",
+        default="datasets",
+        required=False,
+        type=str,
+        help="Filepath to test datasets directory",
+    )
+
+
+@pytest.fixture(scope="function")
+def dataset_root(request) -> Path:
+    """Root of test datasets"""
+    return Path(request.config.getoption("--datasets-root"))
+
+
+@pytest.fixture(scope="function")
+def grid8(dataset_root) -> nx.Graph:
+    """Undirected grid graph with 8 vertices"""
+    filepath = dataset_root / "grid8.dot"
+    G = nx.Graph(nx.drawing.nx_pydot.read_dot(filepath))
+    G = nx.relabel.convert_node_labels_to_integers(G)
+    for u, v, data in G.edges(data=True):
+        G[u][v]["cost"] = int(data["cost"])
+    nx.set_node_attributes(G, 1, name="prize")
+    return G
+
+
 @pytest.fixture(scope="function")
 def suurballes_undirected_graph(suurballes_edges) -> nx.Graph:
     """Undirected suurballe's graph with prize of 1 on every vertex"""

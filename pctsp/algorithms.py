@@ -64,6 +64,7 @@ def pctsp_branch_and_cut(
     cost_cover_disjoint_paths: bool = False,
     cost_cover_shortest_path: bool = False,
     cost_cover_steiner_tree: bool = False,
+    cycle_cover: bool = False,
     disjoint_paths_cost: VertexFunction = None,
     initial_solution: Optional[EdgeList] = None,
     log_boost_filename: str = BOOST_LOGS_TXT,
@@ -89,6 +90,7 @@ def pctsp_branch_and_cut(
         cost_cover_disjoint_paths: True if disjoint paths cost cover inequality is used
         cost_cover_shortest_path: True if shortest paths cost cover inequality is used
         cost_cover_steiner_tree: True if Steiner tree cost cover inequality is used
+        cycle_cover: True to add cycle cover inequalities
         initial_solution: Edges of a feasible solution found by a heuristic
         log_boost_filename: Name of file to store the logs of algorithms
         log_scip_filename: Name of ile to store logs of the solver
@@ -137,6 +139,7 @@ def pctsp_branch_and_cut(
         cost_cover_disjoint_paths,
         cost_cover_shortest_path,
         cost_cover_steiner_tree,
+        cycle_cover,
         disjoint_paths_cost,
         initial_yes_instance,
         str(log_boost_filepath),

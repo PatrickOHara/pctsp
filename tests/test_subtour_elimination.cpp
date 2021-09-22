@@ -171,6 +171,7 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
         false,
         false,
         false,
+        false,
         {},
         log_filepath,
         metrics_csv_filepath,
