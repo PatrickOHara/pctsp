@@ -103,3 +103,24 @@ def remove_leaves(graph: nx.Graph) -> nx.Graph:
     if leaf_vertex_found:
         return remove_leaves(subgraph)
     return subgraph
+
+
+def remove_one_connected_components(graph: nx.Graph, root_vertex: Vertex) -> nx.Graph:
+    """Remove vertices that are not in the same bi-connected component as the root vertex
+
+    Args:
+        graph: Undirected graph
+        root_vertex: Root vertex
+
+    Returns:
+        Undirected graph where all vertices are in the same bi-connected component
+
+    Notes:
+        The graph is mutated. Make a copy if you wish to keep the original input graph
+    """
+    removed_vertices = []
+    for component in nx.biconnected_components(graph):
+        if root_vertex not in component:
+            removed_vertices.extend(component)
+    graph.remove_nodes_from(removed_vertices)
+    return graph
