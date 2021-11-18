@@ -118,9 +118,12 @@ def remove_one_connected_components(graph: nx.Graph, root_vertex: Vertex) -> nx.
     Notes:
         The graph is mutated. Make a copy if you wish to keep the original input graph
     """
-    removed_vertices = []
+    root_component = set()
     for component in nx.biconnected_components(graph):
-        if root_vertex not in component:
-            removed_vertices.extend(component)
+        if root_vertex in component and len(component) >= 3:
+            # NOTE the 'update' here is essential incase the root is part of multiple bi-connected
+            # components, but removing the root disconnects the remaining graph
+            root_component.update(component)
+    removed_vertices = set(graph.nodes()) - root_component
     graph.remove_nodes_from(removed_vertices)
     return graph
