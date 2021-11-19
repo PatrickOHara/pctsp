@@ -40,10 +40,10 @@ def test_remove_components(disconnected_graph):
 @pytest.mark.parametrize(
     "edges,source_vertex,size_of_processed_graph",
     [
-        ([(0, 1), (1, 2), (2,3)], 0, 0),
+        ([(0, 1), (1, 2), (2, 3)], 0, 0),
         ([(0, 1), (1, 2), (2, 0), (0, 3), (3, 4), (0, 4), (4, 5)], 0, 5),
         ([(0, 1), (0, 2), (1, 2)], 0, 3),
-        ([(0, 1), (0, 2), (1, 2), (0, 3), (3, 4), (4, 5), (3, 5), (5,7)], 0, 3),
+        ([(0, 1), (0, 2), (1, 2), (0, 3), (3, 4), (4, 5), (3, 5), (5, 7)], 0, 3),
     ],
 )
 def test_remove_one_connected_components(edges, source_vertex, size_of_processed_graph):
