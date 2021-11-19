@@ -1,4 +1,6 @@
 """Preprocessing of undirected input graphs"""
+
+import copy
 from typing import Mapping
 
 import networkx as nx
@@ -125,5 +127,6 @@ def remove_one_connected_components(graph: nx.Graph, root_vertex: Vertex) -> nx.
             # components, but removing the root disconnects the remaining graph
             root_component.update(component)
     removed_vertices = set(graph.nodes()) - root_component
-    graph.remove_nodes_from(removed_vertices)
-    return graph
+    graph_copy = nx.Graph(copy.deepcopy(graph)) # NOTE unfreeze graph and make deep copy
+    graph_copy.remove_nodes_from(removed_vertices)
+    return graph_copy
