@@ -269,7 +269,7 @@ def find_cycle_from_bfs(G: nx.Graph, root_vertex: Vertex) -> VertexList:
         color += 1
         queue.append(successor)
 
-    cycle = []
+    cycle: VertexList = []
     while queue:
         vertex = queue.pop(0)
         branch_neighbors = set()
@@ -284,9 +284,13 @@ def find_cycle_from_bfs(G: nx.Graph, root_vertex: Vertex) -> VertexList:
             if vertex_color[neighbor] != color:
                 # then we have found a simple cycle containing the root...
                 # get the part from vertex to the root
-                path_from_root_to_vertex = path_to_vertex_in_tree(tree, vertex)
+                path_from_root_to_vertex: VertexList = path_to_vertex_in_tree(
+                    tree, vertex
+                )
                 # get the path from the neighbor to the root
-                path_from_root_to_neighbor = path_to_vertex_in_tree(tree, neighbor)
+                path_from_root_to_neighbor: VertexList = path_to_vertex_in_tree(
+                    tree, neighbor
+                )
                 # create a cycle containing the vertex, root and neighbor
                 path_from_root_to_neighbor.reverse()
                 path_from_root_to_vertex.extend(path_from_root_to_neighbor)
@@ -299,7 +303,7 @@ def find_cycle_from_bfs(G: nx.Graph, root_vertex: Vertex) -> VertexList:
 
 def path_to_vertex_in_tree(T: nx.DiGraph, target: Vertex) -> VertexList:
     """Find a path from the root vertex to the target vertex in a tree"""
-    path_from_root_to_vertex = []
+    path_from_root_to_vertex: VertexList = []
     current = target
     while len(list(T.predecessors(current))) == 1:
         path_from_root_to_vertex.insert(0, current)
