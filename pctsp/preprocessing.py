@@ -1,4 +1,6 @@
 """Preprocessing of undirected input graphs"""
+
+import copy
 from typing import Mapping
 
 import networkx as nx
@@ -103,3 +105,30 @@ def remove_leaves(graph: nx.Graph) -> nx.Graph:
     if leaf_vertex_found:
         return remove_leaves(subgraph)
     return subgraph
+
+
+def remove_one_connected_components(graph: nx.Graph, root_vertex: Vertex) -> nx.Graph:
+    """Remove vertices that are not in the same bi-connected component as the root vertex
+
+    Args:
+        graph: Undirected graph
+        root_vertex: Root vertex
+
+    Returns:
+        Undirected graph where all vertices are in the same bi-connected component
+
+    Notes:
+        The graph is mutated. Make a copy if you wish to keep the original input graph
+    """
+    root_component = set()
+    for component in nx.biconnected_components(graph):
+        if root_vertex in component and len(component) >= 3:
+            # NOTE the 'update' here is essential incase the root is part of multiple bi-connected
+            # components, but removing the root disconnects the remaining graph
+            root_component.update(component)
+    removed_vertices = set(graph.nodes()) - root_component
+    graph_copy = nx.Graph(
+        copy.deepcopy(graph)
+    )  # NOTE unfreeze graph and make deep copy
+    graph_copy.remove_nodes_from(removed_vertices)
+    return graph_copy

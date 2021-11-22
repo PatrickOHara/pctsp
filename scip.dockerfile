@@ -40,7 +40,7 @@ RUN tar zxvf ${SCIP_FILENAME}
 RUN git clone ${YAML_CPP_URL} ${YAML_CPP_DIR}
 
 # install build dependencies with pip
-RUN pip3 install cmake ninja
+RUN pip3 install cmake ninja scikit-build
 
 # build Boost
 WORKDIR ${BOOST_DIR}
@@ -74,3 +74,6 @@ ENV SCIP_ROOT /usr/local
 # set so that pyscipopt can find the scip install
 ENV SCIPOPTDIR=${SCIP_ROOT}
 RUN pip install pyscipopt
+
+# export location of local install for linker
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"

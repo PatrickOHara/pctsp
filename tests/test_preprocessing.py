@@ -1,9 +1,12 @@
 """Tests for preprocessing a networkx graph"""
 
 import networkx as nx
+import pytest
+
 from pctsp import (
     remove_leaves,
     remove_components_disconnected_from_vertex,
+    remove_one_connected_components,
 )
 
 
@@ -32,3 +35,19 @@ def test_remove_components(disconnected_graph):
     graph = remove_components_disconnected_from_vertex(complete, 0)
     assert complete.number_of_nodes() == graph.number_of_nodes()
     assert complete.number_of_edges() == graph.number_of_edges()
+
+
+@pytest.mark.parametrize(
+    "edges,source_vertex,size_of_processed_graph",
+    [
+        ([(0, 1), (1, 2), (2, 3)], 0, 0),
+        ([(0, 1), (1, 2), (2, 0), (0, 3), (3, 4), (0, 4), (4, 5)], 0, 5),
+        ([(0, 1), (0, 2), (1, 2)], 0, 3),
+        ([(0, 1), (0, 2), (1, 2), (0, 3), (3, 4), (4, 5), (3, 5), (5, 7)], 0, 3),
+    ],
+)
+def test_remove_one_connected_components(edges, source_vertex, size_of_processed_graph):
+    """Test vertices not in the same bi-connected component as the root as removed"""
+    G = nx.Graph(edges)
+    G = remove_one_connected_components(G, source_vertex)
+    assert G.number_of_nodes() == size_of_processed_graph
