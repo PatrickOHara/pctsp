@@ -276,6 +276,7 @@ def find_cycle_from_bfs(G: nx.Graph, root_vertex: Vertex) -> VertexList:
         color = vertex_color[vertex]
         parent = list(tree.predecessors(vertex))[0]
         branch_neighbors.add(parent)
+        branch_neighbors.add(vertex)    # incase of self loops
         for child in tree.successors(vertex):
             vertex_color[child] = color
             branch_neighbors.add(child)

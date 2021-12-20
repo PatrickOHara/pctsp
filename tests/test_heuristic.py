@@ -122,6 +122,8 @@ def test_find_cycle_from_bfs(suurballes_undirected_graph, root):
     assert root in cycle
     assert cycle[0] == root
     assert cycle[len(cycle) - 1] == root
+    for v in cycle:
+        assert cycle.count(v) == 1 or v == root
 
 
 def test_find_cycle_from_bfs_tsplib(tspwplib_graph, root):
@@ -131,3 +133,5 @@ def test_find_cycle_from_bfs_tsplib(tspwplib_graph, root):
     assert root in cycle
     assert cycle[0] == root
     assert cycle[len(cycle) - 1] == root
+    for v in cycle:
+        assert cycle.count(v) == 1 or v == root
