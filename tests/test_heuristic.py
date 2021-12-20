@@ -5,6 +5,7 @@ from tspwplib import (
     asymmetric_from_undirected,
     biggest_vertex_id_from_graph,
     edge_list_from_walk,
+    is_simple_cycle,
     split_head,
     total_cost,
     total_cost_networkx,
@@ -16,6 +17,7 @@ from pctsp import (
     collapse,
     extend,
     extend_until_prize_feasible,
+    find_cycle_from_bfs,
     random_tour_complete_graph,
     undirected_vertex_disjoint_paths_map,
     vertex_disjoint_cost_map,
@@ -111,3 +113,21 @@ def test_suurballes_heuristic(suurballes_undirected_graph, root):
         == 16
     )
     assert total_prize(prize_map, tour) >= quota
+
+
+def test_find_cycle_from_bfs(suurballes_undirected_graph, root):
+    """Test finding a simple cycle including the root"""
+    cycle = find_cycle_from_bfs(suurballes_undirected_graph, root)
+    assert is_simple_cycle(suurballes_undirected_graph, cycle)
+    assert root in cycle
+    assert cycle[0] == root
+    assert cycle[len(cycle) - 1] == root
+
+
+def test_find_cycle_from_bfs_tsplib(tspwplib_graph, root):
+    """Test finding simple cycle on tsplib graph"""
+    cycle = find_cycle_from_bfs(tspwplib_graph, root)
+    assert is_simple_cycle(tspwplib_graph, cycle)
+    assert root in cycle
+    assert cycle[0] == root
+    assert cycle[len(cycle) - 1] == root

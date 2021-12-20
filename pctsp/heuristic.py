@@ -247,3 +247,66 @@ def random_tour_from_disjoint_paths_map(
         vertex_choices.remove(vertex)
         vertex = random.choice(vertex_choices)
     return tour_from_vertex_disjoint_paths(disjoint_paths_map[vertex])
+
+
+def find_cycle_from_bfs(G: nx.Graph, root_vertex: Vertex) -> VertexList:
+    """Find a simple cycle starting and ending at the root vertex
+    from a breadth first traversal of the graph
+
+    Args:
+        G: Undirected input graph
+        root_vertex: Vertex to start the BFS traversal from
+
+    Returns:
+        List of vertices in the simple cycle, including the root vertex
+    """
+    tree = nx.bfs_tree(G, root_vertex)
+    color = 0
+    queue = []
+    vertex_color = {}
+    for successor in tree.successors(root_vertex):
+        vertex_color[successor] = color
+        color += 1
+        queue.append(successor)
+
+    cycle: VertexList = []
+    while queue:
+        vertex = queue.pop(0)
+        branch_neighbors = set()
+        color = vertex_color[vertex]
+        parent = list(tree.predecessors(vertex))[0]
+        branch_neighbors.add(parent)
+        for child in tree.successors(vertex):
+            vertex_color[child] = color
+            branch_neighbors.add(child)
+            queue.append(child)
+        for neighbor in set(G.neighbors(vertex)) - branch_neighbors:
+            if vertex_color[neighbor] != color:
+                # then we have found a simple cycle containing the root...
+                # get the part from vertex to the root
+                path_from_root_to_vertex: VertexList = path_to_vertex_in_tree(
+                    tree, vertex
+                )
+                # get the path from the neighbor to the root
+                path_from_root_to_neighbor: VertexList = path_to_vertex_in_tree(
+                    tree, neighbor
+                )
+                # create a cycle containing the vertex, root and neighbor
+                path_from_root_to_neighbor.reverse()
+                path_from_root_to_vertex.extend(path_from_root_to_neighbor)
+                cycle = path_from_root_to_vertex
+                while queue:
+                    queue.pop()
+                break
+    return cycle
+
+
+def path_to_vertex_in_tree(T: nx.DiGraph, target: Vertex) -> VertexList:
+    """Find a path from the root vertex to the target vertex in a tree"""
+    path_from_root_to_vertex: VertexList = []
+    current = target
+    while len(list(T.predecessors(current))) == 1:
+        path_from_root_to_vertex.insert(0, current)
+        current = list(T.predecessors(current))[0]
+    path_from_root_to_vertex.insert(0, current)
+    return path_from_root_to_vertex
