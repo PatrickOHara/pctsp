@@ -27,7 +27,7 @@ TEST(TestExpandCollapse, testUnitaryGain) {
 }
 
 TEST(TestExpandCollapse, testCalculateAverageGain) {
-    typedef std::map<int, UnitaryGainOfVertex> UnitaryGainMap;
+    typedef std::map<int, ExtensionVertex> UnitaryGainMap;
     UnitaryGainMap gain_map;
 
     std::unordered_set<int> vertices_in_tour = { 0, 1, 2, 3, 0 };
@@ -39,16 +39,16 @@ TEST(TestExpandCollapse, testCalculateAverageGain) {
     int c = 6;
 
     // initialise unitary gain and gain map
-    UnitaryGainOfVertex gain_a = UnitaryGainOfVertex();
-    UnitaryGainOfVertex gain_b = UnitaryGainOfVertex();
-    UnitaryGainOfVertex gain_c = UnitaryGainOfVertex();
+    ExtensionVertex gain_a = ExtensionVertex();
+    ExtensionVertex gain_b = ExtensionVertex();
+    ExtensionVertex gain_c = ExtensionVertex();
 
-    gain_a.gain_of_vertex = 1;
-    gain_a.index_of_extension = 1;
-    gain_b.gain_of_vertex = 2;
-    gain_b.index_of_extension = 2;
-    gain_c.gain_of_vertex = 6;
-    gain_c.index_of_extension = 3;
+    gain_a. = 1;
+    gain_a.index = 1;
+    gain_b. = 2;
+    gain_b.index = 2;
+    gain_c. = 6;
+    gain_c.index = 3;
 
     gain_map[a] = gain_a;
     gain_map[b] = gain_b;
@@ -75,13 +75,13 @@ TEST_P(CompleteGraphParameterizedFixture, testUnitaryGainOfVertex) {
     auto cost_map = getCostMap(g);
     // Vertex missing_vertex = boost::vertex(3, g);
     int missing_vertex = 3;
-    UnitaryGainOfVertex gain =
+    ExtensionVertex gain =
         unitaryGainOfVertex(g, tour, cost_map, prize_map, missing_vertex);
     if (num_vertices(g) == 4) {
-        EXPECT_FLOAT_EQ(0.5, gain.gain_of_vertex);
+        EXPECT_FLOAT_EQ(0.5, gain.);
     }
     else if (num_vertices(g) == 5) {
-        EXPECT_FLOAT_EQ(3.0 / 7.0, gain.gain_of_vertex);
+        EXPECT_FLOAT_EQ(3.0 / 7.0, gain.);
     }
 }
 

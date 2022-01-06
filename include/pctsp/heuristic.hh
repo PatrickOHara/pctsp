@@ -17,13 +17,31 @@ using namespace std;
 
 float unitary_gain(int prize_v, int cost_uw, int cost_uv, int cost_vw);
 
-struct UnitaryGainOfVertex {
+struct ExtensionVertex {
     int index_of_extension;
     float gain_of_vertex;
 };
 
+template <typename TVertex>
+struct ExtensionPath {
+    int index;
+    float value;
+    std::list<TVertex> path;
+};
+
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
-UnitaryGainOfVertex unitaryGainOfVertex(
+ExtensionVertex unitaryLossOfVertex(
+
+) {
+
+}
+
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+ExtensionPath unitaryGainOfPath
+
+
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+ExtensionVertex unitaryGainOfVertex(
     TGraph& g,
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
@@ -36,7 +54,7 @@ UnitaryGainOfVertex unitaryGainOfVertex(
     VertexDescriptor u = boost::vertex(prev_vertex_id, g);
     VertexDescriptor v = boost::vertex(vertex, g);
 
-    // caclulate the unitary gain of a vertex
+    // calculate the unitary gain of a vertex
     float max_gain = 0.0;
     int prize_of_v = prize_map[v];
     int index_of_extension;
@@ -74,9 +92,9 @@ UnitaryGainOfVertex unitaryGainOfVertex(
         prev_vertex_id = *tour_iterator;
         i++;
     }
-    UnitaryGainOfVertex gain_of_vertex = UnitaryGainOfVertex();
-    gain_of_vertex.gain_of_vertex = max_gain;
-    gain_of_vertex.index_of_extension = index_of_extension;
+    ExtensionVertex gain_of_vertex = ExtensionVertex();
+    gain_of_vertex.value = max_gain;
+    gain_of_vertex.index = index_of_extension;
     return gain_of_vertex;
 }
 
@@ -87,7 +105,7 @@ float calculateAverageGain(VertexSet& vertices_in_tour, GainMap& gain_map) {
     for (auto const& [key, val] : gain_map) {
         if (vertices_in_tour.count(key) == 0) {
             // only add up gain of vertices not in the tour
-            total_gain += val.gain_of_vertex;
+            total_gain += val.value;
             num_vertices_considered++;
         }
     }
@@ -117,12 +135,12 @@ typename TGraph::vertex_descriptor findVertexWithBiggestGain(
         // only look at vertices not in the tour
         VertexDescriptor vertex = *vp.first;
         if (vertices_in_tour.count(vertex) == 0) {
-            UnitaryGainOfVertex gain = unitaryGainOfVertex(
+            ExtensionVertex gain = unitaryGainOfVertex(
                 graph, tour, cost_map, prize_map, vertex);
             gain_map[vertex] = gain;
-            if (gain.gain_of_vertex > biggest_gain) {
+            if (gain.value > biggest_gain) {
                 biggest_gain_vertex = vertex;
-                biggest_gain = gain.gain_of_vertex;
+                biggest_gain = gain.value;
                 found_biggest_gain = true;
             }
         }
@@ -144,7 +162,7 @@ void insertBiggestGainVertexIntoTour(
     tour_iterator_t tour_iterator = tour.begin();
 
     // iterator to point to position
-    int insert_index = gain_map[biggest_gain_vertex].index_of_extension + 1;
+    int insert_index = gain_map[biggest_gain_vertex].index + 1;
     std::advance(tour_iterator, insert_index);
     tour.insert(tour_iterator, biggest_gain_vertex);
 }
@@ -161,7 +179,7 @@ void extend(
     // we assume that the first and last vertex in the tour are the same
 
     // map vertices to the unitary gain
-    typedef std::map<VertexDescriptor, UnitaryGainOfVertex> UnitaryGainMap;
+    typedef std::map<VertexDescriptor, ExtensionVertex> UnitaryGainMap;
     UnitaryGainMap gain_map;
 
     // create a set of vertices in tour
@@ -176,7 +194,7 @@ void extend(
         try {
             VertexDescriptor biggest_gain_vertex = findVertexWithBiggestGain(
                 g, tour, cost_map, prize_map, gain_map, vertices_in_tour);
-            float biggest_gain = gain_map[biggest_gain_vertex].gain_of_vertex;
+            float biggest_gain = gain_map[biggest_gain_vertex].value;
             // only calculate the average gain once
             if (calculate_avg_gain) {
                 avg_gain = calculateAverageGain(vertices_in_tour, gain_map);
@@ -213,7 +231,7 @@ void extendUntilPrizeFeasible(
 
     // define a mapping from vertices to the unitary gain data structure
     typedef typename TGraph::vertex_descriptor VertexDescriptor;
-    typedef std::map<VertexDescriptor, UnitaryGainOfVertex> UnitaryGainMap;
+    typedef std::map<VertexDescriptor, ExtensionVertex> UnitaryGainMap;
     UnitaryGainMap gain_map;
 
     // create a set of vertices in tour
