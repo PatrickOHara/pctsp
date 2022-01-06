@@ -14,7 +14,7 @@ ENV BOOST_FILENAME "boost_${BOOST_MAJOR}_${BOOST_MINOR}_${BOOST_PATCH}.tar.bz2"
 ENV BOOST_URL "https://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/${BOOST_FILENAME}/download"
 
 # SCIP variables
-ENV SCIP_VERSION 7.0.2
+ENV SCIP_VERSION 7.0.3
 ENV SCIP_DIR /app/scip-${SCIP_VERSION}
 ENV SCIP_FILENAME scip-${SCIP_VERSION}.tgz
 ENV SCIP_URL https\://www.scipopt.org/download/release
