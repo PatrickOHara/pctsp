@@ -14,66 +14,67 @@ ENV BOOST_FILENAME "boost_${BOOST_MAJOR}_${BOOST_MINOR}_${BOOST_PATCH}.tar.bz2"
 ENV BOOST_URL "https://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/${BOOST_FILENAME}/download"
 
 # SCIP variables
-ENV SCIP_VERSION 7.0.3
-ENV SCIP_DIR /app/scip-${SCIP_VERSION}
-ENV SCIP_FILENAME scip-${SCIP_VERSION}.tgz
+ENV SCIP_VERSION 8.0.0
+ENV SCIP_SRC_DIR /app/scipoptsuite-${SCIP_VERSION}
+ENV SCIP_FILENAME scipoptsuite-${SCIP_VERSION}.tgz
 ENV SCIP_URL https\://www.scipopt.org/download/release
 
-# SOPLEX variables
-ENV SOPLEX_VERSION 5.0.2
-ENV SOPLEX_DIR /app/soplex-${SOPLEX_VERSION}
-ENV SOPLEX_FILENAME soplex-${SOPLEX_VERSION}.tgz
-ENV SOPLEX_URL https://soplex.zib.de/download/release
+# TBB variables
+ENV TBB_SRC_DIR /app/oneTBB
+ENV TBB_URL https://github.com/oneapi-src/oneTBB.git
 
 # yaml-cpp variables
-ENV YAML_CPP_DIR /app/yaml-cpp
+ENV YAML_CPP_SRC_DIR /app/yaml-cpp
 ENV YAML_CPP_URL https://github.com/jbeder/yaml-cpp.git
 
-# download and extract boost, soplex, scip and yaml-cpp
+# install locations
+ENV LOCAL_INSTALL_PREFIX /usr/local/
+ENV TBB_ROOT ${LOCAL_INSTALL_PREFIX}
+ENV SCIP_ROOT ${LOCAL_INSTALL_PREFIX}
+ENV YAML_CPP_ROOT ${LOCAL_INSTALL_PREFIX}
+
+# export location of local install for linker
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${LOCAL_INSTALL_PREFIX}/lib"
+
+# download and extract boost, scip, TBB and yaml-cpp
 ADD ${BOOST_URL} ${BOOST_FILENAME}
-ADD ${SOPLEX_URL}/${SOPLEX_FILENAME} ${SOPLEX_FILENAME}
 ADD ${SCIP_URL}/${SCIP_FILENAME} ${SCIP_FILENAME}
+ADD https://api.github.com/repos/oneapi-src/oneTBB/compare/master...HEAD /dev/null
 ADD https://api.github.com/repos/jbeder/yaml-cpp/compare/master...HEAD /dev/null
 RUN tar --bzip2 -xf ${BOOST_FILENAME}
-RUN tar zxvf ${SOPLEX_FILENAME}
 RUN tar zxvf ${SCIP_FILENAME}
-RUN git clone ${YAML_CPP_URL} ${YAML_CPP_DIR}
+RUN git clone ${TBB_URL} ${TBB_SRC_DIR}
+RUN git clone ${YAML_CPP_URL} ${YAML_CPP_SRC_DIR}
 
 # install build dependencies with pip
 RUN pip3 install cmake ninja scikit-build
 
-# build Boost
+# build and install Boost
 WORKDIR ${BOOST_DIR}
 RUN ./bootstrap.sh
 RUN ./b2 install
 
-# build SOPLEX
-RUN mkdir ${SOPLEX_DIR}/build
-WORKDIR ${SOPLEX_DIR}/build
-RUN cmake -GNinja ..
+# build and install TBB
+RUN mkdir ${TBB_SRC_DIR}/build
+WORKDIR ${TBB_SRC_DIR}/build
+RUN cmake -GNinja -DCMAKE_INSTALL_PREFIX=${TBB_ROOT} -DTBB_TEST=OFF ..
 RUN cmake --build .
 RUN cmake --install .
 
-# build SCIP
-RUN mkdir ${SCIP_DIR}/build
-WORKDIR ${SCIP_DIR}/build
-RUN cmake -GNinja .. -DSOPLEX_DIR=${SOPLEX_DIR}/build
+# build and install SCIP
+RUN mkdir ${SCIP_SRC_DIR}/build
+WORKDIR ${SCIP_SRC_DIR}/build
+RUN cmake -GNinja -DCMAKE_INSTALL_PREFIX=${SCIP_ROOT} -DIPOPT=false ..
 RUN cmake --build .
 RUN cmake --install .
 
 # download, build and install yaml-cpp
-RUN mkdir ${YAML_CPP_DIR}/build
-WORKDIR ${YAML_CPP_DIR}/build
-RUN cmake -GNinja -DYAML_BUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DYAML_CPP_BUILD_TESTS=0 ..
+RUN mkdir ${YAML_CPP_SRC_DIR}/build
+WORKDIR ${YAML_CPP_SRC_DIR}/build
+RUN cmake -GNinja -DYAML_BUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DYAML_CPP_BUILD_TESTS=0 -DCMAKE_INSTALL_PREFIX=${YAML_CPP_ROOT} ..
 RUN cmake --build .
 RUN cmake --install .
-
-# install location of SCIP
-ENV SCIP_ROOT /usr/local
 
 # set so that pyscipopt can find the scip install
 ENV SCIPOPTDIR=${SCIP_ROOT}
 RUN pip install pyscipopt
-
-# export location of local install for linker
-ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
