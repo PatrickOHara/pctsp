@@ -12,7 +12,7 @@ setup(
     install_requires=[
         "pydantic>=1.8.0",
         "pyscipopt>=3.3.0",
-        "tspwplib>=0.6.1",
+        "tspwplib>=0.6.6",
     ],
     name="pctsp",
     packages=["pctsp"],
