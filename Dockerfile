@@ -14,4 +14,5 @@ RUN git clone https://github.com/rhgrant10/tsplib95.git /app/tsplib95
 COPY . /app/pctsp
 
 # Install package
-RUN pip3 install /app/pctsp
+RUN --mount=source=.git,target=.git,type=bind \
+    pip3 install --no-cache-dir /app/pctsp
