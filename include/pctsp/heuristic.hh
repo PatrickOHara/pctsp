@@ -7,6 +7,7 @@
 #include <iostream>
 #include <limits>
 
+#include "exception.hh"
 #include "logger.hh"
 #include "walk.hh"
 
@@ -18,26 +19,76 @@ using namespace std;
 float unitary_gain(int prize_v, int cost_uw, int cost_uv, int cost_vw);
 
 struct ExtensionVertex {
-    int index_of_extension;
-    float gain_of_vertex;
-};
-
-template <typename TVertex>
-struct ExtensionPath {
     int index;
     float value;
-    std::list<TVertex> path;
 };
 
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
-ExtensionVertex unitaryLossOfVertex(
-
+void extension(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    int& step_size,
+    int& path_depth_limit
 ) {
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
 
+    bool exists_path_with_below_avg_loss = true;
+    bool calculate_avg_loss = true;
+    float avg_loss = 0.0;
+
+    while (exists_path_with_below_avg_loss) {
+        // get vector to iterate over unique vertices in tour
+        int k = tour.size() - 1;
+        auto start = tour.begin();
+        auto end = tour.end();
+        std::vector<VertexDescriptor> unique_vertices (start, --end);
+
+        // define vectors to store unitary loss and paths
+        std::vector<float> unitary_loss(k);
+        std::vector<bool> is_feasible_extension(k);
+        std::vector<std::list<VertexDescriptor>> extension_paths(k);
+
+        // TODO: filter the graph by marking vertices that are already in the tour
+
+
+        for (int i = 0; i < k; i++) {
+            int j = (i + step_size) % k;
+            // get the path in the tour from i to j
+
+            // find a path using BFS from i to j using unmarked vertices
+
+            // need to check that root vertex is not an *internal* vertex between i and j
+
+            // if the external path has prize greater than the internal path
+
+            // then calculate the unitary loss of the external path
+
+            // store the unitary loss of the path in the array
+        }
+        // TODO calculate the average loss
+
+        // TODO find the smallest loss in the array
+
+        // TODO check if there exists a path with below average unitary loss
+
+        // TODO extend the tour with the path of smallest unitary loss
+
+    }
 }
 
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
-ExtensionPath unitaryGainOfPath
+float unitaryLossOfPath (
+    TGraph& graph,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    std::list<typename TGraph::vertex_descriptor>& path_in_tour,
+    std::list<typename TGraph::vertex_descriptor>& external_path
+) {
+    float loss = 0.0;
+    return loss; 
+}
 
 
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
