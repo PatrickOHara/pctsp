@@ -110,6 +110,27 @@ TEST_P(GraphFix, testGetEdgesInducedByVertices) {
     EXPECT_EQ(induced_edges.size(), expected_num_edges);
 }
 
+TEST(TestGraph, testGetSubpathOfCycle) {
+    std::list<PCTSPvertex> cycle1 = {0, 1, 2, 0};
+    std::list<PCTSPvertex> cycle2 = {0, 0};
+
+    int first1a = 1;
+    int last1a = 3;
+    auto path1a = getSubpathOfCycle(cycle1, first1a, last1a);
+    EXPECT_EQ(path1a.size(), 3);
+    EXPECT_EQ(path1a[0], 1);
+    EXPECT_EQ(path1a[1], 2);
+    EXPECT_EQ(path1a[2], 0);
+
+    int first1b = 2;
+    int last1b = 1;
+    auto path1b = getSubpathOfCycle(cycle1, first1b, last1b);
+    EXPECT_EQ(path1b.size(), 3);
+    EXPECT_EQ(path1b[0], 2);
+    EXPECT_EQ(path1b[1], 0);
+    EXPECT_EQ(path1b[2], 1);
+}
+
 INSTANTIATE_TEST_SUITE_P(
     TestGraph,
     GraphFix,

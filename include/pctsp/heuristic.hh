@@ -8,6 +8,7 @@
 #include <limits>
 
 #include "exception.hh"
+#include "graph.hh"
 #include "logger.hh"
 #include "walk.hh"
 
@@ -22,6 +23,19 @@ struct ExtensionVertex {
     int index;
     float value;
 };
+
+
+
+
+template <typename TVertex>
+std::vector<TVertex> getSubpathFromVector(
+    std::vector<TVertex>& path,
+    int& first,
+    int& last
+) {
+
+}
+
 
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
 void extension(
@@ -56,8 +70,9 @@ void extension(
         for (int i = 0; i < k; i++) {
             int j = (i + step_size) % k;
             // get the path in the tour from i to j
+            std::vector<VertexDescriptor> ij_path(step_size);
 
-            // find a path using BFS from i to j using unmarked vertices
+            // find a path using BFS/shortest path from i to j using unmarked vertices
 
             // need to check that root vertex is not an *internal* vertex between i and j
 

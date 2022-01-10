@@ -43,11 +43,11 @@ TEST(TestExpandCollapse, testCalculateAverageGain) {
     ExtensionVertex gain_b = ExtensionVertex();
     ExtensionVertex gain_c = ExtensionVertex();
 
-    gain_a. = 1;
+    gain_a.value = 1;
     gain_a.index = 1;
-    gain_b. = 2;
+    gain_b.value = 2;
     gain_b.index = 2;
-    gain_c. = 6;
+    gain_c.value = 6;
     gain_c.index = 3;
 
     gain_map[a] = gain_a;
@@ -78,10 +78,10 @@ TEST_P(CompleteGraphParameterizedFixture, testUnitaryGainOfVertex) {
     ExtensionVertex gain =
         unitaryGainOfVertex(g, tour, cost_map, prize_map, missing_vertex);
     if (num_vertices(g) == 4) {
-        EXPECT_FLOAT_EQ(0.5, gain.);
+        EXPECT_FLOAT_EQ(0.5, gain.value);
     }
     else if (num_vertices(g) == 5) {
-        EXPECT_FLOAT_EQ(3.0 / 7.0, gain.);
+        EXPECT_FLOAT_EQ(3.0 / 7.0, gain.value);
     }
 }
 

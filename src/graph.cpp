@@ -49,3 +49,13 @@ std::vector<PCTSPedge> getSelfLoops(PCTSPgraph& graph, std::vector<PCTSPvertex>&
     auto last = vertices.end();
     return getSelfLoops(graph, first, last);
 }
+
+std::vector<PCTSPvertex> getSubpathOfCycle(
+    std::list<PCTSPvertex>& cycle,
+    int& subpath_start,
+    int& subpath_end
+) {
+    auto first = cycle.begin();
+    auto last = cycle.end();
+    return getSubpathOfCycle(first, last, subpath_start, subpath_end);
+}

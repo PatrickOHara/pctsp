@@ -59,13 +59,13 @@ class VariableIsNullException : public std::exception {
 
 class StepSizeIsTooBig : public std::exception {
     private:
-        const std::string message "The step size given to the extension algorithm was larger than the tour that was given.";
+        const std::string message = "The step size given to the extension algorithm was larger than the tour that was given.";
 
     public:
-        StepSizeIsToBig() {};
+        StepSizeIsTooBig() {};
         const char* what() const throw() {
             return message.c_str();
         }
-}
+};
 
 #endif
