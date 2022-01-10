@@ -25,15 +25,33 @@ struct ExtensionVertex {
 };
 
 
+float unitaryLoss(
+    int& external_path_prize,
+    int& internal_path_prize,
+    int& external_path_cost,
+    int& internal_path_cost
+);
 
-
-template <typename TVertex>
-std::vector<TVertex> getSubpathFromVector(
-    std::vector<TVertex>& path,
-    int& first,
-    int& last
+/**
+ * @brief Get the set intersection of the neighbors of vertex u and vertex v.
+ */
+template <typename TGraph>
+std::vector<typename TGraph::vertex_descriptor> neighborIntersection(
+    TGraph& graph,
+    typename TGraph::vertex_descriptor& u,
+    typename TGraph::vertex_descriptor& v
 ) {
-
+    typedef typename TGraph::vertex_descriptor VertexDescriptor;
+    typename graph_traits< TGraph >::adjacency_iterator ui, ui_end, vi, vi_end;
+    boost::tie(ui, ui_end) = boost::adjacent_vertices(u, graph);
+    boost::tie(vi, vi_end) = boost::adjacent_vertices(v, graph);
+    std::vector<VertexDescriptor> u_neighbors (ui, ui_end);
+    std::vector<VertexDescriptor> v_neighbors (vi, vi_end);
+    std::vector<VertexDescriptor> intersection;
+    std::sort(u_neighbors.begin(), u_neighbors.end());
+    std::sort(v_neighbors.begin(), v_neighbors.end());
+    std::set_intersection(u_neighbors.begin(), u_neighbors.end(), v_neighbors.begin(), v_neighbors.end(), std::back_inserter(intersection));
+    return intersection;
 }
 
 
@@ -55,9 +73,7 @@ void extension(
     while (exists_path_with_below_avg_loss) {
         // get vector to iterate over unique vertices in tour
         int k = tour.size() - 1;
-        auto start = tour.begin();
-        auto end = tour.end();
-        std::vector<VertexDescriptor> unique_vertices (start, --end);
+        std::vector<VertexDescriptor> unique_vertices (tour.begin(), --tour.end());
 
         // define vectors to store unitary loss and paths
         std::vector<float> unitary_loss(k);
@@ -69,18 +85,67 @@ void extension(
 
         for (int i = 0; i < k; i++) {
             int j = (i + step_size) % k;
+            auto vi = unique_vertices[i];
+            auto vj = unique_vertices[j];
             // get the path in the tour from i to j
-            std::vector<VertexDescriptor> ij_path(step_size);
+            auto start = tour.begin();
+            auto end = tour.end();
+            auto internal_path = getSubpathOfCycle(start, end, vi, vj);
 
-            // find a path using BFS/shortest path from i to j using unmarked vertices
+            // keep a vector of potential external paths
+            std::vector<std::list<VertexDescriptor>> external_path_candidates;
 
-            // need to check that root vertex is not an *internal* vertex between i and j
+            if (path_depth_limit == 2) {
+                // look at every vertex that is adjacent to both i and j
+                auto neighbors = neighborIntersection(graph, vi, vj);
+                for (const auto& u : neighbors) {
+                    std::list<VertexDescriptor> path_iuj = {vi, u, vj};
+                    external_path_candidates.push_back(path_iuj);
+                }
+            }
+            else if (path_depth_limit > 2) {
+                // TODO find a path using BFS from i to j using unmarked vertices
+                // need to check that root vertex is not an *internal* vertex between i and j
+            }
 
-            // if the external path has prize greater than the internal path
+            float smallest_loss = 0.0;
+            int smallest_loss_index = 0;
+            int current_index = 0;
+            bool extension_found = false;
+            for (auto& external_path : external_path_candidates) {
+                // if the external path has prize greater than the internal path
+                float internal_path_prize = total_prize(graph, internal_path, prize_map);
+                float external_path_prize = total_prize(graph, external_path, prize_map);
+                float prize_diff = external_path_prize - internal_path_prize;
 
-            // then calculate the unitary loss of the external path
-
-            // store the unitary loss of the path in the array
+                if (prize_diff > 0) {
+                    // then calculate the unitary loss of the external path between i and j
+                    auto external_path_cost = total_cost(graph, external_path, cost_map);
+                    auto internal_path_cost = total_cost(graph, internal_path, cost_map);
+                    auto loss_ij = unitaryLoss(
+                        external_path_prize,
+                        internal_path_prize,
+                        external_path_cost,
+                        internal_path_cost
+                    );
+                    if ((loss_ij < smallest_loss) || !(extension_found)) {
+                        smallest_loss = loss_ij;
+                        smallest_loss_index = current_index;
+                        extension_found = true;
+                    }
+                }
+                current_index ++;
+            }
+            // store the best unitary loss of the path in the array
+            if (extension_found) {
+                unitary_loss[i] = smallest_loss;
+                is_feasible_extension[i] = true;
+                extension_paths[i] = external_path_candidates[smallest_loss_index];
+            }
+            else {
+                unitary_loss[i] = 0.0;
+                is_feasible_extension[i] = false;
+            }
         }
         // TODO calculate the average loss
 

@@ -6,3 +6,12 @@ float unitary_gain(int prize_v, int cost_uw, int cost_uv, int cost_vw) {
     // et al. [1998])) cast to float to avoid rounding
     return (float)prize_v / (float)(cost_uv + cost_vw - cost_uw);
 }
+
+float unitaryLoss(
+    int& external_path_prize,
+    int& internal_path_prize,
+    int& external_path_cost,
+    int& internal_path_cost
+) {
+    return (float) (external_path_prize - internal_path_prize) / (float) (external_path_cost - internal_path_cost);
+}

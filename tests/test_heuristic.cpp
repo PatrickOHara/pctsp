@@ -18,6 +18,7 @@ int expected_num_edges_in_complete_graph(int n_vertices) {
 
 typedef GraphFixture CompleteGraphParameterizedFixture;
 typedef GraphFixture SuurballeGraphFixture;
+typedef GraphFixture ExtensionFixture;
 
 TEST(TestExpandCollapse, testUnitaryGain) {
     EXPECT_EQ(unitary_gain(10, 2, 2, 2), 5);
@@ -242,10 +243,44 @@ TEST(TestExpandCollapse, testIndexOfReverseIterator) {
     EXPECT_EQ(indexOfReverseIterator(mylist, rit), 0);
 }
 
+TEST_P(ExtensionFixture, testNeighborIntersection) {
+    PCTSPgraph graph = getGraph();
+    auto u = boost::vertex(0, graph);
+    auto v = boost::vertex(1, graph);
+    auto intersection = neighborIntersection(graph, u, v);
+    int expected_size;
+    switch (GetParam()) {
+        case GraphType::COMPLETE4:
+            expected_size = 2;
+            break;
+        case GraphType::COMPLETE5: {
+            expected_size = 3;
+            break;
+        }
+        case GraphType::GRID8: {
+            expected_size = 0;
+            break;
+        }
+        case GraphType::SUURBALLE: {
+            expected_size = 1;
+            break;
+        }
+        default: {
+            expected_size = 0;
+            break;
+        }
+    }
+    EXPECT_EQ(expected_size, intersection.size());
+}
+
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
     ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5)
 );
 
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, SuurballeGraphFixture,
     ::testing::Values(GraphType::SUURBALLE)
+);
+
+INSTANTIATE_TEST_SUITE_P(TestExtension, ExtensionFixture,
+    ::testing::Values(GraphType::SUURBALLE, GraphType::GRID8, GraphType::COMPLETE4, GraphType::COMPLETE5)
 );
