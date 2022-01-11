@@ -13,5 +13,5 @@ float unitaryLoss(
     int& external_path_cost,
     int& internal_path_cost
 ) {
-    return (float) (external_path_prize - internal_path_prize) / (float) (external_path_cost - internal_path_cost);
+    return (float) (external_path_cost - internal_path_cost) / (float) (external_path_prize - internal_path_prize);
 }

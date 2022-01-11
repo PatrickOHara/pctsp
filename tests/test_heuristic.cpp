@@ -273,6 +273,14 @@ TEST_P(ExtensionFixture, testNeighborIntersection) {
     EXPECT_EQ(expected_size, intersection.size());
 }
 
+TEST_P(ExtensionFixture, testExtension) {
+    PCTSPgraph graph = getGraph();
+    auto cost_map = getCostMap(graph);
+    auto prize_map = getPrizeMap(graph);
+    auto small_tour = getSmallTour();
+    extension(graph, small_tour, cost_map, prize_map);
+}
+
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
     ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5)
 );

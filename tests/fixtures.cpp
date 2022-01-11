@@ -188,3 +188,15 @@ std::string GraphFixture::getParamName() {
         default: return "UNKNOWN"; break;
     }
 }
+
+std::list<PCTSPvertex> GraphFixture::getSmallTour() {
+    std::list<PCTSPvertex> small_tour;
+    switch (GetParam()) {
+        case GraphType::COMPLETE4: 
+        case GraphType::COMPLETE5: small_tour = {0, 1, 2}; break;
+        case GraphType::GRID8: small_tour = {0, 1, 3, 2}; break;
+        case GraphType::SUURBALLE: small_tour = {0, 1, 4}; break;
+        default: small_tour = {}; break;
+    }
+    return small_tour;
+}

@@ -91,6 +91,36 @@ int total_cost(TGraph& graph, std::list<typename TGraph::vertex_descriptor>& tou
     return total_cost(graph, first, last, cost_map);
 }
 
+template <typename TGraph, typename TCostMap>
+int total_cost(TGraph& graph, std::vector<typename TGraph::vertex_descriptor>& path, TCostMap& cost_map) {
+    auto first = path.begin();
+    auto last = path.end();
+    return total_cost(graph, first, last, cost_map);
+}
+
+template<typename TPrizeMap, typename TVertexIt>
+int totalPrize(TPrizeMap& prize_map, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it) {
+    int prize = 0;
+    for (; first_vertex_it != last_vertex_it; first_vertex_it ++) {
+        prize += prize_map[*first_vertex_it];
+    }
+    return prize;
+}
+
+template<typename TPrizeMap, typename TVertex>
+int totalPrize(TPrizeMap& prize_map, std::list<TVertex>& path) {
+    auto first = path.begin();
+    auto last = path.end();
+    return totalPrize(prize_map, first, last);
+}
+
+template<typename TPrizeMap, typename TVertex>
+int totalPrize(TPrizeMap& prize_map, std::vector<TVertex>& path) {
+    auto first = path.begin();
+    auto last = path.end();
+    return totalPrize(prize_map, first, last);
+}
+
 template <typename TGraph, typename TPrizeMap, typename Vertex>
 int total_prize(TGraph& graph, std::list<Vertex>& tour, TPrizeMap& prize_map) {
     // calculate the total prize of a tour
