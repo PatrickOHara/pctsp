@@ -229,7 +229,7 @@ void extension(
         float smallest_loss = 0.0;
         int index_of_smallest_loss = -1;
         for (int i = 0; i < k; i++) {
-            if ((unitary_loss[i] < smallest_loss) || !(found_smallest_loss)) {
+            if (is_feasible_extension[i] && ((unitary_loss[i] < smallest_loss) || !(found_smallest_loss))) {
                 found_smallest_loss = true;
                 smallest_loss = unitary_loss[i];
                 index_of_smallest_loss = i;
@@ -243,8 +243,6 @@ void extension(
             int last_index =  index_of_smallest_loss + step_size;
             swapPathsInTour(tour, external_path, index_of_smallest_loss, last_index);
         }
-        // TODO remove below line that stops infinite loop!
-        exists_path_with_below_avg_loss = false;
     }
 }
 

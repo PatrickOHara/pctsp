@@ -278,21 +278,37 @@ TEST_P(ExtensionFixture, testExtension) {
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
     auto small_tour = getSmallTour();
+    if (GetParam() == GraphType::SUURBALLE) {
+        small_tour = {0, 1, 3, 6, 7, 2, 0};
+    }
     auto old_size = small_tour.size();
     int expected_size;
     extension(graph, small_tour, cost_map, prize_map);
     switch (GetParam()) {
+        case GraphType::SUURBALLE:
         case GraphType::COMPLETE5:
             expected_size = old_size + 1; break;
         default:
             expected_size = old_size;
     }
     EXPECT_EQ(small_tour.size(), expected_size);
-    std::cout << getParamName() << ": ";
-    for (auto v: small_tour) {
-        std::cout << v << ", ";
+}
+
+TEST_P(ExtensionFixture, testExtensionStep) {
+    PCTSPgraph graph = getGraph();
+    auto cost_map = getCostMap(graph);
+    auto prize_map = getPrizeMap(graph);
+    auto small_tour = getSmallTour();
+    auto old_size = small_tour.size();
+    int expected_size;
+    int step_size = 2;
+    int path_depth_limit = 2;
+    extension(graph, small_tour, cost_map, prize_map, step_size, path_depth_limit);
+    switch (GetParam()) {
+        default:
+            expected_size = old_size; break;
     }
-    std::cout << std::endl;
+    EXPECT_EQ(small_tour.size(), expected_size);
 }
 
 TEST_P(ExtensionFixture, testSwapPathsInTour) {
@@ -316,11 +332,6 @@ TEST_P(ExtensionFixture, testSwapPathsInTourWithRoot) {
     int j = 1;
     swapPathsInTour(small_tour, new_path, i, j);
     EXPECT_EQ(old_length + new_path.size() + 1 - (old_length - i + j + 1), small_tour.size());
-    std::cout << getParamName() << ": ";
-    for (auto v: small_tour) {
-        std::cout << v << ", ";
-    }
-    std::cout << std::endl;
 }
 
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
