@@ -70,6 +70,7 @@ def test_extend_until_prize_feasible(suurballes_undirected_graph):
         >= quota
     )
 
+
 def test_extension(suurballes_undirected_graph):
     """Test if a tour is extended"""
     tour = [0, 1, 3, 6, 7, 2, 0]
@@ -82,6 +83,18 @@ def test_extension(suurballes_undirected_graph):
     assert 4 not in extended_tour
     assert 5 in extended_tour
     assert len(extended_tour) == len(tour) + 1
+
+
+def test_extension_tsplib(tspwplib_graph, root):
+    """Test if a tour is extended on the tsplib dataset"""
+    n = tspwplib_graph.number_of_nodes()
+    tour = [0, 1, 2, n - 1, n - 2, 0]
+    extended_tour = extension(tspwplib_graph, tour)
+    prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
+    assert total_prize(prize_map, extended_tour) > total_prize(prize_map, tour)
+    assert root in extended_tour
+    assert is_simple_cycle(tspwplib_graph, extended_tour)
+
 
 def test_random_tour_complete_graph(tspwplib_graph, root):
     """Test random tours on complete graphs"""
