@@ -98,15 +98,21 @@ ExtensionVertex chooseExtensionPathFromCandidates(
  */
 template<typename TVertex>
 void swapPathsInTour(std::list<TVertex>& tour, std::list<TVertex>& new_path, int& first_index, int& last_index) {
-    if (first_index < last_vertex) {
+    if (first_index < last_index) {
         // remove the path from first to last (inclusive)
         auto first_it = tour.begin();
+        auto last_it = tour.begin();
         std::advance(first_it, first_index);
-
-        // TODO fix this for loop
+        std::advance(last_it, last_index);
         while (first_it != last_it) {
-            itr = lst.erase(itr);
+            first_it = tour.erase(first_it);
         }
+        tour.erase(last_it);
+
+        // insert the new path at the first index
+        first_it = tour.begin();
+        std::advance(first_it, first_index);
+        tour.insert(first_it, new_path.begin(), new_path.end());
     }
     else {
         // remove the path from last to end of tour
@@ -133,22 +139,23 @@ void extension(
     float avg_loss = 0.0;
 
     while (exists_path_with_below_avg_loss) {
-        // get vector to iterate over unique vertices in tour
         int k = tour.size() - 1;
-        std::vector<VertexDescriptor> unique_vertices (tour.begin(), --tour.end());
+        // create a set of vertices in tour
+        std::unordered_set<VertexDescriptor> vertices_in_tour(std::begin(tour), std::end(tour));
 
         // define vectors to store unitary loss and paths
         std::vector<float> unitary_loss(k);
         std::vector<bool> is_feasible_extension(k);
         std::vector<std::list<VertexDescriptor>> extension_paths(k);
 
-        // TODO: filter the graph by marking vertices that are already in the tour
-
-
         for (int i = 0; i < k; i++) {
             int j = (i + step_size) % k;
-            auto vi = unique_vertices[i];
-            auto vj = unique_vertices[j];
+            auto it = tour.begin();
+            std::advance(it, i);
+            auto vi = *it;
+            it = tour.begin();
+            std::advance(it, j);
+            auto vj = *it;
             // get the path in the tour from i to j
             auto start = tour.begin();
             auto end = tour.end();
@@ -161,11 +168,14 @@ void extension(
                 // look at every vertex that is adjacent to both i and j
                 auto neighbors = neighborIntersection(graph, vi, vj);
                 for (const auto& u : neighbors) {
-                    std::list<VertexDescriptor> path_iuj = {vi, u, vj};
-                    external_path_candidates.push_back(path_iuj);
+                    if (vertices_in_tour.count(u) == 0) {
+                        std::list<VertexDescriptor> path_iuj = {vi, u, vj};
+                        external_path_candidates.push_back(path_iuj);
+                    }
                 }
             }
             else if (path_depth_limit > 2) {
+                // TODO: filter the graph by marking vertices that are already in the tour
                 // TODO find a path using BFS from i to j using unmarked vertices
                 // need to check that root vertex is not an *internal* vertex between i and j
             }
@@ -212,9 +222,11 @@ void extension(
         // TODO extend the tour with the path of smallest unitary loss
         if (exists_path_with_below_avg_loss) {
             auto external_path = extension_paths[index_of_smallest_loss];
-
+            int last_index =  index_of_smallest_loss + step_size;
+            swapPathsInTour(tour, external_path, index_of_smallest_loss, last_index);
         }
-        
+        // TODO remove below line that stops infinite loop!
+        exists_path_with_below_avg_loss = false;
     }
 }
 

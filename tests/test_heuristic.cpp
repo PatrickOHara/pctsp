@@ -278,7 +278,31 @@ TEST_P(ExtensionFixture, testExtension) {
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
     auto small_tour = getSmallTour();
+    auto old_size = small_tour.size();
+    int expected_size;
     extension(graph, small_tour, cost_map, prize_map);
+    switch (GetParam()) {
+        case GraphType::COMPLETE5:
+            expected_size = old_size + 1; break;
+        default:
+            expected_size = old_size;
+    }
+    EXPECT_EQ(small_tour.size(), expected_size);
+    std::cout << getParamName() << ": ";
+    for (auto v: small_tour) {
+        std::cout << v << ", ";
+    }
+    std::cout << std::endl;
+}
+
+TEST_P(ExtensionFixture, testSwapPathsInTour) {
+    auto small_tour = getSmallTour();
+    auto old_length = small_tour.size();
+    std::list<PCTSPvertex> new_path = {5, 8, 9, 10};
+    int i = 1;
+    int j = 3;
+    swapPathsInTour(small_tour, new_path, i, j);
+    EXPECT_EQ(old_length - (j - i + 1) + new_path.size(), small_tour.size());
 }
 
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
