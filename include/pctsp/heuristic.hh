@@ -116,10 +116,28 @@ void swapPathsInTour(std::list<TVertex>& tour, std::list<TVertex>& new_path, int
     }
     else {
         // remove the path from last to end of tour
-        // remember the root vertex at the beginning and end of the tour... we need to replace this
+        auto first_it = tour.begin();
+        auto root_vertex = *first_it;        // remember the root vertex at the beginning and end of the tour... we need to replace this
+        auto last_it = tour.end();
+        std::advance(first_it, first_index);
+        while (first_it != last_it) {
+            first_it = tour.erase(first_it);
+        }
         // remove the path from the beginning of the tour to the first index
+        first_it = tour.begin();
+        last_it = tour.begin();
+        std::advance(last_it, last_index);
+        while (first_it != last_it) {
+            first_it = tour.erase(first_it);
+        }
+        tour.erase(last_it);
         // now take a subset of the path upto and including the root vertex and add this to the end of the tour
+        auto root_it = std::find(new_path.begin(), new_path.end(),root_vertex);
+        tour.insert(tour.begin(), root_it, new_path.end());
+        root_it = std::find(new_path.begin(), new_path.end(),root_vertex);
+        tour.insert(tour.end(), new_path.begin(), ++ root_it);
         // take the subset of the path from the root vertex until the end and add this to the beginning of the tour
+        
     }
 }
 

@@ -298,11 +298,29 @@ TEST_P(ExtensionFixture, testExtension) {
 TEST_P(ExtensionFixture, testSwapPathsInTour) {
     auto small_tour = getSmallTour();
     auto old_length = small_tour.size();
-    std::list<PCTSPvertex> new_path = {5, 8, 9, 10};
+    std::list<PCTSPvertex> new_path = {5, 8, 0, 10};
+    // when i < j is the easy test
     int i = 1;
     int j = 3;
     swapPathsInTour(small_tour, new_path, i, j);
     EXPECT_EQ(old_length - (j - i + 1) + new_path.size(), small_tour.size());
+}
+
+
+TEST_P(ExtensionFixture, testSwapPathsInTourWithRoot) {
+    auto small_tour = getSmallTour();
+    auto old_length = small_tour.size();
+    std::list<PCTSPvertex> new_path = {5, 8, 0, 10};
+    // when i > j is more difficult
+    int i = 3;
+    int j = 1;
+    swapPathsInTour(small_tour, new_path, i, j);
+    EXPECT_EQ(old_length + new_path.size() + 1 - (old_length - i + j + 1), small_tour.size());
+    std::cout << getParamName() << ": ";
+    for (auto v: small_tour) {
+        std::cout << v << ", ";
+    }
+    std::cout << std::endl;
 }
 
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
