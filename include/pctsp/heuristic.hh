@@ -275,6 +275,46 @@ void extension(
     return extension(graph, tour, cost_map, prize_map, step_size, path_depth_limit);
 }
 
+/**
+ * @brief Extend the tour until it is prize-feasible.
+ */
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+void extensionUntilPrizeFeasible(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    int& step_size,
+    int& path_depth_limit,
+    int& quota,
+) {
+    int prize = total_prize_of_tour(g, tour, prize_map);
+    int num_feasible_extensions = 1;
+
+    while (prize < quota && num_feasible_extensions > 0) {
+        int k = tour.size() - 1;
+
+        // define vectors to store unitary loss and paths
+        std::vector<float> unitary_loss(k);
+        std::vector<bool> is_feasible_extension(k);
+        std::vector<std::list<VertexDescriptor>> extension_paths(k);
+
+        // find all possible extension paths of length path_depth_limit
+        findExtensionPaths(graph, tour, cost_map, prize_map, step_size, path_depth_limit, unitary_loss, is_feasible_extension, extension_paths);
+        num_feasible_extensions = numFeasibleExtensions(is_feasible_extension);
+
+        // extend the tour with the path of smallest unitary loss
+        if (num_feasible_extensions > 0) {
+            // find the smallest loss in the array
+            int index_of_smallest_loss = indexOfSmallestLoss(unitary_loss, is_feasible_extension);
+            auto smallest_loss = unitary_loss[index_of_smallest_loss];
+            auto external_path = extension_paths[index_of_smallest_loss];
+            int last_index =  index_of_smallest_loss + step_size;
+            swapPathsInTour(tour, external_path, index_of_smallest_loss, last_index);
+        }
+    }
+}
+
 
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
 ExtensionVertex unitaryGainOfVertex(
