@@ -162,4 +162,15 @@ std::string walkToString(std::list<TVertex>& walk) {
     return walkToString(first, last);
 }
 
+template <typename TVertex>
+bool isInternalVertexOfWalk(std::vector<TVertex>& walk, TVertex& internal_vertex) {
+    // returns true if the internal vertex is in the walk
+    // AND if the internal vertex is not the first or last vertex in the walk
+    auto start = walk.begin();
+    auto end = walk.end();
+    start++;
+    end--;
+    return std::find(start, end, internal_vertex) != end;
+}
+
 #endif

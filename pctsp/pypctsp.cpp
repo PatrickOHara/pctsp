@@ -142,6 +142,7 @@ py::list extension_bind(
     py::list& py_tour,
     py::dict& cost_dict,
     py::dict& prize_dict,
+    int py_root,
     int step_size,
     int path_depth_limit
 ) {
@@ -152,7 +153,30 @@ py::list extension_bind(
     fillPrizeMapFromPyDict(prize_map, prize_dict, vertex_id_map);
     EdgeCostMap cost_map = boost::get(edge_weight, graph);
     fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
-    extension(graph, tour, cost_map, prize_map, step_size, path_depth_limit);
+    auto root_vertex = getNewVertex(vertex_id_map, py_root);
+    extension(graph, tour, cost_map, prize_map, root_vertex, step_size, path_depth_limit);
+    return getPyVertexList(vertex_id_map, tour);
+}
+
+py::list extension_until_prize_feasible_bind(
+    py::list& edge_list,
+    py::list& py_tour,
+    py::dict& cost_dict,
+    py::dict& prize_dict,
+    int py_root,
+    int quota,
+    int step_size,
+    int path_depth_limit
+) {
+    BoostPyBimap vertex_id_map;
+    PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
+    auto tour = getBoostVertexList(vertex_id_map, py_tour);
+    VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
+    fillPrizeMapFromPyDict(prize_map, prize_dict, vertex_id_map);
+    EdgeCostMap cost_map = boost::get(edge_weight, graph);
+    fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
+    auto root_vertex = getNewVertex(vertex_id_map, py_root);
+    extensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, root_vertex, quota, step_size, path_depth_limit);
     return getPyVertexList(vertex_id_map, tour);
 }
 
@@ -180,6 +204,7 @@ BOOST_PYTHON_MODULE(libpypctsp) {
     def("extend_bind", extend_bind);
     def("extend_until_prize_feasible_bind", extend_until_prize_feasible_bind);
     def("extension_bind", extension_bind);
+    def("extension_until_prize_feasible_bind", extension_until_prize_feasible_bind);
     def("unitary_gain", unitary_gain);
 
     // algorithms
