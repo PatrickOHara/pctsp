@@ -141,6 +141,77 @@ void swapPathsInTour(std::list<TVertex>& tour, std::list<TVertex>& new_path, int
     }
 }
 
+int numFeasibleExtensions(std::vector<bool>& is_feasible_extension);
+
+float averageUnitaryLoss(std::vector<float>& unitary_loss, std::vector<bool>& is_feasible_extension);
+
+int indexOfSmallestLoss(std::vector<float>& unitary_loss, std::vector<bool>& is_feasible_extension);
+
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+void findExtensionPaths(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    int& step_size,
+    int& path_depth_limit,
+    std::vector<float>& unitary_loss,
+    std::vector<bool>& is_feasible_extension,
+    std::vector<std::list<typename TGraph::vertex_descriptor>>& extension_paths
+) {
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
+
+    int k = tour.size() - 1;
+
+    // create a set of vertices in tour
+    std::unordered_set<VertexDescriptor> vertices_in_tour(std::begin(tour), std::end(tour));
+
+    for (int i = 0; i < k; i++) {
+        int j = (i + step_size) % k;
+        auto it = tour.begin();
+        std::advance(it, i);
+        auto vi = *it;
+        it = tour.begin();
+        std::advance(it, j);
+        auto vj = *it;
+        // get the path in the tour from i to j
+        auto start = tour.begin();
+        auto end = tour.end();
+        std::vector<VertexDescriptor> internal_path = getSubpathOfCycle(start, end, i, j);
+
+        // keep a vector of potential external paths
+        std::vector<std::list<VertexDescriptor>> external_path_candidates;
+
+        if (path_depth_limit == 2) {
+            // look at every vertex that is adjacent to both i and j
+            auto neighbors = neighborIntersection(graph, vi, vj);
+            for (const auto& u : neighbors) {
+                if (vertices_in_tour.count(u) == 0) {
+                    std::list<VertexDescriptor> path_iuj = {vi, u, vj};
+                    external_path_candidates.push_back(path_iuj);
+                }
+            }
+        }
+        else if (path_depth_limit > 2) {
+            // TODO: filter the graph by marking vertices that are already in the tour
+            // TODO find a path using BFS from i to j using unmarked vertices
+            // need to check that root vertex is not an *internal* vertex between i and j
+        }
+        ExtensionVertex best_candidate = chooseExtensionPathFromCandidates(graph, cost_map, prize_map, external_path_candidates, internal_path);
+        // store the best unitary loss of the path in the array
+        if (best_candidate.index >= 0) {
+            unitary_loss[i] = best_candidate.value;
+            is_feasible_extension[i] = true;
+            auto best_external_path = external_path_candidates[best_candidate.index];
+            extension_paths[i] = std::list(best_external_path.begin(), best_external_path.end());
+        }
+        else {
+            unitary_loss[i] = 0.0;
+            is_feasible_extension[i] = false;
+        }
+    }
+}
+
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
 void extension(
     TGraph& graph,
@@ -158,86 +229,32 @@ void extension(
 
     while (exists_path_with_below_avg_loss) {
         int k = tour.size() - 1;
-        // create a set of vertices in tour
-        std::unordered_set<VertexDescriptor> vertices_in_tour(std::begin(tour), std::end(tour));
 
         // define vectors to store unitary loss and paths
         std::vector<float> unitary_loss(k);
         std::vector<bool> is_feasible_extension(k);
         std::vector<std::list<VertexDescriptor>> extension_paths(k);
 
-        for (int i = 0; i < k; i++) {
-            int j = (i + step_size) % k;
-            auto it = tour.begin();
-            std::advance(it, i);
-            auto vi = *it;
-            it = tour.begin();
-            std::advance(it, j);
-            auto vj = *it;
-            // get the path in the tour from i to j
-            auto start = tour.begin();
-            auto end = tour.end();
-            std::vector<VertexDescriptor> internal_path = getSubpathOfCycle(start, end, i, j);
+        // find all possible extension paths of length path_depth_limit
+        findExtensionPaths(graph, tour, cost_map, prize_map, step_size, path_depth_limit, unitary_loss, is_feasible_extension, extension_paths);
 
-            // keep a vector of potential external paths
-            std::vector<std::list<VertexDescriptor>> external_path_candidates;
-
-            if (path_depth_limit == 2) {
-                // look at every vertex that is adjacent to both i and j
-                auto neighbors = neighborIntersection(graph, vi, vj);
-                for (const auto& u : neighbors) {
-                    if (vertices_in_tour.count(u) == 0) {
-                        std::list<VertexDescriptor> path_iuj = {vi, u, vj};
-                        external_path_candidates.push_back(path_iuj);
-                    }
-                }
-            }
-            else if (path_depth_limit > 2) {
-                // TODO: filter the graph by marking vertices that are already in the tour
-                // TODO find a path using BFS from i to j using unmarked vertices
-                // need to check that root vertex is not an *internal* vertex between i and j
-            }
-            ExtensionVertex best_candidate = chooseExtensionPathFromCandidates(graph, cost_map, prize_map, external_path_candidates, internal_path);
-            // store the best unitary loss of the path in the array
-            if (best_candidate.index >= 0) {
-                unitary_loss[i] = best_candidate.value;
-                is_feasible_extension[i] = true;
-                auto best_external_path = external_path_candidates[best_candidate.index];
-                extension_paths[i] = std::list(best_external_path.begin(), best_external_path.end());
-            }
-            else {
-                unitary_loss[i] = 0.0;
-                is_feasible_extension[i] = false;
-            }
-        }
         // get the number of possible extensions
-        int num_feasible_extensions = 0;
-        for (bool is_feasible: is_feasible_extension) num_feasible_extensions += is_feasible;
+        auto num_feasible_extensions = numFeasibleExtensions(is_feasible_extension);
 
         // calculate the average loss
         if (calculate_avg_loss) {
-            float total_loss = 0.0;
-            for (int i = 0; i < k; i++) {
-                if (is_feasible_extension[i]) total_loss += unitary_loss[i];
-            }
-            avg_loss = total_loss / ((float) num_feasible_extensions);
+            avg_loss = averageUnitaryLoss(unitary_loss, is_feasible_extension);
             calculate_avg_loss = false;
         }
 
         // find the smallest loss in the array
-        bool found_smallest_loss = false;
-        float smallest_loss = 0.0;
-        int index_of_smallest_loss = -1;
-        for (int i = 0; i < k; i++) {
-            if (is_feasible_extension[i] && ((unitary_loss[i] < smallest_loss) || !(found_smallest_loss))) {
-                found_smallest_loss = true;
-                smallest_loss = unitary_loss[i];
-                index_of_smallest_loss = i;
-            }
-        }
+        int index_of_smallest_loss = indexOfSmallestLoss(unitary_loss, is_feasible_extension);
+        auto smallest_loss = unitary_loss[index_of_smallest_loss];
+
         // check if there exists a path with below average unitary loss
         exists_path_with_below_avg_loss = (smallest_loss < avg_loss) && (num_feasible_extensions > 0);
-        // TODO extend the tour with the path of smallest unitary loss
+
+        // extend the tour with the path of smallest unitary loss
         if (exists_path_with_below_avg_loss) {
             auto external_path = extension_paths[index_of_smallest_loss];
             int last_index =  index_of_smallest_loss + step_size;
@@ -446,7 +463,7 @@ void extendUntilPrizeFeasible(
     // Run the extension algorithm until the total prize of the tour is greater
     // than the quota. We don't calculate the average gain, the only termination
     // criteria of the algorithm is that the tour has sufficient prize.
-    // NOTE: there is no gaurantee that a prize feasible tour is found!
+    // NOTE: there is no guarantee that a prize feasible tour is found!
 
     // define a mapping from vertices to the unitary gain data structure
     typedef typename TGraph::vertex_descriptor VertexDescriptor;

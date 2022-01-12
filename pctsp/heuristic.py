@@ -223,15 +223,14 @@ def random_tour_complete_graph(
     prize = prize_dict[root_vertex]
     random.seed(seed)
     tour = [root_vertex]
-    vertices_not_in_tour = set(graph.nodes())  # quickly check membership
+    vertices_not_in_tour = list(graph.nodes())  # quickly check membership
     vertices_not_in_tour.remove(root_vertex)
-    vertex_list = list(graph.nodes())
     while len(vertices_not_in_tour) > 0 and prize < quota:
         # choose a vertex that has not yet been added to the tour
-        j = random.randint(0, graph.number_of_nodes() - len(tour) - 1)
-        vertex = vertex_list[j]
+        vertex = random.choice(vertices_not_in_tour)
         prize += prize_dict[vertex]
         tour.append(vertex)
+        vertices_not_in_tour.remove(vertex)
 
     # add the root vertex to the end of the tour
     tour.append(root_vertex)

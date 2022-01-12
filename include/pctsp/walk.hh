@@ -2,6 +2,7 @@
 #define __PCTSP_WALK__
 
 #include <algorithm>
+#include <string>
 #include <boost/graph/graph_traits.hpp>
 
 #include "exception.hh"
@@ -142,6 +143,23 @@ int total_prize_of_tour(TGraph& graph, std::list<Vertex>& tour,
     // repeated)
     std::list<Vertex> tour_copy(tour.begin(), --tour.end());
     return total_prize(graph, tour_copy, prize_map);
+}
+
+template <typename VertexIt>
+std::string walkToString(VertexIt& first_it, VertexIt& last_it) {
+    std::string walk_str = "";
+    while (first_it != last_it) {
+        walk_str += std::to_string(*first_it) + ", ";
+        first_it ++;
+    }
+    return walk_str;
+}
+
+template <typename TVertex>
+std::string walkToString(std::list<TVertex>& walk) {
+    auto first = walk.begin();
+    auto last = walk.end();
+    return walkToString(first, last);
 }
 
 #endif

@@ -94,6 +94,8 @@ def test_extension_tsplib(tspwplib_graph, root):
     assert total_prize(prize_map, extended_tour) > total_prize(prize_map, tour)
     assert root in extended_tour
     assert is_simple_cycle(tspwplib_graph, extended_tour)
+    for u in tspwplib_graph:
+        assert extended_tour.count(u) < 2 or u == root
 
 
 def test_random_tour_complete_graph(tspwplib_graph, root):
