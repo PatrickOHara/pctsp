@@ -18,6 +18,7 @@ int expected_num_edges_in_complete_graph(int n_vertices) {
 
 typedef GraphFixture CompleteGraphParameterizedFixture;
 typedef GraphFixture SuurballeGraphFixture;
+typedef GraphFixture ExtensionFixture;
 
 TEST(TestExpandCollapse, testUnitaryGain) {
     EXPECT_EQ(unitary_gain(10, 2, 2, 2), 5);
@@ -27,7 +28,7 @@ TEST(TestExpandCollapse, testUnitaryGain) {
 }
 
 TEST(TestExpandCollapse, testCalculateAverageGain) {
-    typedef std::map<int, UnitaryGainOfVertex> UnitaryGainMap;
+    typedef std::map<int, ExtensionVertex> UnitaryGainMap;
     UnitaryGainMap gain_map;
 
     std::unordered_set<int> vertices_in_tour = { 0, 1, 2, 3, 0 };
@@ -39,16 +40,16 @@ TEST(TestExpandCollapse, testCalculateAverageGain) {
     int c = 6;
 
     // initialise unitary gain and gain map
-    UnitaryGainOfVertex gain_a = UnitaryGainOfVertex();
-    UnitaryGainOfVertex gain_b = UnitaryGainOfVertex();
-    UnitaryGainOfVertex gain_c = UnitaryGainOfVertex();
+    ExtensionVertex gain_a = ExtensionVertex();
+    ExtensionVertex gain_b = ExtensionVertex();
+    ExtensionVertex gain_c = ExtensionVertex();
 
-    gain_a.gain_of_vertex = 1;
-    gain_a.index_of_extension = 1;
-    gain_b.gain_of_vertex = 2;
-    gain_b.index_of_extension = 2;
-    gain_c.gain_of_vertex = 6;
-    gain_c.index_of_extension = 3;
+    gain_a.value = 1;
+    gain_a.index = 1;
+    gain_b.value = 2;
+    gain_b.index = 2;
+    gain_c.value = 6;
+    gain_c.index = 3;
 
     gain_map[a] = gain_a;
     gain_map[b] = gain_b;
@@ -75,13 +76,13 @@ TEST_P(CompleteGraphParameterizedFixture, testUnitaryGainOfVertex) {
     auto cost_map = getCostMap(g);
     // Vertex missing_vertex = boost::vertex(3, g);
     int missing_vertex = 3;
-    UnitaryGainOfVertex gain =
+    ExtensionVertex gain =
         unitaryGainOfVertex(g, tour, cost_map, prize_map, missing_vertex);
     if (num_vertices(g) == 4) {
-        EXPECT_FLOAT_EQ(0.5, gain.gain_of_vertex);
+        EXPECT_FLOAT_EQ(0.5, gain.value);
     }
     else if (num_vertices(g) == 5) {
-        EXPECT_FLOAT_EQ(3.0 / 7.0, gain.gain_of_vertex);
+        EXPECT_FLOAT_EQ(3.0 / 7.0, gain.value);
     }
 }
 
@@ -242,10 +243,105 @@ TEST(TestExpandCollapse, testIndexOfReverseIterator) {
     EXPECT_EQ(indexOfReverseIterator(mylist, rit), 0);
 }
 
+TEST_P(ExtensionFixture, testNeighborIntersection) {
+    PCTSPgraph graph = getGraph();
+    auto u = boost::vertex(0, graph);
+    auto v = boost::vertex(1, graph);
+    auto intersection = neighborIntersection(graph, u, v);
+    int expected_size;
+    switch (GetParam()) {
+        case GraphType::COMPLETE4:
+            expected_size = 2;
+            break;
+        case GraphType::COMPLETE5: {
+            expected_size = 3;
+            break;
+        }
+        case GraphType::GRID8: {
+            expected_size = 0;
+            break;
+        }
+        case GraphType::SUURBALLE: {
+            expected_size = 1;
+            break;
+        }
+        default: {
+            expected_size = 0;
+            break;
+        }
+    }
+    EXPECT_EQ(expected_size, intersection.size());
+}
+
+TEST_P(ExtensionFixture, testExtension) {
+    PCTSPgraph graph = getGraph();
+    auto cost_map = getCostMap(graph);
+    auto prize_map = getPrizeMap(graph);
+    auto small_tour = getSmallTour();
+    if (GetParam() == GraphType::SUURBALLE) {
+        small_tour = {0, 1, 3, 6, 7, 2, 0};
+    }
+    auto old_size = small_tour.size();
+    int expected_size;
+    extension(graph, small_tour, cost_map, prize_map);
+    switch (GetParam()) {
+        case GraphType::SUURBALLE:
+        case GraphType::COMPLETE5:
+            expected_size = old_size + 1; break;
+        default:
+            expected_size = old_size;
+    }
+    EXPECT_EQ(small_tour.size(), expected_size);
+}
+
+TEST_P(ExtensionFixture, testExtensionStep) {
+    PCTSPgraph graph = getGraph();
+    auto cost_map = getCostMap(graph);
+    auto prize_map = getPrizeMap(graph);
+    auto small_tour = getSmallTour();
+    auto old_size = small_tour.size();
+    int expected_size;
+    int step_size = 2;
+    int path_depth_limit = 2;
+    extension(graph, small_tour, cost_map, prize_map, step_size, path_depth_limit);
+    switch (GetParam()) {
+        default:
+            expected_size = old_size; break;
+    }
+    EXPECT_EQ(small_tour.size(), expected_size);
+}
+
+TEST_P(ExtensionFixture, testSwapPathsInTour) {
+    auto small_tour = getSmallTour();
+    auto old_length = small_tour.size();
+    std::list<PCTSPvertex> new_path = {5, 8, 0, 10};
+    // when i < j is the easy test
+    int i = 1;
+    int j = 3;
+    swapPathsInTour(small_tour, new_path, i, j);
+    EXPECT_EQ(old_length - (j - i + 1) + new_path.size(), small_tour.size());
+}
+
+
+TEST_P(ExtensionFixture, testSwapPathsInTourWithRoot) {
+    auto small_tour = getSmallTour();
+    auto old_length = small_tour.size();
+    std::list<PCTSPvertex> new_path = {5, 8, 0, 10};
+    // when i > j is more difficult
+    int i = 3;
+    int j = 1;
+    swapPathsInTour(small_tour, new_path, i, j);
+    EXPECT_EQ(old_length + new_path.size() + 1 - (old_length - i + j + 1), small_tour.size());
+}
+
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
     ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5)
 );
 
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, SuurballeGraphFixture,
     ::testing::Values(GraphType::SUURBALLE)
+);
+
+INSTANTIATE_TEST_SUITE_P(TestExtension, ExtensionFixture,
+    ::testing::Values(GraphType::SUURBALLE, GraphType::GRID8, GraphType::COMPLETE4, GraphType::COMPLETE5)
 );

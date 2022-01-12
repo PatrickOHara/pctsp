@@ -17,6 +17,7 @@ from pctsp import (
     collapse,
     extend,
     extend_until_prize_feasible,
+    extension,
     find_cycle_from_bfs,
     random_tour_complete_graph,
     undirected_vertex_disjoint_paths_map,
@@ -68,6 +69,33 @@ def test_extend_until_prize_feasible(suurballes_undirected_graph):
         )
         >= quota
     )
+
+
+def test_extension(suurballes_undirected_graph):
+    """Test if a tour is extended"""
+    tour = [0, 1, 3, 6, 7, 2, 0]
+    for vertex in tour:
+        assert suurballes_undirected_graph.has_node(vertex)
+    for edge in edge_list_from_walk(tour):
+        assert suurballes_undirected_graph.has_edge(edge[0], edge[1])
+
+    extended_tour = extension(suurballes_undirected_graph, tour)
+    assert 4 not in extended_tour
+    assert 5 in extended_tour
+    assert len(extended_tour) == len(tour) + 1
+
+
+def test_extension_tsplib(tspwplib_graph, root):
+    """Test if a tour is extended on the tsplib dataset"""
+    n = tspwplib_graph.number_of_nodes()
+    tour = [0, 1, 2, n - 1, n - 2, 0]
+    extended_tour = extension(tspwplib_graph, tour)
+    prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
+    assert total_prize(prize_map, extended_tour) > total_prize(prize_map, tour)
+    assert root in extended_tour
+    assert is_simple_cycle(tspwplib_graph, extended_tour)
+    for u in tspwplib_graph:
+        assert extended_tour.count(u) < 2 or u == root
 
 
 def test_random_tour_complete_graph(tspwplib_graph, root):

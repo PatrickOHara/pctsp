@@ -2,6 +2,7 @@
 #define __PCTSP_WALK__
 
 #include <algorithm>
+#include <string>
 #include <boost/graph/graph_traits.hpp>
 
 #include "exception.hh"
@@ -91,6 +92,36 @@ int total_cost(TGraph& graph, std::list<typename TGraph::vertex_descriptor>& tou
     return total_cost(graph, first, last, cost_map);
 }
 
+template <typename TGraph, typename TCostMap>
+int total_cost(TGraph& graph, std::vector<typename TGraph::vertex_descriptor>& path, TCostMap& cost_map) {
+    auto first = path.begin();
+    auto last = path.end();
+    return total_cost(graph, first, last, cost_map);
+}
+
+template<typename TPrizeMap, typename TVertexIt>
+int totalPrize(TPrizeMap& prize_map, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it) {
+    int prize = 0;
+    for (; first_vertex_it != last_vertex_it; first_vertex_it ++) {
+        prize += prize_map[*first_vertex_it];
+    }
+    return prize;
+}
+
+template<typename TPrizeMap, typename TVertex>
+int totalPrize(TPrizeMap& prize_map, std::list<TVertex>& path) {
+    auto first = path.begin();
+    auto last = path.end();
+    return totalPrize(prize_map, first, last);
+}
+
+template<typename TPrizeMap, typename TVertex>
+int totalPrize(TPrizeMap& prize_map, std::vector<TVertex>& path) {
+    auto first = path.begin();
+    auto last = path.end();
+    return totalPrize(prize_map, first, last);
+}
+
 template <typename TGraph, typename TPrizeMap, typename Vertex>
 int total_prize(TGraph& graph, std::list<Vertex>& tour, TPrizeMap& prize_map) {
     // calculate the total prize of a tour
@@ -112,6 +143,23 @@ int total_prize_of_tour(TGraph& graph, std::list<Vertex>& tour,
     // repeated)
     std::list<Vertex> tour_copy(tour.begin(), --tour.end());
     return total_prize(graph, tour_copy, prize_map);
+}
+
+template <typename VertexIt>
+std::string walkToString(VertexIt& first_it, VertexIt& last_it) {
+    std::string walk_str = "";
+    while (first_it != last_it) {
+        walk_str += std::to_string(*first_it) + ", ";
+        first_it ++;
+    }
+    return walk_str;
+}
+
+template <typename TVertex>
+std::string walkToString(std::list<TVertex>& walk) {
+    auto first = walk.begin();
+    auto last = walk.end();
+    return walkToString(first, last);
 }
 
 #endif

@@ -7,6 +7,8 @@
 #include <iostream>
 #include <limits>
 
+#include "exception.hh"
+#include "graph.hh"
 #include "logger.hh"
 #include "walk.hh"
 
@@ -17,13 +19,265 @@ using namespace std;
 
 float unitary_gain(int prize_v, int cost_uw, int cost_uv, int cost_vw);
 
-struct UnitaryGainOfVertex {
-    int index_of_extension;
-    float gain_of_vertex;
+struct ExtensionVertex {
+    int index;
+    float value;
 };
 
+
+float unitaryLoss(
+    int& external_path_prize,
+    int& internal_path_prize,
+    int& external_path_cost,
+    int& internal_path_cost
+);
+
+/**
+ * @brief Get the set intersection of the neighbors of vertex u and vertex v.
+ */
+template <typename TGraph>
+std::vector<typename TGraph::vertex_descriptor> neighborIntersection(
+    TGraph& graph,
+    typename TGraph::vertex_descriptor& u,
+    typename TGraph::vertex_descriptor& v
+) {
+    typedef typename TGraph::vertex_descriptor VertexDescriptor;
+    typename graph_traits< TGraph >::adjacency_iterator ui, ui_end, vi, vi_end;
+    boost::tie(ui, ui_end) = boost::adjacent_vertices(u, graph);
+    boost::tie(vi, vi_end) = boost::adjacent_vertices(v, graph);
+    std::vector<VertexDescriptor> u_neighbors (ui, ui_end);
+    std::vector<VertexDescriptor> v_neighbors (vi, vi_end);
+    std::vector<VertexDescriptor> intersection;
+    std::sort(u_neighbors.begin(), u_neighbors.end());
+    std::sort(v_neighbors.begin(), v_neighbors.end());
+    std::set_intersection(u_neighbors.begin(), u_neighbors.end(), v_neighbors.begin(), v_neighbors.end(), std::back_inserter(intersection));
+    return intersection;
+}
+
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
-UnitaryGainOfVertex unitaryGainOfVertex(
+ExtensionVertex chooseExtensionPathFromCandidates(
+    TGraph& graph,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    std::vector<std::list<typename TGraph::vertex_descriptor>> external_path_candidates,
+    std::vector<typename TGraph::vertex_descriptor> internal_path
+) {
+    ExtensionVertex best_candidate = {-1, 0.0};
+    int current_index = 0;
+    bool extension_found = false;
+    for (auto& external_path : external_path_candidates) {
+        // if the external path has prize greater than the internal path
+        int internal_path_prize = totalPrize(prize_map, internal_path);
+        int external_path_prize = total_prize(graph, external_path, prize_map);
+        float prize_diff = external_path_prize - internal_path_prize;
+
+        if (prize_diff > 0) {
+            // then calculate the unitary loss of the external path between i and j
+            int external_path_cost = total_cost(graph, external_path, cost_map);
+            int internal_path_cost = total_cost(graph, internal_path, cost_map);
+            auto loss_ij = unitaryLoss(
+                external_path_prize,
+                internal_path_prize,
+                external_path_cost,
+                internal_path_cost
+            );
+            if ((loss_ij < best_candidate.value) || !(extension_found)) {
+                best_candidate.value = loss_ij;
+                best_candidate.index = current_index;
+                extension_found = true;
+            }
+        }
+        current_index ++;
+    }
+    return best_candidate;
+}
+
+/**
+ * @brief Replace the section of the tour from first to last index with the new path.
+ * First and last index are inclusive!
+ */
+template<typename TVertex>
+void swapPathsInTour(std::list<TVertex>& tour, std::list<TVertex>& new_path, int& first_index, int& last_index) {
+    if (first_index < last_index) {
+        // remove the path from first to last (inclusive)
+        auto first_it = tour.begin();
+        auto last_it = tour.begin();
+        std::advance(first_it, first_index);
+        std::advance(last_it, last_index);
+        while (first_it != last_it) {
+            first_it = tour.erase(first_it);
+        }
+        tour.erase(last_it);
+
+        // insert the new path at the first index
+        first_it = tour.begin();
+        std::advance(first_it, first_index);
+        tour.insert(first_it, new_path.begin(), new_path.end());
+    }
+    else {
+        // remove the path from last to end of tour
+        auto first_it = tour.begin();
+        auto root_vertex = *first_it;        // remember the root vertex at the beginning and end of the tour... we need to replace this
+        auto last_it = tour.end();
+        std::advance(first_it, first_index);
+        while (first_it != last_it) {
+            first_it = tour.erase(first_it);
+        }
+        // remove the path from the beginning of the tour to the first index
+        first_it = tour.begin();
+        last_it = tour.begin();
+        std::advance(last_it, last_index);
+        while (first_it != last_it) {
+            first_it = tour.erase(first_it);
+        }
+        tour.erase(last_it);
+        // now take a subset of the path upto and including the root vertex and add this to the end of the tour
+        auto root_it = std::find(new_path.begin(), new_path.end(),root_vertex);
+        tour.insert(tour.begin(), root_it, new_path.end());
+        root_it = std::find(new_path.begin(), new_path.end(),root_vertex);
+        tour.insert(tour.end(), new_path.begin(), ++ root_it);
+        // take the subset of the path from the root vertex until the end and add this to the beginning of the tour
+        
+    }
+}
+
+int numFeasibleExtensions(std::vector<bool>& is_feasible_extension);
+
+float averageUnitaryLoss(std::vector<float>& unitary_loss, std::vector<bool>& is_feasible_extension);
+
+int indexOfSmallestLoss(std::vector<float>& unitary_loss, std::vector<bool>& is_feasible_extension);
+
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+void findExtensionPaths(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    int& step_size,
+    int& path_depth_limit,
+    std::vector<float>& unitary_loss,
+    std::vector<bool>& is_feasible_extension,
+    std::vector<std::list<typename TGraph::vertex_descriptor>>& extension_paths
+) {
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
+
+    int k = tour.size() - 1;
+
+    // create a set of vertices in tour
+    std::unordered_set<VertexDescriptor> vertices_in_tour(std::begin(tour), std::end(tour));
+
+    for (int i = 0; i < k; i++) {
+        int j = (i + step_size) % k;
+        auto it = tour.begin();
+        std::advance(it, i);
+        auto vi = *it;
+        it = tour.begin();
+        std::advance(it, j);
+        auto vj = *it;
+        // get the path in the tour from i to j
+        auto start = tour.begin();
+        auto end = tour.end();
+        std::vector<VertexDescriptor> internal_path = getSubpathOfCycle(start, end, i, j);
+
+        // keep a vector of potential external paths
+        std::vector<std::list<VertexDescriptor>> external_path_candidates;
+
+        if (path_depth_limit == 2) {
+            // look at every vertex that is adjacent to both i and j
+            auto neighbors = neighborIntersection(graph, vi, vj);
+            for (const auto& u : neighbors) {
+                if (vertices_in_tour.count(u) == 0) {
+                    std::list<VertexDescriptor> path_iuj = {vi, u, vj};
+                    external_path_candidates.push_back(path_iuj);
+                }
+            }
+        }
+        else if (path_depth_limit > 2) {
+            // TODO: filter the graph by marking vertices that are already in the tour
+            // TODO find a path using BFS from i to j using unmarked vertices
+            // need to check that root vertex is not an *internal* vertex between i and j
+        }
+        ExtensionVertex best_candidate = chooseExtensionPathFromCandidates(graph, cost_map, prize_map, external_path_candidates, internal_path);
+        // store the best unitary loss of the path in the array
+        if (best_candidate.index >= 0) {
+            unitary_loss[i] = best_candidate.value;
+            is_feasible_extension[i] = true;
+            auto best_external_path = external_path_candidates[best_candidate.index];
+            extension_paths[i] = std::list(best_external_path.begin(), best_external_path.end());
+        }
+        else {
+            unitary_loss[i] = 0.0;
+            is_feasible_extension[i] = false;
+        }
+    }
+}
+
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+void extension(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    int& step_size,
+    int& path_depth_limit
+) {
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
+
+    bool exists_path_with_below_avg_loss = true;
+    bool calculate_avg_loss = true;
+    float avg_loss = 0.0;
+
+    while (exists_path_with_below_avg_loss) {
+        int k = tour.size() - 1;
+
+        // define vectors to store unitary loss and paths
+        std::vector<float> unitary_loss(k);
+        std::vector<bool> is_feasible_extension(k);
+        std::vector<std::list<VertexDescriptor>> extension_paths(k);
+
+        // find all possible extension paths of length path_depth_limit
+        findExtensionPaths(graph, tour, cost_map, prize_map, step_size, path_depth_limit, unitary_loss, is_feasible_extension, extension_paths);
+
+        // get the number of possible extensions
+        auto num_feasible_extensions = numFeasibleExtensions(is_feasible_extension);
+
+        // calculate the average loss
+        if (calculate_avg_loss) {
+            avg_loss = averageUnitaryLoss(unitary_loss, is_feasible_extension);
+            calculate_avg_loss = false;
+        }
+
+        // find the smallest loss in the array
+        int index_of_smallest_loss = indexOfSmallestLoss(unitary_loss, is_feasible_extension);
+        auto smallest_loss = unitary_loss[index_of_smallest_loss];
+
+        // check if there exists a path with below average unitary loss
+        exists_path_with_below_avg_loss = (smallest_loss < avg_loss) && (num_feasible_extensions > 0);
+
+        // extend the tour with the path of smallest unitary loss
+        if (exists_path_with_below_avg_loss) {
+            auto external_path = extension_paths[index_of_smallest_loss];
+            int last_index =  index_of_smallest_loss + step_size;
+            swapPathsInTour(tour, external_path, index_of_smallest_loss, last_index);
+        }
+    }
+}
+
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+void extension(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map
+) {
+    int step_size = 1;
+    int path_depth_limit = 2;
+    return extension(graph, tour, cost_map, prize_map, step_size, path_depth_limit);
+}
+
+
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+ExtensionVertex unitaryGainOfVertex(
     TGraph& g,
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
@@ -36,7 +290,7 @@ UnitaryGainOfVertex unitaryGainOfVertex(
     VertexDescriptor u = boost::vertex(prev_vertex_id, g);
     VertexDescriptor v = boost::vertex(vertex, g);
 
-    // caclulate the unitary gain of a vertex
+    // calculate the unitary gain of a vertex
     float max_gain = 0.0;
     int prize_of_v = prize_map[v];
     int index_of_extension;
@@ -74,9 +328,9 @@ UnitaryGainOfVertex unitaryGainOfVertex(
         prev_vertex_id = *tour_iterator;
         i++;
     }
-    UnitaryGainOfVertex gain_of_vertex = UnitaryGainOfVertex();
-    gain_of_vertex.gain_of_vertex = max_gain;
-    gain_of_vertex.index_of_extension = index_of_extension;
+    ExtensionVertex gain_of_vertex = ExtensionVertex();
+    gain_of_vertex.value = max_gain;
+    gain_of_vertex.index = index_of_extension;
     return gain_of_vertex;
 }
 
@@ -87,7 +341,7 @@ float calculateAverageGain(VertexSet& vertices_in_tour, GainMap& gain_map) {
     for (auto const& [key, val] : gain_map) {
         if (vertices_in_tour.count(key) == 0) {
             // only add up gain of vertices not in the tour
-            total_gain += val.gain_of_vertex;
+            total_gain += val.value;
             num_vertices_considered++;
         }
     }
@@ -117,12 +371,12 @@ typename TGraph::vertex_descriptor findVertexWithBiggestGain(
         // only look at vertices not in the tour
         VertexDescriptor vertex = *vp.first;
         if (vertices_in_tour.count(vertex) == 0) {
-            UnitaryGainOfVertex gain = unitaryGainOfVertex(
+            ExtensionVertex gain = unitaryGainOfVertex(
                 graph, tour, cost_map, prize_map, vertex);
             gain_map[vertex] = gain;
-            if (gain.gain_of_vertex > biggest_gain) {
+            if (gain.value > biggest_gain) {
                 biggest_gain_vertex = vertex;
-                biggest_gain = gain.gain_of_vertex;
+                biggest_gain = gain.value;
                 found_biggest_gain = true;
             }
         }
@@ -144,7 +398,7 @@ void insertBiggestGainVertexIntoTour(
     tour_iterator_t tour_iterator = tour.begin();
 
     // iterator to point to position
-    int insert_index = gain_map[biggest_gain_vertex].index_of_extension + 1;
+    int insert_index = gain_map[biggest_gain_vertex].index + 1;
     std::advance(tour_iterator, insert_index);
     tour.insert(tour_iterator, biggest_gain_vertex);
 }
@@ -161,7 +415,7 @@ void extend(
     // we assume that the first and last vertex in the tour are the same
 
     // map vertices to the unitary gain
-    typedef std::map<VertexDescriptor, UnitaryGainOfVertex> UnitaryGainMap;
+    typedef std::map<VertexDescriptor, ExtensionVertex> UnitaryGainMap;
     UnitaryGainMap gain_map;
 
     // create a set of vertices in tour
@@ -176,7 +430,7 @@ void extend(
         try {
             VertexDescriptor biggest_gain_vertex = findVertexWithBiggestGain(
                 g, tour, cost_map, prize_map, gain_map, vertices_in_tour);
-            float biggest_gain = gain_map[biggest_gain_vertex].gain_of_vertex;
+            float biggest_gain = gain_map[biggest_gain_vertex].value;
             // only calculate the average gain once
             if (calculate_avg_gain) {
                 avg_gain = calculateAverageGain(vertices_in_tour, gain_map);
@@ -209,11 +463,11 @@ void extendUntilPrizeFeasible(
     // Run the extension algorithm until the total prize of the tour is greater
     // than the quota. We don't calculate the average gain, the only termination
     // criteria of the algorithm is that the tour has sufficient prize.
-    // NOTE: there is no gaurantee that a prize feasible tour is found!
+    // NOTE: there is no guarantee that a prize feasible tour is found!
 
     // define a mapping from vertices to the unitary gain data structure
     typedef typename TGraph::vertex_descriptor VertexDescriptor;
-    typedef std::map<VertexDescriptor, UnitaryGainOfVertex> UnitaryGainMap;
+    typedef std::map<VertexDescriptor, ExtensionVertex> UnitaryGainMap;
     UnitaryGainMap gain_map;
 
     // create a set of vertices in tour

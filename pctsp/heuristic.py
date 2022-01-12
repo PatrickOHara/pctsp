@@ -20,6 +20,7 @@ from .libpypctsp import (
     collapse_bind,
     extend_bind,
     extend_until_prize_feasible_bind,
+    extension_bind,
 )
 
 # pylint: enable=import-error
@@ -101,6 +102,34 @@ def extend_until_prize_feasible(graph: nx.Graph, tour: VertexList, quota: int):
         cost_dict,
         prize_dict,
         quota,
+    )
+    return extended_tour
+
+
+def extension(
+    graph: nx.Graph, tour: VertexList, step_size: int = 1, path_depth_limit: int = 2
+) -> VertexList:
+    """Increase the prize of the tour by selecting vertices according to their unitary loss.
+
+    Args:
+        graph: Undirected input graph
+        tour: Tour that has the first and last vertex the same
+        step_size: Gap between two vertices in the tour when trying to extend the tour
+        path_depth_limit: Length of the path to explore in order to extend the tour
+
+    Returns:
+        Tour that has prize above the quota
+    """
+    cost_dict = nx.get_edge_attributes(graph, EdgeFunctionName.cost.value)
+    prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
+    edge_list = list(graph.edges())
+    extended_tour: VertexList = extension_bind(
+        edge_list,
+        tour,
+        cost_dict,
+        prize_dict,
+        step_size,
+        path_depth_limit,
     )
     return extended_tour
 
@@ -194,15 +223,14 @@ def random_tour_complete_graph(
     prize = prize_dict[root_vertex]
     random.seed(seed)
     tour = [root_vertex]
-    vertices_not_in_tour = set(graph.nodes())  # quickly check membership
+    vertices_not_in_tour = list(graph.nodes())  # quickly check membership
     vertices_not_in_tour.remove(root_vertex)
-    vertex_list = list(graph.nodes())
     while len(vertices_not_in_tour) > 0 and prize < quota:
         # choose a vertex that has not yet been added to the tour
-        j = random.randint(0, graph.number_of_nodes() - len(tour) - 1)
-        vertex = vertex_list[j]
+        vertex = random.choice(vertices_not_in_tour)
         prize += prize_dict[vertex]
         tour.append(vertex)
+        vertices_not_in_tour.remove(vertex)
 
     # add the root vertex to the end of the tour
     tour.append(root_vertex)

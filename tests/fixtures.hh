@@ -24,4 +24,5 @@ public:
   int getQuota();
   PCTSPvertex getRootVertex();
   std::string getParamName();
+  std::list<PCTSPvertex> getSmallTour();
 };

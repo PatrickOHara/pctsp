@@ -241,4 +241,43 @@ bool isPrizeFeasible(
     return isPrizeFeasible(prize_map, quota, first, last);
 }
 
+/**
+ * @brief Get the subpath of a cycle in a graph. Note first and last vertex are assumed to be the same.
+ */
+template <typename It>
+std::vector<typename std::iterator_traits<It>::value_type> getSubpathOfCycle(
+    It& first,
+    It& last,
+    int& subpath_start,
+    int& subpath_end
+) {
+    typedef typename std::iterator_traits<It>::value_type TVertex;
+    auto cycle_length = std::distance(first, last);
+    auto subpath_length = subpath_end - subpath_start + 1;
+    if (subpath_length <= 0) {
+        subpath_length = cycle_length - subpath_start + subpath_end;
+    }
+
+    std::vector<TVertex> subpath (subpath_length);
+    It current = first;
+    std::advance(current, subpath_start);
+ 
+    for (int i = 0; i < subpath_length; i++) {
+        if (current == last) {
+            current = first;
+            current ++;
+        }
+        subpath[i] = *current;
+        current ++;
+    }
+    return subpath;
+}
+
+std::vector<PCTSPvertex> getSubpathOfCycle(
+    std::list<PCTSPvertex>& cycle,
+    int& subpath_start,
+    int& subpath_end
+);
+
+
 #endif
