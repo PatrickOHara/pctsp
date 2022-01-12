@@ -324,7 +324,7 @@ TEST_P(ExtensionFixture, testExtensionUntilPrizeFeasible) {
     int step_size = 1;
     int path_depth_limit = 2;
 
-    extensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, step_size, path_depth_limit, quota);
+    extensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, quota, step_size, path_depth_limit);
 
     switch (GetParam()) {
         case GraphType::GRID8: EXPECT_LT(total_prize_of_tour(graph, small_tour, prize_map), quota); break;

@@ -295,9 +295,9 @@ void extensionUntilPrizeFeasible(
     TCostMap& cost_map,
     TPrizeMap& prize_map,
     typename TGraph::vertex_descriptor& root_vertex,
+    int& quota,
     int& step_size,
-    int& path_depth_limit,
-    int& quota
+    int& path_depth_limit
 ) {
     typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
     int prize = total_prize_of_tour(graph, tour, prize_map);
