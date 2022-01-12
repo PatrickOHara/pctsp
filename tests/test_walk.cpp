@@ -84,6 +84,16 @@ TEST(TestWalk, TestReorderTourFromRoot) {
     CheckReorderTourFromRoot(tour5, root_vertex);
 }
 
+TEST(TestWalk, testIsInternalVertexOfWalk) {
+    std::vector<int> walk = { 0, 1, 2, 3, 0 };
+    int zero = 0;
+    int one = 1;
+    int four = 4;
+    EXPECT_TRUE(isInternalVertexOfWalk(walk, one));
+    EXPECT_FALSE(isInternalVertexOfWalk(walk, zero));
+    EXPECT_FALSE(isInternalVertexOfWalk(walk, four));
+}
+
 TEST_P(WalkFixture, testGetEdgeVector) {
     auto graph = getGraph();
     typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor Vertex;

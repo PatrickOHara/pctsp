@@ -107,13 +107,14 @@ def extend_until_prize_feasible(graph: nx.Graph, tour: VertexList, quota: int):
 
 
 def extension(
-    graph: nx.Graph, tour: VertexList, step_size: int = 1, path_depth_limit: int = 2
+    graph: nx.Graph, tour: VertexList, root_vertex: int, step_size: int = 1, path_depth_limit: int = 2
 ) -> VertexList:
     """Increase the prize of the tour by selecting vertices according to their unitary loss.
 
     Args:
         graph: Undirected input graph
         tour: Tour that has the first and last vertex the same
+        root_vertex: Tour starts and ends at this vertex
         step_size: Gap between two vertices in the tour when trying to extend the tour
         path_depth_limit: Length of the path to explore in order to extend the tour
 
@@ -128,6 +129,7 @@ def extension(
         tour,
         cost_dict,
         prize_dict,
+        root_vertex,
         step_size,
         path_depth_limit,
     )

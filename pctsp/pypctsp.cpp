@@ -142,6 +142,7 @@ py::list extension_bind(
     py::list& py_tour,
     py::dict& cost_dict,
     py::dict& prize_dict,
+    int py_root,
     int step_size,
     int path_depth_limit
 ) {
@@ -152,7 +153,8 @@ py::list extension_bind(
     fillPrizeMapFromPyDict(prize_map, prize_dict, vertex_id_map);
     EdgeCostMap cost_map = boost::get(edge_weight, graph);
     fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
-    extension(graph, tour, cost_map, prize_map, step_size, path_depth_limit);
+    auto root_vertex = getNewVertex(vertex_id_map, py_root);
+    extension(graph, tour, cost_map, prize_map, root_vertex, step_size, path_depth_limit);
     return getPyVertexList(vertex_id_map, tour);
 }
 

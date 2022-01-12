@@ -278,12 +278,13 @@ TEST_P(ExtensionFixture, testExtension) {
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
     auto small_tour = getSmallTour();
+    auto root = getRootVertex();
     if (GetParam() == GraphType::SUURBALLE) {
         small_tour = {0, 1, 3, 6, 7, 2, 0};
     }
     auto old_size = small_tour.size();
     int expected_size;
-    extension(graph, small_tour, cost_map, prize_map);
+    extension(graph, small_tour, cost_map, prize_map, root);
     switch (GetParam()) {
         case GraphType::SUURBALLE:
         case GraphType::COMPLETE5:
@@ -299,16 +300,36 @@ TEST_P(ExtensionFixture, testExtensionStep) {
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
     auto small_tour = getSmallTour();
+    auto root = getRootVertex();
     auto old_size = small_tour.size();
     int expected_size;
     int step_size = 2;
     int path_depth_limit = 2;
-    extension(graph, small_tour, cost_map, prize_map, step_size, path_depth_limit);
+    extension(graph, small_tour, cost_map, prize_map, root, step_size, path_depth_limit);
     switch (GetParam()) {
         default:
             expected_size = old_size; break;
     }
     EXPECT_EQ(small_tour.size(), expected_size);
+}
+
+TEST_P(ExtensionFixture, testExtensionUntilPrizeFeasible) {
+    auto graph = getGraph();
+    auto cost_map = getCostMap(graph);
+    auto prize_map = getPrizeMap(graph);
+    auto root = getRootVertex();
+    auto small_tour = getSmallTour();
+    auto quota = getQuota();
+
+    int step_size = 1;
+    int path_depth_limit = 2;
+
+    extensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, step_size, path_depth_limit, quota);
+
+    switch (GetParam()) {
+        case GraphType::GRID8: EXPECT_LT(total_prize_of_tour(graph, small_tour, prize_map), quota); break;
+        default: EXPECT_GE(total_prize_of_tour(graph, small_tour, prize_map), quota); break;
+    }
 }
 
 TEST_P(ExtensionFixture, testSwapPathsInTour) {

@@ -131,13 +131,11 @@ void swapPathsInTour(std::list<TVertex>& tour, std::list<TVertex>& new_path, int
             first_it = tour.erase(first_it);
         }
         tour.erase(last_it);
-        // now take a subset of the path upto and including the root vertex and add this to the end of the tour
+
         auto root_it = std::find(new_path.begin(), new_path.end(),root_vertex);
         tour.insert(tour.begin(), root_it, new_path.end());
         root_it = std::find(new_path.begin(), new_path.end(),root_vertex);
         tour.insert(tour.end(), new_path.begin(), ++ root_it);
-        // take the subset of the path from the root vertex until the end and add this to the beginning of the tour
-        
     }
 }
 
@@ -153,13 +151,14 @@ void findExtensionPaths(
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
     TPrizeMap& prize_map,
+    typename TGraph::vertex_descriptor& root_vertex,
     int& step_size,
     int& path_depth_limit,
     std::vector<float>& unitary_loss,
     std::vector<bool>& is_feasible_extension,
     std::vector<std::list<typename TGraph::vertex_descriptor>>& extension_paths
 ) {
-    typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
+    typedef typename TGraph::vertex_descriptor VertexDescriptor;
 
     int k = tour.size() - 1;
 
@@ -179,10 +178,19 @@ void findExtensionPaths(
         auto end = tour.end();
         std::vector<VertexDescriptor> internal_path = getSubpathOfCycle(start, end, i, j);
 
+
         // keep a vector of potential external paths
         std::vector<std::list<VertexDescriptor>> external_path_candidates;
 
-        if (path_depth_limit == 2) {
+        // check if the root is an internal vertex (not an endpoint) inside the internal path
+        if ((path_depth_limit == 2) && isInternalVertexOfWalk(internal_path, root_vertex)) {
+            if (boost::edge(vi, root_vertex, graph).second && boost::edge(root_vertex, vj, graph).second) {
+                std::list<VertexDescriptor> path_iuj = {vi, root_vertex, vj};
+                external_path_candidates.push_back(path_iuj);
+            }
+        }
+
+        else if (path_depth_limit == 2) {
             // look at every vertex that is adjacent to both i and j
             auto neighbors = neighborIntersection(graph, vi, vj);
             for (const auto& u : neighbors) {
@@ -218,6 +226,7 @@ void extension(
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
     TPrizeMap& prize_map,
+    typename TGraph::vertex_descriptor& root_vertex,
     int& step_size,
     int& path_depth_limit
 ) {
@@ -236,7 +245,7 @@ void extension(
         std::vector<std::list<VertexDescriptor>> extension_paths(k);
 
         // find all possible extension paths of length path_depth_limit
-        findExtensionPaths(graph, tour, cost_map, prize_map, step_size, path_depth_limit, unitary_loss, is_feasible_extension, extension_paths);
+        findExtensionPaths(graph, tour, cost_map, prize_map, root_vertex, step_size, path_depth_limit, unitary_loss, is_feasible_extension, extension_paths);
 
         // get the number of possible extensions
         auto num_feasible_extensions = numFeasibleExtensions(is_feasible_extension);
@@ -268,11 +277,12 @@ void extension(
     TGraph& graph,
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
-    TPrizeMap& prize_map
+    TPrizeMap& prize_map,
+    typename TGraph::vertex_descriptor& root_vertex
 ) {
     int step_size = 1;
     int path_depth_limit = 2;
-    return extension(graph, tour, cost_map, prize_map, step_size, path_depth_limit);
+    return extension(graph, tour, cost_map, prize_map, root_vertex, step_size, path_depth_limit);
 }
 
 /**
@@ -284,11 +294,13 @@ void extensionUntilPrizeFeasible(
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
     TPrizeMap& prize_map,
+    typename TGraph::vertex_descriptor& root_vertex,
     int& step_size,
     int& path_depth_limit,
-    int& quota,
+    int& quota
 ) {
-    int prize = total_prize_of_tour(g, tour, prize_map);
+    typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
+    int prize = total_prize_of_tour(graph, tour, prize_map);
     int num_feasible_extensions = 1;
 
     while (prize < quota && num_feasible_extensions > 0) {
@@ -300,7 +312,7 @@ void extensionUntilPrizeFeasible(
         std::vector<std::list<VertexDescriptor>> extension_paths(k);
 
         // find all possible extension paths of length path_depth_limit
-        findExtensionPaths(graph, tour, cost_map, prize_map, step_size, path_depth_limit, unitary_loss, is_feasible_extension, extension_paths);
+        findExtensionPaths(graph, tour, cost_map, prize_map, root_vertex, step_size, path_depth_limit, unitary_loss, is_feasible_extension, extension_paths);
         num_feasible_extensions = numFeasibleExtensions(is_feasible_extension);
 
         // extend the tour with the path of smallest unitary loss
@@ -309,7 +321,7 @@ void extensionUntilPrizeFeasible(
             int index_of_smallest_loss = indexOfSmallestLoss(unitary_loss, is_feasible_extension);
             auto smallest_loss = unitary_loss[index_of_smallest_loss];
             auto external_path = extension_paths[index_of_smallest_loss];
-            int last_index =  index_of_smallest_loss + step_size;
+            int last_index = (index_of_smallest_loss + step_size) % k;
             swapPathsInTour(tour, external_path, index_of_smallest_loss, last_index);
         }
     }

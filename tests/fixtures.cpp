@@ -195,7 +195,7 @@ std::list<PCTSPvertex> GraphFixture::getSmallTour() {
         case GraphType::COMPLETE4: 
         case GraphType::COMPLETE5: small_tour = {0, 1, 2, 0}; break;
         case GraphType::GRID8: small_tour = {0, 1, 3, 2, 0}; break;
-        case GraphType::SUURBALLE: small_tour = {0, 1, 4, 0}; break;
+        case GraphType::SUURBALLE: small_tour = {0, 1, 5, 2, 0}; break;
         default: small_tour = {}; break;
     }
     return small_tour;
