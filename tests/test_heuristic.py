@@ -1,6 +1,7 @@
 """Test heuristics for the prize collecting TSP"""
 
 import networkx as nx
+import pytest
 from tspwplib import (
     asymmetric_from_undirected,
     biggest_vertex_id_from_graph,
@@ -94,12 +95,13 @@ def test_extension_tsplib(tspwplib_graph, root):
         assert extended_tour.count(u) < 2 or u == root
 
 
-def test_extension_until_feasible(tspwplib_graph, root):
+@pytest.mark.parametrize("step_size,path_depth_limit", [(1, 2), (1, 4)])
+def test_extension_until_feasible(tspwplib_graph, root, step_size, path_depth_limit):
     """Test obtaining a feasible tour via extension"""
     quota = 20
     n = tspwplib_graph.number_of_nodes()
     tour = [0, 1, 2, n - 1, n - 2, 0]
-    extended_tour = extension_until_prize_feasible(tspwplib_graph, tour, root, quota)
+    extended_tour = extension_until_prize_feasible(tspwplib_graph, tour, root, quota, step_size=step_size, path_depth_limit=path_depth_limit)
     prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
     assert total_prize(prize_map, extended_tour) >= quota
     assert root in extended_tour
