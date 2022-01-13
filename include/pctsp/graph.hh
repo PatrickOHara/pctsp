@@ -342,10 +342,12 @@ std::list<TVertex> pathInTreeFromParents(
     std::list<TVertex> path = {target};
     TVertex child = target;
     TVertex parent = parent_lookup[child];
-    while (parent != child) {
+    int i = 0;
+    while (parent != child && i <= parent_lookup.size()) {
         path.push_front(parent);
         child = parent;
         parent = parent_lookup[parent];
+        i++;
     }
     return path;
 }

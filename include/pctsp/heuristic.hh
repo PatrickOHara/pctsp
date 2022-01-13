@@ -202,19 +202,25 @@ void findExtensionPaths(
             }
         }
         // need to check that root vertex is not an *internal* vertex between i and j
-        else if (path_depth_limit > 2 && !is_root_internal_vertex) {
+        else if (path_depth_limit > 2 && !(is_root_internal_vertex)) {
             // filter the graph by marking vertices that are already in the tour
-            std::vector<bool> marked (boost::num_vertices(graph));
-            for (auto& h: tour) marked[h] = true;
-            marked[vj] = false; // un-mark target vertex
+            auto n_vertices = num_vertices(graph);
+            std::vector<bool> marked (n_vertices);
+            for (auto h: tour) marked[h] = true;
             // find a path using BFS from i to j using unmarked vertices
-            std::vector<VertexDescriptor> parent (boost::num_vertices(graph));
-            breadthFirstSearch(graph, vi, marked, parent, path_depth_limit);
-            auto path_ij = pathInTreeFromParents(parent, vi, vj);
+            std::vector<VertexDescriptor> parent (n_vertices);
+            breadthFirstSearch(graph, vi, marked, parent, path_depth_limit - 1);
 
-            // path is only a candidate if it has prize larger than internal path
-            if (totalPrize(prize_map, path_ij) > totalPrize(prize_map, internal_path))
-                external_path_candidates.push_back(path_ij);
+            for (auto neighbor : boost::make_iterator_range(boost::adjacent_vertices(vj, graph))) {
+                if (vertices_in_tour.count(neighbor) == 0 && marked[neighbor]) {
+                    auto path_ij = pathInTreeFromParents(parent, vi, neighbor);
+                    path_ij.push_back(vj);
+
+                    // path is only a candidate if it has prize larger than internal path
+                    if (totalPrize(prize_map, path_ij) > totalPrize(prize_map, internal_path))
+                        external_path_candidates.push_back(path_ij);
+                }
+            }
         }
         ExtensionVertex best_candidate = chooseExtensionPathFromCandidates(graph, cost_map, prize_map, external_path_candidates, internal_path);
         // store the best unitary loss of the path in the array
