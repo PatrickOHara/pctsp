@@ -131,6 +131,98 @@ TEST(TestGraph, testGetSubpathOfCycle) {
     EXPECT_EQ(path1b[2], 1);
 }
 
+TEST_P(GraphFix, testDepthFirstSearch) {
+    auto graph = getGraph();
+    auto root = getRootVertex();
+
+    std::vector<bool> marked (boost::num_vertices(graph));
+    std::vector<PCTSPvertex> parent (boost::num_vertices(graph));
+
+    depthFirstSearch(graph, root, marked, parent, 2);
+
+    std::vector<bool> expected_marked;
+
+    switch (GetParam()) {
+        case GraphType::GRID8: {
+            expected_marked = {true, true, true, true, true, false, false, false};
+            break;
+        }
+        case GraphType::SUURBALLE: {
+            expected_marked = {true, true, true, true, true, true, false, true};
+            break;
+        }
+        default: {
+            expected_marked = std::vector<bool>(boost::num_vertices(graph));
+            for (auto vertex: boost::make_iterator_range(boost::vertices(graph)))
+                expected_marked[vertex] = true;
+            break;
+        }
+    }
+    for (auto vertex : boost::make_iterator_range(boost::vertices(graph))) {
+        EXPECT_EQ(marked[vertex], expected_marked[vertex]);
+    }
+}
+
+TEST_P(GraphFix, testBreadthFirstSearch) {
+    auto graph = getGraph();
+    auto root = getRootVertex();
+
+    std::vector<bool> marked (boost::num_vertices(graph));
+    std::vector<PCTSPvertex> parent (boost::num_vertices(graph));
+
+    breadthFirstSearch(graph, root, marked, parent, 2);
+
+    std::vector<bool> expected_marked;
+
+    switch (GetParam()) {
+        case GraphType::GRID8: {
+            expected_marked = {true, true, true, true, true, false, false, false};
+            break;
+        }
+        default: {
+            expected_marked = std::vector<bool>(boost::num_vertices(graph));
+            for (auto vertex: boost::make_iterator_range(boost::vertices(graph)))
+                expected_marked[vertex] = true;
+            break;
+        }
+    }
+    for (auto vertex : boost::make_iterator_range(boost::vertices(graph))) {
+        EXPECT_EQ(marked[vertex], expected_marked[vertex]);
+    }
+}
+
+TEST_P(GraphFix, testPathInTreeFromParents) {
+    auto graph = getGraph();
+    auto root = getRootVertex();
+
+    std::vector<bool> marked (boost::num_vertices(graph));
+    std::vector<PCTSPvertex> parent (boost::num_vertices(graph));
+
+    breadthFirstSearch(graph, root, marked, parent, 2);
+    PCTSPvertex target;
+    std::list<PCTSPvertex> expected_path;
+
+    switch (GetParam()) {
+        case GraphType::GRID8: {
+            target = 4;
+            expected_path = {0, 1, 4};
+            break;
+        }
+        case GraphType::SUURBALLE: {
+            target = 6;
+            expected_path = {0, 4, 6};
+            break;
+        }
+        default: {
+            target = 1;
+            expected_path = {0, 1};
+            break;
+        }
+    }
+    std::list<PCTSPvertex> actual_path = pathInTreeFromParents(parent, root, target);
+    EXPECT_EQ(expected_path, actual_path);
+}
+
 INSTANTIATE_TEST_SUITE_P(
     TestGraph,
     GraphFix,
