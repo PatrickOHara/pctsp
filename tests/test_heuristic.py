@@ -101,7 +101,14 @@ def test_extension_until_feasible(tspwplib_graph, root, step_size, path_depth_li
     quota = 20
     n = tspwplib_graph.number_of_nodes()
     tour = [0, 1, 2, n - 1, n - 2, 0]
-    extended_tour = extension_until_prize_feasible(tspwplib_graph, tour, root, quota, step_size=step_size, path_depth_limit=path_depth_limit)
+    extended_tour = extension_until_prize_feasible(
+        tspwplib_graph,
+        tour,
+        root,
+        quota,
+        step_size=step_size,
+        path_depth_limit=path_depth_limit,
+    )
     prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
     assert total_prize(prize_map, extended_tour) >= quota
     assert root in extended_tour
