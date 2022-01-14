@@ -750,4 +750,50 @@ std::list<typename TGraph::vertex_descriptor> collapse(
     }
     return ReorderTourFromRoot(best_tour, root_vertex);
 }
+
+/**
+ * @brief Find an (external) path from the last vertex in the internal path
+ * to the first vertex in the internal path.
+ * 
+ * The external path should not use any of the internal vertices of the internal path.
+ * 
+ * The number of vertices in the external path cannot exceed the depth_limit + 1.
+ * A special case when the depth limit is two searches through neighboring vertices.
+ */
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+std::list<std::list<typename TGraph::vertex_descriptor>> findCollapsePaths (
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& internal_path,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    int quota,
+    int depth_limit
+) {
+    typedef typename TGraph::vertex_descriptor VD;
+    VD source = * (internal_path.end() -- );
+    VD target = * internal_path.begin();
+    auto prize_of_internal_path = totalPrize(prize_map, internal_path);
+    std::list<std::list<VD>> collapse_paths;
+
+    // keep track of which vertices are in the internal path
+    int n = boost::num_vertices(graph);
+    std::vector<bool> in_internal_path (n);
+    for (auto u : internal_path) in_internal_path[u] = true;
+
+    if (depth_limit == 2) {
+        // for each neighbour of the source vertex
+        for (VD collapse_vertex: boost::make_iterator_range(boost::adjacent_vertices(source, graph))) {
+            // check if there exists an edge from v to root
+            auto edge = boost::edge(collapse_vertex, target, graph);
+            bool edge_exists = edge.second;
+            auto prize_of_new_tour = prize_of_internal_path + prize_map[collapse_vertex];
+            if (edge_exists && ! in_internal_path[collapse_vertex] && prize_of_new_tour >= quota) {
+                std::list<VD> collapse = {source, collapse_vertex, target};
+                collapse_paths.push_back(collapse);
+            }
+        }
+    }
+}
+
+
 #endif
