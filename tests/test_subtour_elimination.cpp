@@ -183,9 +183,7 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
         summary_yaml_filepath,
         60
     );
-    auto first = solution_edges.begin();
-    auto last = solution_edges.end();
-    int actual_cost = total_cost(first, last, cost_map);
+    int actual_cost = totalCost(solution_edges, cost_map);
     int expected_cost;
     switch (GetParam()) {
         case GraphType::GRID8: {

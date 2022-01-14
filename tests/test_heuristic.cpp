@@ -18,7 +18,7 @@ int expected_num_edges_in_complete_graph(int n_vertices) {
 
 typedef GraphFixture CompleteGraphParameterizedFixture;
 typedef GraphFixture SuurballeGraphFixture;
-typedef GraphFixture ExtensionFixture;
+typedef GraphFixture HeuristicFixture;
 
 TEST(TestExpandCollapse, testUnitaryGain) {
     EXPECT_EQ(unitary_gain(10, 2, 2, 2), 5);
@@ -155,7 +155,7 @@ TEST_P(SuurballeGraphFixture, testExtendUntilPrizeFeasible) {
     extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
 
     // we expect the total prize of the tour to be equal to the quota
-    EXPECT_EQ(total_prize_of_tour(graph, tour, prize_map), quota);
+    EXPECT_EQ(totalPrizeOfTour(graph, tour, prize_map), quota);
 
     // expect vertex g (7) to be in the tour at index 3
     int g = 7;
@@ -174,23 +174,51 @@ TEST_P(SuurballeGraphFixture, testExtendUntilPrizeFeasibleSegFault) {
     extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
 }
 
-TEST_P(SuurballeGraphFixture, testCollapse) {
+TEST_P(HeuristicFixture, testCollapse) {
     // get graphs with property maps
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
     auto cost_map = getCostMap(graph);
+    auto quota = getQuota();
+    auto root_vertex = getRootVertex();
+    std::list<PCTSPvertex> tour;
+    std::list<PCTSPvertex> expected_collapse;
 
-    // this tour can be collapsed to {0, 1, 5, 2, 0}
-    std::list<PCTSPvertex> tour = { 0, 1, 4, 6, 7, 2, 0 };
-    int quota = 5;
-    PCTSPvertex root_vertex = 0;
+    switch (GetParam()) {
+        case GraphType::SUURBALLE: {
+            // this tour can be collapsed to {0, 1, 5, 2, 0}
+            tour = { 0, 1, 4, 6, 7, 2, 0 };
+            expected_collapse = {0, 1, 5, 2, 0};
+            break;
+        }
+        case GraphType::GRID8: {
+            tour = { 0, 1, 4, 6, 7, 5, 3, 2, 0};
+            expected_collapse = { 0, 1, 4, 6, 7, 5, 3, 2, 0};
+            break;
+        }
+        case GraphType::COMPLETE4: {
+            tour = { 0, 1, 2, 3, 0 };
+            expected_collapse = {0, 1, 2, 3, 0};
+            break;
+        }
+        case GraphType::COMPLETE5: {
+            tour = { 0, 1, 2, 3, 4, 0 };
+            expected_collapse = {0, 1, 2, 3, 0};
+            break;
+        }
+    }
 
     // run the collapse heuristic
-    std::list<PCTSPvertex> new_tour =
-        collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
-    EXPECT_EQ(total_cost(graph, new_tour, cost_map), 16);
-    EXPECT_GE(total_prize_of_tour(graph, new_tour, prize_map), quota);
-    EXPECT_GT(new_tour.size(), quota);
+    std::list<PCTSPvertex> new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
+
+    auto expected_cost = totalCost(graph, expected_collapse, cost_map);
+    auto actual_cost = totalCost(graph, new_tour, cost_map);
+    auto expected_prize = totalPrizeOfTour(graph, expected_collapse, prize_map);
+    auto actual_prize = totalPrizeOfTour(graph, new_tour, prize_map);
+    EXPECT_EQ(actual_cost, expected_cost);
+    EXPECT_GE(actual_prize, quota);
+    EXPECT_EQ(actual_prize, expected_prize);
+    EXPECT_EQ(actual_cost, expected_cost);
 
     // ensure the first vertex of the tour is the root vertex
     auto first_root_it =
@@ -225,12 +253,12 @@ TEST_P(CompleteGraphParameterizedFixture, testCollapse) {
         quota = 5;
         std::list<PCTSPvertex> new_tour =
             collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
-        EXPECT_EQ(total_prize_of_tour(graph, new_tour, prize_map), 5);
-        EXPECT_EQ(total_cost(graph, new_tour, cost_map), 9);
+        EXPECT_EQ(totalPrizeOfTour(graph, new_tour, prize_map), 5);
+        EXPECT_EQ(totalCost(graph, new_tour, cost_map), 9);
     }
 }
 
-TEST(TestExpandCollapse, testIndexOfReverseIterator) {
+TEST(TestExtensionCollapse, testIndexOfReverseIterator) {
     std::list<int> mylist = { 0, 1, 2, 3, 4, 0 };
     auto rit = mylist.rbegin();
     EXPECT_EQ(indexOfReverseIterator(mylist, rit), 5);
@@ -243,7 +271,7 @@ TEST(TestExpandCollapse, testIndexOfReverseIterator) {
     EXPECT_EQ(indexOfReverseIterator(mylist, rit), 0);
 }
 
-TEST_P(ExtensionFixture, testNeighborIntersection) {
+TEST_P(HeuristicFixture, testNeighborIntersection) {
     PCTSPgraph graph = getGraph();
     auto u = boost::vertex(0, graph);
     auto v = boost::vertex(1, graph);
@@ -273,7 +301,7 @@ TEST_P(ExtensionFixture, testNeighborIntersection) {
     EXPECT_EQ(expected_size, intersection.size());
 }
 
-TEST_P(ExtensionFixture, testExtension) {
+TEST_P(HeuristicFixture, testExtension) {
     PCTSPgraph graph = getGraph();
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
@@ -295,7 +323,7 @@ TEST_P(ExtensionFixture, testExtension) {
     EXPECT_EQ(small_tour.size(), expected_size);
 }
 
-TEST_P(ExtensionFixture, testExtensionStep) {
+TEST_P(HeuristicFixture, testExtensionStep) {
     PCTSPgraph graph = getGraph();
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
@@ -313,7 +341,7 @@ TEST_P(ExtensionFixture, testExtensionStep) {
     EXPECT_EQ(small_tour.size(), expected_size);
 }
 
-TEST_P(ExtensionFixture, testExtensionUntilPrizeFeasible) {
+TEST_P(HeuristicFixture, testExtensionUntilPrizeFeasible) {
     auto graph = getGraph();
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
@@ -327,12 +355,12 @@ TEST_P(ExtensionFixture, testExtensionUntilPrizeFeasible) {
     extensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, quota, step_size, path_depth_limit);
 
     switch (GetParam()) {
-        case GraphType::GRID8: EXPECT_LT(total_prize_of_tour(graph, small_tour, prize_map), quota); break;
-        default: EXPECT_GE(total_prize_of_tour(graph, small_tour, prize_map), quota); break;
+        case GraphType::GRID8: EXPECT_LT(totalPrizeOfTour(graph, small_tour, prize_map), quota); break;
+        default: EXPECT_GE(totalPrizeOfTour(graph, small_tour, prize_map), quota); break;
     }
 }
 
-TEST_P(ExtensionFixture, testSwapPathsInTour) {
+TEST_P(HeuristicFixture, testSwapPathsInTour) {
     auto small_tour = getSmallTour();
     auto old_length = small_tour.size();
     std::list<PCTSPvertex> new_path = {5, 8, 0, 10};
@@ -344,7 +372,7 @@ TEST_P(ExtensionFixture, testSwapPathsInTour) {
 }
 
 
-TEST_P(ExtensionFixture, testSwapPathsInTourWithRoot) {
+TEST_P(HeuristicFixture, testSwapPathsInTourWithRoot) {
     auto small_tour = getSmallTour();
     auto old_length = small_tour.size();
     std::list<PCTSPvertex> new_path = {5, 8, 0, 10};
@@ -355,7 +383,7 @@ TEST_P(ExtensionFixture, testSwapPathsInTourWithRoot) {
     EXPECT_EQ(old_length + new_path.size() + 1 - (old_length - i + j + 1), small_tour.size());
 }
 
-TEST_P(ExtensionFixture, testExtensionPathDepth) {
+TEST_P(HeuristicFixture, testExtensionPathDepth) {
     auto graph = getGraph();
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
@@ -368,7 +396,7 @@ TEST_P(ExtensionFixture, testExtensionPathDepth) {
 
     extensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, quota, step_size, path_depth_limit);
 
-    auto prize = total_prize_of_tour(graph, small_tour, prize_map);
+    auto prize = totalPrizeOfTour(graph, small_tour, prize_map);
     switch (GetParam()) {
         // case GraphType::SUURBALLE: EXPECT_LE(prize, quota); break;
         default: EXPECT_GE(prize, quota); break;
@@ -383,6 +411,6 @@ INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, SuurballeGraphFixture,
     ::testing::Values(GraphType::SUURBALLE)
 );
 
-INSTANTIATE_TEST_SUITE_P(TestExtension, ExtensionFixture,
+INSTANTIATE_TEST_SUITE_P(TestExtensionCollapse, HeuristicFixture,
     ::testing::Values(GraphType::SUURBALLE, GraphType::GRID8, GraphType::COMPLETE4, GraphType::COMPLETE5)
 );
