@@ -661,11 +661,10 @@ std::list<std::list<typename TGraph::vertex_descriptor>> findCollapsePaths (
     int depth_limit
 ) {
     typedef typename TGraph::vertex_descriptor VD;
-    VD source = * (internal_path.end() -- );
-    VD target = * internal_path.begin();
+    VD source = internal_path.back();
+    VD target = internal_path.front();
     auto prize_of_internal_path = totalPrize(prize_map, internal_path);
     std::list<std::list<VD>> collapse_paths;
-
     // keep track of which vertices are in the internal path
     int n = boost::num_vertices(graph);
     std::vector<bool> in_internal_path (n);
@@ -726,7 +725,7 @@ std::list<typename TGraph::vertex_descriptor> collapse(
                     best_tour.assign(sub_path_over_tour.path.begin(),
                         sub_path_over_tour.path.end());
                     // append collapse path
-                    for (auto external_it = external_path.begin() ++; external_it != external_path.end(); external_it ++) {
+                    for (auto external_it = ++ external_path.begin(); external_it != external_path.end(); external_it ++) {
                         best_tour.push_back(*external_it);
                     }
                     // update best cost
