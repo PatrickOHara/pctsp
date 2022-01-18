@@ -223,6 +223,26 @@ TEST_P(GraphFix, testPathInTreeFromParents) {
     EXPECT_EQ(expected_path, actual_path);
 }
 
+TEST_P(GraphFix, testVertexFilter) {
+    auto graph = getGraph();
+
+    // mark some vertices
+    std::vector<bool> mark (boost::num_vertices(graph));
+    for (auto u : boost::make_iterator_range(boost::vertices(graph))) {
+        mark[u] = u % 2 == 0;
+    }
+
+    // filter out marked vertices
+    auto f_graph = filterMarkedVertices(graph, mark);
+
+    for (auto u : boost::make_iterator_range(boost::vertices(f_graph))) {
+        EXPECT_TRUE(mark[u]);
+    }
+    for (auto e : boost::make_iterator_range(boost::edges(f_graph))) {
+        EXPECT_TRUE(mark[boost::source(e, graph)] || mark[boost::target(e, graph)]);
+    }
+}
+
 INSTANTIATE_TEST_SUITE_P(
     TestGraph,
     GraphFix,

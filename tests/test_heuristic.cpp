@@ -227,6 +227,70 @@ TEST_P(HeuristicFixture, testCollapse) {
     EXPECT_EQ(second_root_index, new_tour.size() - 1);
 }
 
+
+TEST_P(HeuristicFixture, testCollapseShortestPath) {
+    // get graphs with property maps
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
+    auto quota = getQuota();
+    auto root_vertex = getRootVertex();
+    std::list<PCTSPvertex> tour;
+    std::list<PCTSPvertex> expected_collapse;
+
+    switch (GetParam()) {
+        case GraphType::SUURBALLE: {
+            // this tour can be collapsed to {0, 1, 5, 2, 0}
+            quota = 4;
+            tour = { 0, 1, 4, 6, 7, 2, 0 };
+            expected_collapse = {0, 1, 5, 2, 0};
+            break;
+        }
+        case GraphType::GRID8: {
+            tour = { 0, 1, 4, 6, 7, 5, 3, 2, 0};
+            expected_collapse = { 0, 1, 4, 5, 3, 2, 0};
+            break;
+        }
+        case GraphType::COMPLETE4: {
+            tour = { 0, 1, 2, 3, 0 };
+            expected_collapse = {0, 1, 3, 0};
+            break;
+        }
+        case GraphType::COMPLETE5: {
+            tour = { 0, 1, 2, 3, 4, 0 };
+            expected_collapse = {0, 1, 2, 3, 0};
+            break;
+        }
+    }
+
+    // run the collapse heuristic
+    int depth = 2;
+    std::list<PCTSPvertex> new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex, depth);
+
+    auto expected_cost = totalCost(graph, expected_collapse, cost_map);
+    auto actual_cost = totalCost(graph, new_tour, cost_map);
+    auto expected_prize = totalPrizeOfTour(graph, expected_collapse, prize_map);
+    auto actual_prize = totalPrizeOfTour(graph, new_tour, prize_map);
+    EXPECT_EQ(actual_cost, expected_cost);
+    EXPECT_GE(actual_prize, quota);
+    EXPECT_EQ(actual_prize, expected_prize);
+    EXPECT_EQ(actual_cost, expected_cost);
+
+    // ensure the first vertex of the tour is the root vertex
+    auto first_root_it =
+        std::find(new_tour.begin(), new_tour.end(), root_vertex);
+    int root_index = std::distance(new_tour.begin(), first_root_it);
+    EXPECT_FALSE(first_root_it == new_tour.end());
+    EXPECT_EQ(root_index, 0);
+
+    // ensure the last vertex of the tour is the root vertex
+    ++first_root_it;
+    auto second_root_it = std::find(first_root_it, tour.end(), root_vertex);
+    int second_root_index = std::distance(new_tour.begin(), second_root_it);
+    EXPECT_FALSE(second_root_it == new_tour.end());
+    EXPECT_EQ(second_root_index, new_tour.size() - 1);
+}
+
 TEST(TestExtensionCollapse, testIndexOfReverseIterator) {
     std::list<int> mylist = { 0, 1, 2, 3, 4, 0 };
     auto rit = mylist.rbegin();

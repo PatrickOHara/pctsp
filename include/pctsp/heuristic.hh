@@ -683,6 +683,41 @@ std::list<std::list<typename TGraph::vertex_descriptor>> findCollapsePaths (
             }
         }
     }
+    else if (depth_limit > 2) {
+        // mark unusable vertices
+        std::vector<bool> mark (in_internal_path);
+        mark[source] = false;
+        mark[target] = false;
+        auto f_graph = filterMarkedVertices(graph, mark);
+
+        // find the shortest path from the source to the target using unmarked vertices
+        std::vector<VD> predecessor (boost::num_vertices(graph)); 
+        std::vector<int> distance (boost::num_vertices(graph));
+
+        typedef typename property_map<TGraph, vertex_index_t>::type IndexMap;
+        typedef typename boost::iterator_property_map<typename std::vector<int>::iterator, IndexMap> DistanceMap;
+        IndexMap v_index = boost::get(vertex_index, graph);
+        auto w = boost::get(edge_weight, graph);
+        // DistanceMap distance_map = boost::make_iterator_property_map(distance.begin(), v_index);
+
+        // Visitor to throw an exception when the end is reached
+        TargetVisitor<TGraph> vis(target);
+
+        try {
+            boost::dijkstra_shortest_paths(
+                graph, 
+                source,
+                weight_map(cost_map)
+                .vertex_index_map(v_index)
+                .predecessor_map(boost::make_iterator_property_map(predecessor.begin(), v_index))
+                .distance_map(boost::make_iterator_property_map(distance.begin(), v_index))
+                .visitor(vis)
+            );
+        }
+        catch (TargetVertexFound) {
+            std::cout << "The Dijsktra algorithm stopped" << std::endl;
+        }
+    }
     return collapse_paths;
 }
 

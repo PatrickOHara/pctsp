@@ -352,4 +352,40 @@ std::list<TVertex> pathInTreeFromParents(
     return path;
 }
 
+
+struct BoolVertexFilter {
+    std::vector<bool> is_vertex_filtered;
+
+    BoolVertexFilter(std::vector<bool>& filtered) : is_vertex_filtered(filtered) {}
+
+    template <typename TVertex>
+    bool operator() (const TVertex& u) const {
+        return is_vertex_filtered[u];
+    }
+};
+
+template <typename TGraph>
+struct BoolEdgeFilter {
+    std::vector<bool> is_vertex_filtered;
+    TGraph * g;
+
+    BoolEdgeFilter(TGraph& graph, std::vector<bool>& filtered) : is_vertex_filtered(filtered) {
+        g = & graph;
+    }
+
+    template <typename TEdge>
+    bool operator() (const TEdge& e) const {
+        return is_vertex_filtered[boost::source(e, *g)] || is_vertex_filtered[boost::target(e, *g)];
+    }
+};
+
+template <typename TGraph>
+boost::filtered_graph<TGraph, BoolEdgeFilter<TGraph>, BoolVertexFilter>
+filterMarkedVertices(TGraph& graph, std::vector<bool>& mark) {
+    BoolVertexFilter v_filter (mark);
+    BoolEdgeFilter<TGraph> e_filter (graph, mark);
+    boost::filtered_graph<TGraph, BoolEdgeFilter<TGraph>, BoolVertexFilter> f_graph (graph, e_filter, v_filter);
+    return f_graph;
+}
+
 #endif

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <string>
 #include <boost/graph/graph_traits.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 
 #include "exception.hh"
 
@@ -189,5 +190,34 @@ bool isInternalVertexOfWalk(std::vector<TVertex>& walk, TVertex& internal_vertex
     end--;
     return std::find(start, end, internal_vertex) != end;
 }
+
+// Visitor that throw an exception when finishing the destination vertex
+template <typename TGraph>
+class TargetVisitor : boost::default_bfs_visitor{
+    typedef typename TGraph::vertex_descriptor TVertex;
+    typedef typename TGraph::edge_descriptor TEdge;
+
+    protected:
+        TVertex destination_vertex_m;
+    public:
+
+    TargetVisitor() {} ;
+
+    TargetVisitor(TVertex destination_vertex_l)
+        : destination_vertex_m(destination_vertex_l) {};
+
+    
+
+    void initialize_vertex(const TVertex &s, const TGraph &g) const {}
+    void discover_vertex(const TVertex &s, const TGraph &g) const {}
+    void examine_vertex(const TVertex &s, const TGraph &g) const {}
+    void examine_edge(const TEdge &e, const TGraph &g) const {}
+    void edge_relaxed(const TEdge &e, const TGraph &g) const {}
+    void edge_not_relaxed(const TEdge &e, const TGraph &g) const {}
+    void finish_vertex(const TVertex &s, const TGraph &g) const {
+        if (destination_vertex_m == s)
+            throw TargetVertexFound();
+    }
+};
 
 #endif
