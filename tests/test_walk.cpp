@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "fixtures.hh"
+#include "pctsp/graph.hh"
 #include "pctsp/walk.hh"
 
 using namespace std;
@@ -112,6 +113,31 @@ TEST_P(WalkFixture, testGetEdgeVector) {
         it++;
         EXPECT_EQ(v, *it);
     }
+}
+
+TEST_P(SuurballeGraphFixture, testShortestPathBlacklist) {
+    auto graph = getGraph();
+    auto cost_map = getCostMap(graph);
+    PCTSPvertex source = 0;
+    PCTSPvertex target =  7;
+    int n = boost::num_vertices(graph);
+    std::vector<bool> mark (n);
+    std::vector<PCTSPvertex> predecessor(n);
+    std::vector<int> distance(n);
+    
+    std::vector<ColorType> color_vector (n);
+    mark[2] = true;
+
+    try {
+        dijkstraShortestPathBlacklist(graph, source, target, predecessor, distance, cost_map, color_vector, mark);
+    }
+    catch (TargetVertexFound) {
+
+    }
+        auto path_st = pathInTreeFromParents(predecessor, source, target);
+        default_color_type b = default_color_type::black_color;
+        EXPECT_EQ(color_vector[2], b);
+        EXPECT_EQ(distance[target], 11);
 }
 
 INSTANTIATE_TEST_SUITE_P(

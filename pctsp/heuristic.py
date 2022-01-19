@@ -32,6 +32,7 @@ def collapse(
     tour: VertexList,
     quota: int,
     root_vertex: Vertex,
+    collapse_shortest_paths: bool = False,
     logging_level: int = logging.INFO,
 ) -> VertexList:
     """Collapse the tour by finding shortcuts
@@ -41,6 +42,7 @@ def collapse(
         tour: Tour that has the first and last vertex the same
         quota: The minimum prize the tour must collect
         root_vertex: The tour must start and end at the root vertex
+        collapse_shortest_paths: Find collapse paths as well as collapse vertices
         logging_level: Verbosity of logging.
 
     Returns:
@@ -56,6 +58,7 @@ def collapse(
         prize_dict,
         quota,
         root_vertex,
+        collapse_shortest_paths,
         logging_level,
     )
     return collapsed_tour

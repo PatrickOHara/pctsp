@@ -264,8 +264,7 @@ TEST_P(HeuristicFixture, testCollapseShortestPath) {
     }
 
     // run the collapse heuristic
-    int depth = 2;
-    std::list<PCTSPvertex> new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex, depth);
+    std::list<PCTSPvertex> new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex, true);
 
     auto expected_cost = totalCost(graph, expected_collapse, cost_map);
     auto actual_cost = totalCost(graph, new_tour, cost_map);

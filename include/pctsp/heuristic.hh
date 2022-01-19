@@ -658,7 +658,7 @@ std::list<std::list<typename TGraph::vertex_descriptor>> findCollapsePaths (
     TCostMap& cost_map,
     TPrizeMap& prize_map,
     int quota,
-    int depth_limit
+    bool collapse_shortest_paths
 ) {
     typedef typename TGraph::vertex_descriptor VD;
     VD source = internal_path.back();
@@ -670,52 +670,45 @@ std::list<std::list<typename TGraph::vertex_descriptor>> findCollapsePaths (
     std::vector<bool> in_internal_path (n);
     for (auto u : internal_path) in_internal_path[u] = true;
 
-    if (depth_limit == 2) {
-        // for each neighbour of the source vertex
-        for (VD collapse_vertex: boost::make_iterator_range(boost::adjacent_vertices(source, graph))) {
-            // check if there exists an edge from v to root
-            auto edge = boost::edge(collapse_vertex, target, graph);
-            bool edge_exists = edge.second;
-            auto prize_of_new_tour = prize_of_internal_path + prize_map[collapse_vertex];
-            if (edge_exists && ! in_internal_path[collapse_vertex] && prize_of_new_tour >= quota) {
-                std::list<VD> collapse = {source, collapse_vertex, target};
-                collapse_paths.push_back(collapse);
-            }
+
+    // for each neighbour of the source vertex
+    for (VD collapse_vertex: boost::make_iterator_range(boost::adjacent_vertices(source, graph))) {
+        // check if there exists an edge from v to root
+        auto edge = boost::edge(collapse_vertex, target, graph);
+        bool edge_exists = edge.second;
+        auto prize_of_new_tour = prize_of_internal_path + prize_map[collapse_vertex];
+        if (edge_exists && ! in_internal_path[collapse_vertex] && prize_of_new_tour >= quota) {
+            std::list<VD> collapse = {source, collapse_vertex, target};
+            collapse_paths.push_back(collapse);
         }
     }
-    else if (depth_limit > 2) {
+
+    if (collapse_shortest_paths) {
         // mark unusable vertices
+        typedef typename boost::filtered_graph<TGraph, BoolEdgeFilter<TGraph>, BoolVertexFilter> fgraph_t;
         std::vector<bool> mark (in_internal_path);
         mark[source] = false;
         mark[target] = false;
-        auto f_graph = filterMarkedVertices(graph, mark);
 
         // find the shortest path from the source to the target using unmarked vertices
-        std::vector<VD> predecessor (boost::num_vertices(graph)); 
         std::vector<int> distance (boost::num_vertices(graph));
+        std::vector<VD> predecessor (boost::num_vertices(graph));
+        std::vector<boost::default_color_type> color_map (boost::num_vertices(graph));
+        auto v_index = boost::get(vertex_index, graph);
 
-        typedef typename property_map<TGraph, vertex_index_t>::type IndexMap;
-        typedef typename boost::iterator_property_map<typename std::vector<int>::iterator, IndexMap> DistanceMap;
-        IndexMap v_index = boost::get(vertex_index, graph);
-        auto w = boost::get(edge_weight, graph);
-        // DistanceMap distance_map = boost::make_iterator_property_map(distance.begin(), v_index);
-
-        // Visitor to throw an exception when the end is reached
-        TargetVisitor<TGraph> vis(target);
 
         try {
-            boost::dijkstra_shortest_paths(
-                graph, 
-                source,
-                weight_map(cost_map)
-                .vertex_index_map(v_index)
-                .predecessor_map(boost::make_iterator_property_map(predecessor.begin(), v_index))
-                .distance_map(boost::make_iterator_property_map(distance.begin(), v_index))
-                .visitor(vis)
-            );
+            dijkstraShortestPathBlacklist(graph, source, target, predecessor, distance, cost_map, color_map, mark);
         }
         catch (TargetVertexFound) {
-            std::cout << "The Dijsktra algorithm stopped" << std::endl;
+            // get the shortest path from the source to the target
+            auto color_start = color_map.begin();
+            auto color_last = color_map.end();
+            auto path_st = pathInTreeFromParents(predecessor, source, target);
+            int prize_of_new_tour = prize_of_internal_path + totalPrize(prize_map, path_st) - prize_map[source] - prize_map[target];
+            if (prize_of_new_tour >= quota) {
+                collapse_paths.push_back(path_st);
+            }
         }
     }
     return collapse_paths;
@@ -729,7 +722,7 @@ std::list<typename TGraph::vertex_descriptor> collapse(
     TPrizeMap& prize_map,
     int quota,
     typename TGraph::vertex_descriptor root_vertex,
-    int depth_limit = 2
+    bool collapse_shortest_paths = false
 ) {
     typedef typename TGraph::vertex_descriptor VertexDescriptor;
     typedef typename std::list<VertexDescriptor>::reverse_iterator reverse_tour_iterator_t;
@@ -750,23 +743,32 @@ std::list<typename TGraph::vertex_descriptor> collapse(
 
         if (sub_path_over_tour.root_vertex_seen && sub_path_over_tour.feasible_path_found) {
             // find potential collapses of the tour: all these paths will create prize feasible tours
-            auto collapse_paths = findCollapsePaths(graph, sub_path_over_tour.path, cost_map, prize_map, quota, depth_limit);
+            auto collapse_paths = findCollapsePaths(graph, sub_path_over_tour.path, cost_map, prize_map, quota, collapse_shortest_paths);
 
             auto internal_cost = totalCost(graph, sub_path_over_tour.path, cost_map);
+            int best_index = -1;
+            int i = 0;
             for (auto external_path : collapse_paths) {
                 auto external_cost = totalCost(graph, external_path, cost_map);
                 if (external_cost + internal_cost < cost_of_best_tour) {
-                    // copy internal path to best tour
-                    best_tour.assign(sub_path_over_tour.path.begin(),
-                        sub_path_over_tour.path.end());
-                    // append collapse path
-                    for (auto external_it = ++ external_path.begin(); external_it != external_path.end(); external_it ++) {
-                        best_tour.push_back(*external_it);
-                    }
+                    best_index = i;
                     // update best cost
                     cost_of_best_tour = external_cost + internal_cost;
-                    BOOST_LOG_TRIVIAL(debug) << "Collapse found a new best tour with cost " << cost_of_best_tour;
                 }
+                i++;
+            }
+            if (best_index >=0) {
+                // copy internal path to best tour
+                best_tour.assign(sub_path_over_tour.path.begin(), sub_path_over_tour.path.end());
+                // append collapse path
+                auto paths_it = collapse_paths.begin();
+                std::advance(paths_it, best_index);
+                auto external_path = * paths_it;
+                for (auto external_it = ++ external_path.begin(); external_it != external_path.end(); external_it ++) {
+                    best_tour.push_back(*external_it);
+                }
+                BOOST_LOG_TRIVIAL(debug) << "Collapse found a new best tour with cost " << cost_of_best_tour;
+
             }
         }
     }

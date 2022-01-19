@@ -16,13 +16,14 @@ using namespace boost;
 // attribute types for cost and prize
 typedef int CostNumberType;
 typedef int PrizeNumberType;
+typedef default_color_type ColorType;
 
 // graph definition
 typedef boost::adjacency_list<
     listS,
     vecS,
     undirectedS,        // graphs are undirected
-    boost::property<vertex_distance_t, PrizeNumberType>,    // prize on vertices
+    boost::property<vertex_distance_t, PrizeNumberType, boost::property<boost::vertex_color_t, ColorType>>,    // prize on vertices
     boost::property<edge_weight_t, CostNumberType>          // cost on edges
 > PCTSPgraph;
 
