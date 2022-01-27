@@ -201,6 +201,7 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
         }
     }
     EXPECT_EQ(expected_cost, actual_cost);
+    auto stats = readSummaryStatsFromYaml(summary_yaml_filepath);
 }
 
 TEST(TestSubtourElimination, testGetUnreachableVertices) {

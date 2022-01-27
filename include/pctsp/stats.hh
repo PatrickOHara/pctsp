@@ -20,6 +20,8 @@ struct SummaryStats {
     unsigned int num_sec_maxflow_mincut;        // number of SECs added with max flow
 };
 
+SummaryStats readSummaryStatsFromYaml(std::string& filename);
+
 void writeSummaryStatsToYaml(SummaryStats& summary, std::string& filename);
 
 SummaryStats getSummaryStatsFromSCIP(
