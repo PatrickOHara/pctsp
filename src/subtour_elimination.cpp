@@ -294,8 +294,9 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     // only get edges that are in the same connected components as the root
     VertexPairVector edge_vector = getVertexPairVectorFromEdgeSubset(input_graph, solution_edges);
     VertexPairVector root_edge_vector;
-    for (auto const& pair : edge_vector) {
-        if (root_component.count(pair.first) == 1 && root_component.count(pair.second == 1)) {
+
+    for (auto pair : edge_vector) {
+        if (root_component.count(pair.first) >= 1 && root_component.count(pair.second) >= 1) {
             root_edge_vector.push_back(pair);
         }
     }
@@ -331,8 +332,6 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     auto vindex = boost::get(vertex_index, support_graph);
     std::vector< int > component(boost::num_vertices(support_graph));
     int num = strong_components(support_graph, make_iterator_property_map(component.begin(), get(vertex_index, support_graph)));
-    BOOST_LOG_TRIVIAL(debug) << "Directed capacity graph has " << boost::num_edges(support_graph) << " edges and " << num << " strongly connected components.";
-    BOOST_ASSERT(num <= 1);
     std::vector<bool> added_sec(boost::num_vertices(support_graph));
     for (int i = 0; i < added_sec.size(); i++) {
         added_sec[i] = false;
@@ -350,7 +349,6 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
             auto flow = boost::push_relabel_max_flow(support_graph, support_root, target, capacity_property, residual_capacity, reverse_edges, vindex);
 
             if (flow < 2 * FLOW_FLOAT_MULTIPLIER) {
-                BOOST_LOG_TRIVIAL(debug) << "Flow constraint violated: flow from " << getOldVertex(lookup, support_root) << " to " << getOldVertex(lookup, target) << " is: " << flow;
                 // traverse the residual graph from the root
                 // all vertices that are reachable on edges that have some flow are on one side of the cut
                 // all edges that are not reachable by the flow are on the other side of the cut
@@ -438,7 +436,8 @@ SCIP_RETCODE PCTSPseparateSubtour(
     {
         // create a set from the root component vector
         std::set<PCTSPvertex> root_component;
-        std::copy(root_component.begin(), root_component.end(), std::back_inserter(component_vectors[root_component_id]));
+        // std::copy(root_component.begin(), root_component.end(), std::back_inserter(component_vectors[root_component_id]));
+        std::copy(component_vectors[root_component_id].begin(), component_vectors[root_component_id].end(), std::inserter(root_component, root_component.begin()));
     
         // separate SEC using maxflow mincut
         int num_maxflow_mincut_secs_added = 0;
