@@ -30,6 +30,7 @@ jobs:
     container: patrickohara/scip:latest
     env:
       OPLIB_ROOT: ../OPLib
+      TSPLIB95_ROOT: ../tsplib95
       TSPLIB_ROOT: ../tsplib95/archives/problems/tsp
     steps:
     - name: Checkout
