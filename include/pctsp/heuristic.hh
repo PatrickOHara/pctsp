@@ -178,12 +178,13 @@ void findExtensionPaths(
         auto end = tour.end();
         std::vector<VertexDescriptor> internal_path = getSubpathOfCycle(start, end, i, j);
 
+        bool is_root_internal_vertex = isInternalVertexOfWalk(internal_path, root_vertex);
 
         // keep a vector of potential external paths
         std::vector<std::list<VertexDescriptor>> external_path_candidates;
 
         // check if the root is an internal vertex (not an endpoint) inside the internal path
-        if ((path_depth_limit == 2) && isInternalVertexOfWalk(internal_path, root_vertex)) {
+        if ((path_depth_limit == 2) && is_root_internal_vertex) {
             if (boost::edge(vi, root_vertex, graph).second && boost::edge(root_vertex, vj, graph).second) {
                 std::list<VertexDescriptor> path_iuj = {vi, root_vertex, vj};
                 external_path_candidates.push_back(path_iuj);
@@ -200,10 +201,26 @@ void findExtensionPaths(
                 }
             }
         }
-        else if (path_depth_limit > 2) {
-            // TODO: filter the graph by marking vertices that are already in the tour
-            // TODO find a path using BFS from i to j using unmarked vertices
-            // need to check that root vertex is not an *internal* vertex between i and j
+        // need to check that root vertex is not an *internal* vertex between i and j
+        else if (path_depth_limit > 2 && !(is_root_internal_vertex)) {
+            // filter the graph by marking vertices that are already in the tour
+            auto n_vertices = num_vertices(graph);
+            std::vector<bool> marked (n_vertices);
+            for (auto h: tour) marked[h] = true;
+            // find a path using BFS from i to j using unmarked vertices
+            std::vector<VertexDescriptor> parent (n_vertices);
+            breadthFirstSearch(graph, vi, marked, parent, path_depth_limit - 1);
+
+            for (auto neighbor : boost::make_iterator_range(boost::adjacent_vertices(vj, graph))) {
+                if (vertices_in_tour.count(neighbor) == 0 && marked[neighbor]) {
+                    auto path_ij = pathInTreeFromParents(parent, vi, neighbor);
+                    path_ij.push_back(vj);
+
+                    // path is only a candidate if it has prize larger than internal path
+                    if (totalPrize(prize_map, path_ij) > totalPrize(prize_map, internal_path))
+                        external_path_candidates.push_back(path_ij);
+                }
+            }
         }
         ExtensionVertex best_candidate = chooseExtensionPathFromCandidates(graph, cost_map, prize_map, external_path_candidates, internal_path);
         // store the best unitary loss of the path in the array
@@ -303,7 +320,7 @@ void extensionUntilPrizeFeasible(
     int prize = total_prize_of_tour(graph, tour, prize_map);
     int num_feasible_extensions = 1;
 
-    while (prize < quota && num_feasible_extensions > 0) {
+    while (prize < quota && num_feasible_extensions > 0 && step_size < tour.size() - 1) {
         int k = tour.size() - 1;
 
         // define vectors to store unitary loss and paths

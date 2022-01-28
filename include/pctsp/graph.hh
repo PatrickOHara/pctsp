@@ -280,4 +280,76 @@ std::vector<PCTSPvertex> getSubpathOfCycle(
 );
 
 
+template <typename TGraph, typename TMarked, typename TParent>
+void depthFirstSearch(
+    TGraph& graph,
+    typename TGraph::vertex_descriptor& source,
+    TMarked& marked,
+    TParent& parent,
+    int depth_limit
+) {
+    marked[source] = true;
+    if (depth_limit > 0) {
+        for (auto neighbor: boost::make_iterator_range(boost::adjacent_vertices(source, graph))) {
+            if (!marked[neighbor]) {
+                parent[neighbor] = source;
+                depthFirstSearch(graph, neighbor, marked, parent, depth_limit-1);
+            }
+        }
+    }
+}
+
+template <typename TGraph, typename TMarked, typename TParent>
+void breadthFirstSearch(
+    TGraph& graph,
+    typename TGraph::vertex_descriptor& source,
+    TMarked& marked,
+    TParent& parent,
+    int depth_limit
+) {
+    marked[source] = true;
+    parent[source] = source;
+    std::list<typename TGraph::vertex_descriptor> queue = {source};
+    int depth = 0;
+    int this_level_counter = 1; // num vertices on this level of BFS tree
+    int next_level_counter = 0; // num vertices on next level of BFS tree
+    while (queue.size() > 0 && depth < depth_limit) {
+        auto u = * queue.begin();
+        queue.pop_front();
+        this_level_counter --;
+        for (auto neighbor: boost::make_iterator_range(boost::adjacent_vertices(u, graph))) {
+            if (!marked[neighbor]) {
+                marked[neighbor] = true;
+                parent[neighbor] = u;
+                queue.push_back(neighbor);
+                next_level_counter ++;
+            }
+        }
+        if (this_level_counter == 0) {
+            this_level_counter = next_level_counter;
+            depth ++;
+            next_level_counter = 0;
+        }
+    }
+}
+
+template <typename TVertex, typename TParent>
+std::list<TVertex> pathInTreeFromParents(
+    TParent& parent_lookup,
+    TVertex& source,
+    TVertex& target
+) {
+    std::list<TVertex> path = {target};
+    TVertex child = target;
+    TVertex parent = parent_lookup[child];
+    int i = 0;
+    while (parent != child && i <= parent_lookup.size()) {
+        path.push_front(parent);
+        child = parent;
+        parent = parent_lookup[parent];
+        i++;
+    }
+    return path;
+}
+
 #endif

@@ -355,6 +355,26 @@ TEST_P(ExtensionFixture, testSwapPathsInTourWithRoot) {
     EXPECT_EQ(old_length + new_path.size() + 1 - (old_length - i + j + 1), small_tour.size());
 }
 
+TEST_P(ExtensionFixture, testExtensionPathDepth) {
+    auto graph = getGraph();
+    auto cost_map = getCostMap(graph);
+    auto prize_map = getPrizeMap(graph);
+    auto root = getRootVertex();
+    auto small_tour = getSmallTour();
+    auto quota = getQuota();
+
+    int step_size = 1;
+    int path_depth_limit = 3;
+
+    extensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, quota, step_size, path_depth_limit);
+
+    auto prize = total_prize_of_tour(graph, small_tour, prize_map);
+    switch (GetParam()) {
+        // case GraphType::SUURBALLE: EXPECT_LE(prize, quota); break;
+        default: EXPECT_GE(prize, quota); break;
+    }
+}
+
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
     ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5)
 );
