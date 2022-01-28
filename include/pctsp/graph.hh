@@ -16,13 +16,14 @@ using namespace boost;
 // attribute types for cost and prize
 typedef int CostNumberType;
 typedef int PrizeNumberType;
+typedef default_color_type ColorType;
 
 // graph definition
 typedef boost::adjacency_list<
     listS,
     vecS,
     undirectedS,        // graphs are undirected
-    boost::property<vertex_distance_t, PrizeNumberType>,    // prize on vertices
+    boost::property<vertex_distance_t, PrizeNumberType, boost::property<boost::vertex_color_t, ColorType>>,    // prize on vertices
     boost::property<edge_weight_t, CostNumberType>          // cost on edges
 > PCTSPgraph;
 
@@ -350,6 +351,42 @@ std::list<TVertex> pathInTreeFromParents(
         i++;
     }
     return path;
+}
+
+
+struct BoolVertexFilter {
+    std::vector<bool> is_vertex_filtered;
+
+    BoolVertexFilter(std::vector<bool>& filtered) : is_vertex_filtered(filtered) {}
+
+    template <typename TVertex>
+    bool operator() (const TVertex& u) const {
+        return is_vertex_filtered[u];
+    }
+};
+
+template <typename TGraph>
+struct BoolEdgeFilter {
+    std::vector<bool> is_vertex_filtered;
+    TGraph * g;
+
+    BoolEdgeFilter(TGraph& graph, std::vector<bool>& filtered) : is_vertex_filtered(filtered) {
+        g = & graph;
+    }
+
+    template <typename TEdge>
+    bool operator() (const TEdge& e) const {
+        return is_vertex_filtered[boost::source(e, *g)] || is_vertex_filtered[boost::target(e, *g)];
+    }
+};
+
+template <typename TGraph>
+boost::filtered_graph<TGraph, BoolEdgeFilter<TGraph>, BoolVertexFilter>
+filterMarkedVertices(TGraph& graph, std::vector<bool>& mark) {
+    BoolVertexFilter v_filter (mark);
+    BoolEdgeFilter<TGraph> e_filter (graph, mark);
+    boost::filtered_graph<TGraph, BoolEdgeFilter<TGraph>, BoolVertexFilter> f_graph (graph, e_filter, v_filter);
+    return f_graph;
 }
 
 #endif

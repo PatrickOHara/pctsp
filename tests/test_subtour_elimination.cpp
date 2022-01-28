@@ -183,17 +183,28 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
         summary_yaml_filepath,
         60
     );
-    auto first = solution_edges.begin();
-    auto last = solution_edges.end();
-    int actual_cost = total_cost(first, last, cost_map);
+    int actual_cost = totalCost(solution_edges, cost_map);
     int expected_cost;
+    int expected_num_sec_maxflow_mincut;
     switch (GetParam()) {
+        case GraphType::COMPLETE4: {
+            expected_cost = 4;
+            expected_num_sec_maxflow_mincut = 3;
+            break;
+        }
+        case GraphType::COMPLETE5: {
+            expected_cost = 5;
+            expected_num_sec_maxflow_mincut = 3;
+            break;
+        }
         case GraphType::GRID8: {
             expected_cost = 4;
+            expected_num_sec_maxflow_mincut = 0;
             break;
         }
         case GraphType::SUURBALLE: {
             expected_cost = 15;
+            expected_num_sec_maxflow_mincut = 15;
             break;
         }
         default: {
@@ -203,6 +214,8 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
         }
     }
     EXPECT_EQ(expected_cost, actual_cost);
+    auto stats = readSummaryStatsFromYaml(summary_yaml_filepath);
+    EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
 }
 
 TEST(TestSubtourElimination, testGetUnreachableVertices) {
@@ -230,5 +243,5 @@ TEST(TestSubtourElimination, testGetUnreachableVertices) {
 INSTANTIATE_TEST_SUITE_P(
     TestSubtourElimination,
     SubtourGraphFixture,
-    ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE)
+    ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE, GraphType::COMPLETE4, GraphType::COMPLETE5)
 );

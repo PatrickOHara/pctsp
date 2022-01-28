@@ -16,6 +16,23 @@ void writeSummaryStatsToYaml(SummaryStats& summary, std::string& filename) {
     fout << node;
 }
 
+SummaryStats readSummaryStatsFromYaml(std::string& filename) {
+    YAML::Node stats_yaml = YAML::LoadFile(filename);
+    SCIP_Status status = (SCIP_Status) stats_yaml["status"].as<int>();
+    SummaryStats summary = {
+        status,
+        stats_yaml["lower_bound"].as<double>(),
+        stats_yaml["upper_bound"].as<double>(),
+        stats_yaml["num_cost_cover_disjoint_paths"].as<unsigned int>(),
+        stats_yaml["num_cost_cover_shortest_paths"].as<unsigned int>(),
+        stats_yaml["num_cycle_cover"].as<unsigned int>(),
+        stats_yaml["num_nodes"].as<long long>(),
+        stats_yaml["num_sec_disjoint_tour"].as<unsigned int>(),
+        stats_yaml["num_sec_maxflow_mincut"].as<unsigned int>()
+    };
+    return summary;
+}
+
 SummaryStats getSummaryStatsFromSCIP(
     SCIP* scip,
     unsigned int num_cost_cover_disjoint_paths,

@@ -109,8 +109,16 @@ bool graph_from_edge_list(py::list& edge_list, py::dict& prize_dict,
 
 // heuristic bindings
 
-py::list collapse_bind(py::list& edge_list, py::list& py_tour,
-    py::dict& cost_dict, py::dict& prize_dict, int quota, int py_root, int log_level_py = PyLoggingLevels::INFO) {
+py::list collapse_bind(
+    py::list& edge_list,
+    py::list& py_tour,
+    py::dict& cost_dict,
+    py::dict& prize_dict,
+    int quota,
+    int py_root,
+    bool collapse_shortest_paths = false,
+    int log_level_py = PyLoggingLevels::INFO
+) {
     PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
     BoostPyBimap vertex_id_map;
     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
@@ -120,7 +128,7 @@ py::list collapse_bind(py::list& edge_list, py::list& py_tour,
     EdgeCostMap cost_map = boost::get(edge_weight, graph);
     fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
     auto root_vertex = getNewVertex(vertex_id_map, py_root);
-    auto new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
+    auto new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths);
     return getPyVertexList(vertex_id_map, new_tour);
 }
 

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "fixtures.hh"
+#include "pctsp/graph.hh"
 #include "pctsp/walk.hh"
 
 using namespace std;
@@ -18,8 +19,8 @@ TEST_P(SuurballeGraphFixture, testTotalPrize) {
 TEST_P(SuurballeGraphFixture, testTotalPrizeOfTour) {
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
-    std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
-    EXPECT_EQ(total_prize_of_tour(graph, tour, prize_map), 6);
+    std::list<PCTSPvertex> tour = { 0, 1, 3, 6, 7, 2, 0 };
+    EXPECT_EQ(totalPrizeOfTour(graph, tour, prize_map), 6);
 }
 
 TEST_P(WalkFixture, testTotalPrize) {
@@ -48,15 +49,15 @@ TEST_P(SuurballeGraphFixture, testTotalCost) {
 
     // expected cost of tour
     int expected_cost = 21;
-    EXPECT_EQ(total_cost(graph, tour, cost_map), expected_cost);
+    EXPECT_EQ(totalCost(graph, tour, cost_map), expected_cost);
 
     // empty tour expected to have zero cost
     std::list<PCTSPvertex> empty_tour = {};
-    EXPECT_EQ(total_cost(graph, empty_tour, cost_map), 0);
+    EXPECT_EQ(totalCost(graph, empty_tour, cost_map), 0);
 
     // expect edge exception if edge not in graph
     std::list<PCTSPvertex> invalid_tour = { 0, 1, 2, 0 };
-    EXPECT_THROW(total_cost(graph, invalid_tour, cost_map),
+    EXPECT_THROW(totalCost(graph, invalid_tour, cost_map),
         EdgeNotFoundException);
 }
 
@@ -112,6 +113,31 @@ TEST_P(WalkFixture, testGetEdgeVector) {
         it++;
         EXPECT_EQ(v, *it);
     }
+}
+
+TEST_P(SuurballeGraphFixture, testShortestPathBlacklist) {
+    auto graph = getGraph();
+    auto cost_map = getCostMap(graph);
+    PCTSPvertex source = 0;
+    PCTSPvertex target =  7;
+    int n = boost::num_vertices(graph);
+    std::vector<bool> mark (n);
+    std::vector<PCTSPvertex> predecessor(n);
+    std::vector<int> distance(n);
+    
+    std::vector<ColorType> color_vector (n);
+    mark[2] = true;
+
+    try {
+        dijkstraShortestPathBlacklist(graph, source, target, predecessor, distance, cost_map, color_vector, mark);
+    }
+    catch (TargetVertexFound) {
+
+    }
+        auto path_st = pathInTreeFromParents(predecessor, source, target);
+        default_color_type b = default_color_type::black_color;
+        EXPECT_EQ(color_vector[2], b);
+        EXPECT_EQ(distance[target], 11);
 }
 
 INSTANTIATE_TEST_SUITE_P(

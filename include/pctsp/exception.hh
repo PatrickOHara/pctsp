@@ -68,4 +68,15 @@ class StepSizeIsTooBig : public std::exception {
         }
 };
 
+class TargetVertexFound : public std::exception {
+    private:
+        const std::string message = "The target vertex has been found.";
+
+    public:
+        TargetVertexFound() {};
+        const char* what() const throw() {
+            return message.c_str();
+        }
+};
+
 #endif

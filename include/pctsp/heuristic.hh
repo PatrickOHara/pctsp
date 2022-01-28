@@ -73,8 +73,8 @@ ExtensionVertex chooseExtensionPathFromCandidates(
 
         if (prize_diff > 0) {
             // then calculate the unitary loss of the external path between i and j
-            int external_path_cost = total_cost(graph, external_path, cost_map);
-            int internal_path_cost = total_cost(graph, internal_path, cost_map);
+            int external_path_cost = totalCost(graph, external_path, cost_map);
+            int internal_path_cost = totalCost(graph, internal_path, cost_map);
             auto loss_ij = unitaryLoss(
                 external_path_prize,
                 internal_path_prize,
@@ -317,7 +317,7 @@ void extensionUntilPrizeFeasible(
     int& path_depth_limit
 ) {
     typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
-    int prize = total_prize_of_tour(graph, tour, prize_map);
+    int prize = totalPrizeOfTour(graph, tour, prize_map);
     int num_feasible_extensions = 1;
 
     while (prize < quota && num_feasible_extensions > 0 && step_size < tour.size() - 1) {
@@ -544,7 +544,7 @@ void extendUntilPrizeFeasible(
         std::end(tour));
 
     // keep track of the total prize of the tour
-    int prize = total_prize_of_tour(g, tour, prize_map);
+    int prize = totalPrizeOfTour(g, tour, prize_map);
     int attempts = 0;
     bool insert_a_vertex = true;
     while (prize < quota && insert_a_vertex) {
@@ -642,6 +642,78 @@ getSubPathOverTour(std::list<TVertex>& tour, int index_of_first_vertex,
     return sub_path;
 }
 
+/**
+ * @brief Find an (external) path from the last vertex in the internal path
+ * to the first vertex in the internal path.
+ * 
+ * The external path should not use any of the internal vertices of the internal path.
+ * 
+ * The number of vertices in the external path cannot exceed the depth_limit + 1.
+ * A special case when the depth limit is two searches through neighboring vertices.
+ */
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+std::list<std::list<typename TGraph::vertex_descriptor>> findCollapsePaths (
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& internal_path,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    int quota,
+    bool collapse_shortest_paths
+) {
+    typedef typename TGraph::vertex_descriptor VD;
+    VD source = internal_path.back();
+    VD target = internal_path.front();
+    auto prize_of_internal_path = totalPrize(prize_map, internal_path);
+    std::list<std::list<VD>> collapse_paths;
+    // keep track of which vertices are in the internal path
+    int n = boost::num_vertices(graph);
+    std::vector<bool> in_internal_path (n);
+    for (auto u : internal_path) in_internal_path[u] = true;
+
+
+    // for each neighbour of the source vertex
+    for (VD collapse_vertex: boost::make_iterator_range(boost::adjacent_vertices(source, graph))) {
+        // check if there exists an edge from v to root
+        auto edge = boost::edge(collapse_vertex, target, graph);
+        bool edge_exists = edge.second;
+        auto prize_of_new_tour = prize_of_internal_path + prize_map[collapse_vertex];
+        if (edge_exists && ! in_internal_path[collapse_vertex] && prize_of_new_tour >= quota) {
+            std::list<VD> collapse = {source, collapse_vertex, target};
+            collapse_paths.push_back(collapse);
+        }
+    }
+
+    if (collapse_shortest_paths) {
+        // mark unusable vertices
+        typedef typename boost::filtered_graph<TGraph, BoolEdgeFilter<TGraph>, BoolVertexFilter> fgraph_t;
+        std::vector<bool> mark (in_internal_path);
+        mark[source] = false;
+        mark[target] = false;
+
+        // find the shortest path from the source to the target using unmarked vertices
+        std::vector<int> distance (boost::num_vertices(graph));
+        std::vector<VD> predecessor (boost::num_vertices(graph));
+        std::vector<boost::default_color_type> color_map (boost::num_vertices(graph));
+        auto v_index = boost::get(vertex_index, graph);
+
+
+        try {
+            dijkstraShortestPathBlacklist(graph, source, target, predecessor, distance, cost_map, color_map, mark);
+        }
+        catch (TargetVertexFound) {
+            // get the shortest path from the source to the target
+            auto color_start = color_map.begin();
+            auto color_last = color_map.end();
+            auto path_st = pathInTreeFromParents(predecessor, source, target);
+            int prize_of_new_tour = prize_of_internal_path + totalPrize(prize_map, path_st) - prize_map[source] - prize_map[target];
+            if (prize_of_new_tour >= quota) {
+                collapse_paths.push_back(path_st);
+            }
+        }
+    }
+    return collapse_paths;
+}
+
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
 std::list<typename TGraph::vertex_descriptor> collapse(
     TGraph& graph,
@@ -649,13 +721,14 @@ std::list<typename TGraph::vertex_descriptor> collapse(
     TCostMap& cost_map,
     TPrizeMap& prize_map,
     int quota,
-    typename TGraph::vertex_descriptor root_vertex
+    typename TGraph::vertex_descriptor root_vertex,
+    bool collapse_shortest_paths = false
 ) {
     typedef typename TGraph::vertex_descriptor VertexDescriptor;
     typedef typename std::list<VertexDescriptor>::reverse_iterator reverse_tour_iterator_t;
 
     // store the least-cost prize-feasible tour
-    int cost_of_best_tour = total_cost(graph, tour, cost_map);
+    int cost_of_best_tour = totalCost(graph, tour, cost_map);
     std::list<VertexDescriptor> best_tour(tour);
 
     // loop over the tour in reverse
@@ -667,87 +740,39 @@ std::list<typename TGraph::vertex_descriptor> collapse(
         auto sub_path_over_tour = getSubPathOverTour(
             tour, index_of_first_vertex, prize_map, quota, root_vertex);
 
-        // look for collapse vertices from the predecessor of the feasibility
-        // vertex
-        BOOST_LOG_TRIVIAL(debug) << ". Prize of path " << sub_path_over_tour.prize_of_path;
-        BOOST_LOG_TRIVIAL(debug) << ". Feasibility vertex is "
-            << sub_path_over_tour.feasibility_vertex;
-        BOOST_LOG_TRIVIAL(debug) << ". Predecessor vertex is "
-            << sub_path_over_tour.predecessor_vertex;
-        BOOST_LOG_TRIVIAL(debug) << ". Root seen: " << sub_path_over_tour.root_vertex_seen;
-        BOOST_LOG_TRIVIAL(debug) << ". Feasible path found: "
-            << sub_path_over_tour.feasible_path_found;
 
-        if (sub_path_over_tour.root_vertex_seen &&
-            sub_path_over_tour.feasible_path_found) {
+        if (sub_path_over_tour.root_vertex_seen && sub_path_over_tour.feasible_path_found) {
+            // find potential collapses of the tour: all these paths will create prize feasible tours
+            auto collapse_paths = findCollapsePaths(graph, sub_path_over_tour.path, cost_map, prize_map, quota, collapse_shortest_paths);
 
-            auto predecessor_vertex_descriptor =
-                boost::vertex(sub_path_over_tour.predecessor_vertex, graph);
-            auto first_vertex_descriptor =
-                boost::vertex(sub_path_over_tour.first_vertex, graph);
-            int cost_of_path =
-                total_cost(graph, sub_path_over_tour.path, cost_map);
-
-            // keep set of vertices in path
-            std::unordered_set<VertexDescriptor> vertices_in_path(
-                std::begin(sub_path_over_tour.path),
-                std::end(sub_path_over_tour.path));
-
-            // for each neighbour v of the predecessor vertex
-            for (VertexDescriptor collapse_vertex :
-            make_iterator_range(boost::adjacent_vertices(
-                sub_path_over_tour.predecessor_vertex, graph))) {
-                auto collapse_vertex_descriptor =
-                    boost::vertex(collapse_vertex, graph);
-
-                // check if there exists an edge from v to root
-                auto edge = boost::edge(collapse_vertex_descriptor,
-                    first_vertex_descriptor, graph);
-                bool edge_exists = edge.second;
-                // ensure collapse vertex has not yet been seen in path
-                if (edge_exists &
-                    vertices_in_path.count(collapse_vertex) == 0) {
-
-                    // calculate the prize of the new tour
-                    int prize_of_new_tour = sub_path_over_tour.prize_of_path +
-                        prize_map[collapse_vertex];
-                    // calculate the cost of the new tour
-                    auto edge_from_predecessor_to_collapse =
-                        boost::edge(predecessor_vertex_descriptor,
-                            collapse_vertex_descriptor, graph);
-                    int cost_of_predecessor_to_collapse =
-                        cost_map[edge_from_predecessor_to_collapse.first];
-                    int cost_of_collapse_to_first = cost_map[edge.first];
-                    int cost_of_new_tour = cost_of_path +
-                        cost_of_predecessor_to_collapse +
-                        cost_of_collapse_to_first;
-
-                    BOOST_LOG_TRIVIAL(debug) << "Start at " << sub_path_over_tour.first_vertex;
-                    BOOST_LOG_TRIVIAL(debug) << ". Predecessor at " << vertex_predecessor;
-                    BOOST_LOG_TRIVIAL(debug) << ". Collapse at " << collapse_vertex;
-                    BOOST_LOG_TRIVIAL(debug) << ". New cost is " << cost_of_new_tour;
-                    BOOST_LOG_TRIVIAL(debug) << "(current best is " << cost_of_best_tour;
-                    BOOST_LOG_TRIVIAL(debug) << "). New prize is " << prize_of_new_tour;
-
-                    // check if the induced cycle is prize feasible
-                    // check if the cost is better than the best known cost
-                    if (prize_of_new_tour >= quota &
-                        cost_of_new_tour < cost_of_best_tour) {
-                        BOOST_LOG_TRIVIAL(debug) << ". NEW BEST TOUR!";
-                        // copy path to best tour
-                        best_tour.assign(sub_path_over_tour.path.begin(),
-                            sub_path_over_tour.path.end());
-                        // append collapse and first vertex to path
-                        best_tour.push_back(collapse_vertex);
-                        best_tour.push_back(sub_path_over_tour.first_vertex);
-                        // update best cost
-                        cost_of_best_tour = cost_of_new_tour;
-                    }
-                    BOOST_LOG_TRIVIAL(debug);
+            auto internal_cost = totalCost(graph, sub_path_over_tour.path, cost_map);
+            int best_index = -1;
+            int i = 0;
+            for (auto external_path : collapse_paths) {
+                auto external_cost = totalCost(graph, external_path, cost_map);
+                if (external_cost + internal_cost < cost_of_best_tour) {
+                    best_index = i;
+                    // update best cost
+                    cost_of_best_tour = external_cost + internal_cost;
                 }
+                i++;
+            }
+            if (best_index >=0) {
+                // copy internal path to best tour
+                best_tour.assign(sub_path_over_tour.path.begin(), sub_path_over_tour.path.end());
+                // append collapse path
+                auto paths_it = collapse_paths.begin();
+                std::advance(paths_it, best_index);
+                auto external_path = * paths_it;
+                for (auto external_it = ++ external_path.begin(); external_it != external_path.end(); external_it ++) {
+                    best_tour.push_back(*external_it);
+                }
+                BOOST_LOG_TRIVIAL(debug) << "Collapse found a new best tour with cost " << cost_of_best_tour;
+
             }
         }
     }
     return ReorderTourFromRoot(best_tour, root_vertex);
 }
+
 #endif

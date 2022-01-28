@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <string>
 #include <boost/graph/graph_traits.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/two_bit_color_map.hpp>
 
 #include "exception.hh"
 
@@ -68,7 +70,7 @@ std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getEdgesInWal
 }
 
 template <typename TEdgeIt, typename TCostMap>
-int total_cost(TEdgeIt& first, TEdgeIt& last, TCostMap& cost_map) {
+int totalCost(TEdgeIt& first, TEdgeIt& last, TCostMap& cost_map) {
     int cost = 0;
     for (; first != last; first++) {
         auto edge = *first;
@@ -77,26 +79,40 @@ int total_cost(TEdgeIt& first, TEdgeIt& last, TCostMap& cost_map) {
     return cost;
 }
 
+template <typename TEdge, typename TCostMap>
+int totalCost(std::vector<TEdge>& edges, TCostMap& cost_map) {
+    auto first = edges.begin();
+    auto last = edges.end();
+    return totalCost(first, last, cost_map);
+}
+
+template <typename TEdge, typename TCostMap>
+int totalCost(std::list<TEdge>& edges, TCostMap& cost_map) {
+    auto first = edges.begin();
+    auto last = edges.end();
+    return totalCost(first, last, cost_map);
+}
+
 template <typename TGraph, typename TVertexIt, typename TCostMap>
-int total_cost(TGraph& graph, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it, TCostMap& cost_map) {
+int totalCost(TGraph& graph, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it, TCostMap& cost_map) {
     auto edges = getEdgesInWalk(graph, first_vertex_it, last_vertex_it);
     auto first_edge_it = edges.begin();
     auto last_edge_it = edges.end();
-    return total_cost(first_edge_it, last_edge_it, cost_map);
+    return totalCost(first_edge_it, last_edge_it, cost_map);
 }
 
 template <typename TGraph, typename TCostMap>
-int total_cost(TGraph& graph, std::list<typename TGraph::vertex_descriptor>& tour, TCostMap& cost_map) {
+int totalCost(TGraph& graph, std::list<typename TGraph::vertex_descriptor>& tour, TCostMap& cost_map) {
     auto first = tour.begin();
     auto last = tour.end();
-    return total_cost(graph, first, last, cost_map);
+    return totalCost(graph, first, last, cost_map);
 }
 
 template <typename TGraph, typename TCostMap>
-int total_cost(TGraph& graph, std::vector<typename TGraph::vertex_descriptor>& path, TCostMap& cost_map) {
+int totalCost(TGraph& graph, std::vector<typename TGraph::vertex_descriptor>& path, TCostMap& cost_map) {
     auto first = path.begin();
     auto last = path.end();
-    return total_cost(graph, first, last, cost_map);
+    return totalCost(graph, first, last, cost_map);
 }
 
 template<typename TPrizeMap, typename TVertexIt>
@@ -136,12 +152,15 @@ int total_prize(TGraph& graph, std::list<Vertex>& tour, TPrizeMap& prize_map) {
     return prize;
 }
 
-template <typename TGraph, typename TPrizeMap, typename Vertex>
-int total_prize_of_tour(TGraph& graph, std::list<Vertex>& tour,
-    TPrizeMap& prize_map) {
+template <typename TGraph, typename TPrizeMap>
+int totalPrizeOfTour(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& tour,
+    TPrizeMap& prize_map
+) {
     // total prize of all vertices apart from the last vertex (which is
     // repeated)
-    std::list<Vertex> tour_copy(tour.begin(), --tour.end());
+    std::list<typename TGraph::vertex_descriptor> tour_copy(tour.begin(), --tour.end());
     return total_prize(graph, tour_copy, prize_map);
 }
 
@@ -171,6 +190,87 @@ bool isInternalVertexOfWalk(std::vector<TVertex>& walk, TVertex& internal_vertex
     start++;
     end--;
     return std::find(start, end, internal_vertex) != end;
+}
+
+// Visitor that throw an exception when finishing the destination vertex
+template <typename TGraph, typename TColorMap>
+class TargetVisitor : boost::default_dijkstra_visitor{
+    typedef typename TGraph::vertex_descriptor TVertex;
+    typedef typename TGraph::edge_descriptor TEdge;
+    typedef typename property_traits< TColorMap >::value_type ColorValue;
+    typedef color_traits< ColorValue > Color;
+
+    protected:
+        TVertex destination_vertex_m;
+        std::vector<bool> mark;
+        TColorMap* color;
+    public:
+
+    TargetVisitor() {} ;
+
+    TargetVisitor(TVertex destination_vertex_l)
+        : destination_vertex_m(destination_vertex_l) {};
+
+    TargetVisitor(TVertex destination_vertex_l, std::vector<bool>& mark_vector, TColorMap& color_map)
+        : destination_vertex_m(destination_vertex_l), mark(mark_vector), color(&color_map) {};
+
+    void initialize_vertex(const TVertex &s, const TGraph &g) const {
+
+    }
+    void discover_vertex(const TVertex &s, const TGraph &g) const {
+
+    }
+    void examine_vertex(const TVertex &s, const TGraph &g) const {
+
+    }
+    void examine_edge(const TEdge &e, const TGraph &g) const {
+        auto target = boost::target(e, g);
+        if (mark[target]) {
+            put(*color, target, Color::black());
+        }
+    }
+    void edge_relaxed(const TEdge &e, const TGraph &g) const {}
+    void edge_not_relaxed(const TEdge &e, const TGraph &g) const {}
+    void finish_vertex(const TVertex &s, const TGraph &g) const {
+        if (destination_vertex_m == s)
+            throw TargetVertexFound();
+    }
+};
+
+
+template <typename TGraph, typename WeightMap, typename TPredecessor, typename TWeight, typename TColor>
+void dijkstraShortestPathBlacklist(
+    TGraph& graph,
+    typename TGraph::vertex_descriptor& source,
+    typename TGraph::vertex_descriptor& target,
+    std::vector<TPredecessor>& p_map,
+    std::vector<TWeight>& d_map,
+    WeightMap& w_map,
+    std::vector<TColor>& c_map,
+    std::vector<bool>& mark
+) {
+    typedef typename boost::property_map<PCTSPgraph, vertex_index_t>::type VIndex;
+    typedef typename boost::iterator_property_map<typename std::vector<TColor>::iterator, VIndex> color_map_t;
+
+    VIndex v_index = boost::get(vertex_index, graph);
+    color_map_t colors = boost::make_iterator_property_map(c_map.begin(), v_index);
+
+    TargetVisitor<TGraph, color_map_t> vis(target, mark, colors);
+
+    boost::dijkstra_shortest_paths(
+        graph, 
+        source,
+        boost::make_iterator_property_map(p_map.begin(), v_index),
+        boost::make_iterator_property_map(d_map.begin(), v_index),
+        w_map,
+        v_index,
+        std::less<TWeight>(),
+        std::plus<TWeight>(),
+        std::numeric_limits<TWeight>::max(),
+        TWeight(),
+        vis,
+        colors
+    );
 }
 
 #endif
