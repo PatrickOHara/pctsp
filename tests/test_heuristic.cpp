@@ -290,6 +290,40 @@ TEST_P(HeuristicFixture, testCollapseShortestPath) {
     EXPECT_EQ(second_root_index, new_tour.size() - 1);
 }
 
+TEST_P(HeuristicFixture, testCollapseSmallQuota) {
+    // get graphs with property maps
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
+    int quota = 1;
+    auto root_vertex = getRootVertex();
+    std::list<PCTSPvertex> tour;
+
+    switch (GetParam()) {
+        case GraphType::SUURBALLE: {
+            quota = 1;
+            tour = { 0, 1, 4, 0 };
+            break;
+        }
+        case GraphType::GRID8: {
+            tour = { 0, 1, 3, 2, 0};
+            break;
+        }
+        case GraphType::COMPLETE4:
+        case GraphType::COMPLETE5: {
+            tour = { 0, 1, 2, 0 };
+            break;
+        }
+    }
+    std::list<PCTSPvertex> expected_collapse(tour);
+    auto collapsed_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
+    for (auto v : collapsed_tour) {
+        std::cout << v << ", ";
+    }
+    std::cout << std::endl;
+    expectEqualLists(collapsed_tour, expected_collapse);
+}
+
 TEST(TestExtensionCollapse, testIndexOfReverseIterator) {
     std::list<int> mylist = { 0, 1, 2, 3, 4, 0 };
     auto rit = mylist.rbegin();
