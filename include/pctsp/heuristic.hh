@@ -677,7 +677,8 @@ std::list<std::list<typename TGraph::vertex_descriptor>> findCollapsePaths (
         auto edge = boost::edge(collapse_vertex, target, graph);
         bool edge_exists = edge.second;
         auto prize_of_new_tour = prize_of_internal_path + prize_map[collapse_vertex];
-        if (edge_exists && ! in_internal_path[collapse_vertex] && prize_of_new_tour >= quota) {
+        auto size_of_new_tour = internal_path.size() + 2;
+        if (edge_exists && ! (in_internal_path[collapse_vertex]) && (prize_of_new_tour >= quota) && (size_of_new_tour > 3)) {
             std::list<VD> collapse = {source, collapse_vertex, target};
             collapse_paths.push_back(collapse);
         }
@@ -706,7 +707,9 @@ std::list<std::list<typename TGraph::vertex_descriptor>> findCollapsePaths (
             auto color_last = color_map.end();
             auto path_st = pathInTreeFromParents(predecessor, source, target);
             int prize_of_new_tour = prize_of_internal_path + totalPrize(prize_map, path_st) - prize_map[source] - prize_map[target];
-            if (prize_of_new_tour >= quota) {
+            // the size of the new tour must be greater than three
+            auto size_of_new_tour = path_st.size() + internal_path.size() - 2;
+            if ((prize_of_new_tour >= quota) & (size_of_new_tour > 3)) {
                 collapse_paths.push_back(path_st);
             }
         }

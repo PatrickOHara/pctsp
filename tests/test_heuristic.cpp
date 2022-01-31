@@ -317,10 +317,6 @@ TEST_P(HeuristicFixture, testCollapseSmallQuota) {
     }
     std::list<PCTSPvertex> expected_collapse(tour);
     auto collapsed_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex);
-    for (auto v : collapsed_tour) {
-        std::cout << v << ", ";
-    }
-    std::cout << std::endl;
     expectEqualLists(collapsed_tour, expected_collapse);
 }
 
