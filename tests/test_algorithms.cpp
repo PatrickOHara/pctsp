@@ -176,6 +176,7 @@ TEST_P(AlgorithmsFixture, testModelPrizeCollectingTSP) {
     auto prize_map = getPrizeMap(graph);
 
     SCIP* scip = NULL;
+    SCIPcreate(&scip);
     std::vector<PCTSPvertex> tour;
     switch (GetParam()) {
         case GraphType::GRID8: tour = { 0, 1, 4, 6, 7, 5, 3, 2, 0 }; break;

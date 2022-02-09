@@ -23,50 +23,15 @@
 pybind11::object model_pctsp_bind(
     std::string& name,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
-    std::map<PCTSPvertex, int>& prize_dict,
-    std::map<std::pair<PCTSPvertex, PCTSPvertex>, int>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
-    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& initial_solution_py
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& solution_edges
 ) {
     SCIP* scip = NULL;
-    PCTSPgraph graph;
-
-    // auto edge_list = toStdListOfPairs<PCTSPvertex>(py_edge_list);
-    auto start = edge_list.begin();
-    auto end = edge_list.end();
-    addEdgesToGraph(graph, start, end);
-
-    VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
-    EdgeCostMap cost_map = boost::get(edge_weight, graph);
-    for (auto const& [vertex, prize] : prize_dict) {
-        prize_map[vertex] = prize;
-    }
-    for (auto const& [edge_pair, cost] : cost_dict) {
-        auto edge = boost::edge(edge_pair.first, edge_pair.second, graph);
-        if (! edge.second) throw EdgeNotFoundException(edge_pair.first, edge_pair.second);
-        cost_map[edge.first] = cost;
-    }
-
-    std::vector<PCTSPedge> solution_edges;
-    if (initial_solution_py.size() > 0) {
-        // std::list<std::pair<int, int>> initial_solution_pairs = toStdListOfPairs<int>(initial_solution_py);
-        // auto pairs_first = initial_solution_pairs.begin();
-        // auto pairs_last = initial_solution_pairs.end();
-        auto pairs_first = initial_solution_py.begin();
-        auto pairs_last = initial_solution_py.end();
-        solution_edges = edgesFromVertexPairs(graph, pairs_first, pairs_last);
-    }
-
-    PCTSPvertex boost_root = boost::vertex(root_vertex, graph);
-    // add self loops to graph - we assume the input graph is simple
-    if (hasSelfLoopsOnAllVertices(graph) == false) {
-        addSelfLoopsToGraph(graph);
-        assignZeroCostToSelfLoops(graph, cost_map);
-    }
-
-    modelPrizeCollectingTSP(scip, graph, solution_edges, cost_map, prize_map, quota, boost_root);
-
+    SCIPcreate(&scip);
+    modelPrizeCollectingTSP(scip, edge_list, solution_edges, prize_dict, cost_dict, quota, root_vertex);
     PyObject * capsule = PyCapsule_New((void*)scip, name.c_str(), NULL);
     auto pyscipopt = pybind11::module::import("pyscipopt.scip");
     auto Model = pyscipopt.attr("Model");

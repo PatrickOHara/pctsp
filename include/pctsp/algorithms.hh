@@ -151,9 +151,9 @@ SCIP_RETCODE modelPrizeCollectingTSP(
 SCIP_RETCODE modelPrizeCollectingTSP(
     SCIP* scip,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
-    std::vector<PCTSPedge>& solution_edges,
-    std::map<PCTSPvertex, int>& prize_dict,
-    std::map<std::pair<PCTSPvertex, PCTSPvertex>, int>& cost_dict,
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& solution_edges,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex
 );

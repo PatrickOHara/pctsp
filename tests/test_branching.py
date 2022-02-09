@@ -1,9 +1,8 @@
 from pctsp.libpypctsp import model_pctsp_bind
-from pyscipopt import Model
+from pyscipopt import Model, SCIP_STAGE, SCIP_STATUS
 import networkx as nx
 import faulthandler
-from tspwplib import is_pctsp_yes_instance
-import sys
+from tspwplib import is_pctsp_yes_instance, total_prize
 
 def test_model_pctsp(suurballes_undirected_graph, root):
     quota = 6
@@ -22,7 +21,14 @@ def test_model_pctsp(suurballes_undirected_graph, root):
         initial_yes_instance = initial_solution
     # print(type(model_ptr))
     # model_pctsp_bind(model_ptr, list(graph.edges()), prize_dict, cost_dict, quota, root, initial_yes_instance)
-    model = model_pctsp_bind("scip", list(graph.edges()), prize_dict, cost_dict, quota, root, initial_yes_instance)
-    model.createProbBasic("test_model_pctsp")
-    assert model.getProbName() == "test_model_pctsp"
+    model: Model = model_pctsp_bind("scip", list(graph.edges()), prize_dict, cost_dict, quota, root, initial_yes_instance)
+    print(model)
+    assert model.getProbName() == "modelPrizeCollectingTSP"
+    assert model.getNTotalNodes() == 1
+    assert model.getNVars() == suurballes_undirected_graph.number_of_edges() + suurballes_undirected_graph.number_of_nodes()
+    # model.optimize()
+    assert model.getStage() == SCIP_STAGE.SOLVED
+    assert model.getStatus() == "optimal"
 
+def test_model_pctsp_tsplib(tspwplib_graph, root):
+    quota = (int) 0.5 * total_prize(tspwplib_graph) 

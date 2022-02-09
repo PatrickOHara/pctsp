@@ -32,11 +32,25 @@ SCIP_RETCODE modelPrizeCollectingTSP(
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex
 ) {
+    // add self loops to graph - we assume the input graph is simple
+    if (hasSelfLoopsOnAllVertices(graph) == false) {
+        addSelfLoopsToGraph(graph);
+        assignZeroCostToSelfLoops(graph, cost_map);
+    }
+
     std::map<PCTSPedge, SCIP_VAR*> edge_variable_map;
     std::map<PCTSPedge, PrizeNumberType> weight_map;
-    SCIP_CALL(SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, true, 1, true, 1), TRUE));
     putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
+    std::vector<NodeStats> node_stats;  // save node statistics
+    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota, &node_stats);
+
+    // initialise empty model
+    const char* name = "modelPrizeCollectingTSP";
+    SCIP_CALL(SCIPincludeDefaultPlugins(scip));
+    SCIP_CALL(SCIPcreateObjProb(scip, name, probdata, true));
+
     SCIP_CALL(PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota, root_vertex, edge_variable_map));
+    SCIP_CALL(SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, true, 1, true, 1), TRUE));
 
     // turn off presolving
     SCIPsetIntParam(scip, "presolving/maxrounds", 0);
@@ -56,6 +70,7 @@ SCIP_RETCODE modelPrizeCollectingTSP(
         SCIP_HEUR* heur = NULL;
         addHeuristicEdgesToSolver(scip, graph, heur, edge_variable_map, first, last);
     }
+    SCIPsolve(scip);
     return SCIP_OKAY;
 }
 
@@ -63,18 +78,18 @@ SCIP_RETCODE modelPrizeCollectingTSP(
     SCIP* scip,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& solution_edges,
-    std::map<PCTSPvertex, int>& prize_dict,
-    std::map<std::pair<PCTSPvertex, PCTSPvertex>, int>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex
 ) {
+    // add edges to empty graph
     PCTSPgraph graph;
-
-    // auto edge_list = toStdListOfPairs<PCTSPvertex>(py_edge_list);
     auto start = edge_list.begin();
     auto end = edge_list.end();
     addEdgesToGraph(graph, start, end);
 
+    // get the prize and costs
     VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
     EdgeCostMap cost_map = boost::get(edge_weight, graph);
     for (auto const& [vertex, prize] : prize_dict) {
@@ -85,18 +100,12 @@ SCIP_RETCODE modelPrizeCollectingTSP(
         if (! edge.second) throw EdgeNotFoundException(edge_pair.first, edge_pair.second);
         cost_map[edge.first] = cost;
     }
-
+    // initialise the heuristic solution
     std::vector<PCTSPedge> solution;
     if (solution_edges.size() > 0) {
         auto pairs_first = solution_edges.begin();
         auto pairs_last = solution_edges.end();
         solution = edgesFromVertexPairs(graph, pairs_first, pairs_last);
-    }
-
-    // add self loops to graph - we assume the input graph is simple
-    if (hasSelfLoopsOnAllVertices(graph) == false) {
-        addSelfLoopsToGraph(graph);
-        assignZeroCostToSelfLoops(graph, cost_map);
     }
 
     return modelPrizeCollectingTSP(scip, graph, solution, cost_map, prize_map, quota, root_vertex);
