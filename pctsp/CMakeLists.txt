@@ -12,10 +12,12 @@ target_include_directories(pypctsp PRIVATE
 	${Boost_INCLUDE_DIRS}
 	${Python3_INCLUDE_DIRS}
 	${SCIP_INCLUDE_DIRS}
+	${pybind11_INCLUDE_DIRS}
 )
 target_link_libraries(pypctsp PRIVATE
 	${Boost_LIBRARIES}
 	${SCIP_LIBRARIES}
+	pybind11::headers
 	pctsp
 )
 

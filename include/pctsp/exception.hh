@@ -22,6 +22,9 @@ public:
         : message(std::string("No edge between vertices: ") + first_vertex_str +
             " and " + second_vertex_str) {}
 
+    EdgeNotFoundException(const unsigned long first_vertex, const unsigned long second_vertex)
+        : EdgeNotFoundException(std::to_string(first_vertex), std::to_string(second_vertex)) {}
+
     const char* what() const throw() { return message.c_str(); }
 };
 

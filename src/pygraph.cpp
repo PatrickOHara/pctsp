@@ -27,6 +27,17 @@ void fillPrizeMapFromPyDict(VertexPrizeMap& prize_map, py::dict& prize_dict,
     }
 }
 
+void fillPrizeMapFromPyDict(VertexPrizeMap& prize_map, py::dict& prize_dict) {
+    py::list prize_list = prize_dict.items();
+    int n = py::len(prize_list);
+    for (int i = 0; i < n; i++) {
+        py::tuple prize_tuple = py::extract<py::tuple>(prize_list[i]);
+        int py_vertex = py::extract<int>(prize_tuple[0]);
+        int prize = py::extract<int>(prize_tuple[1]);
+        prize_map[py_vertex] = prize;
+    }
+}
+
 void fillCostMapFromPyDict(PCTSPgraph& graph, EdgeCostMap& cost_map, py::dict& cost_dict, BoostPyBimap& vertex_id_map) {
     py::list cost_list = cost_dict.items();
     int n = py::len(cost_list);
@@ -46,6 +57,24 @@ void fillCostMapFromPyDict(PCTSPgraph& graph, EdgeCostMap& cost_map, py::dict& c
                 std::to_string(boost_target));
         }
         cost_map[boost_edge.first] = cost;
+    }
+}
+
+void fillCostMapFromPyDict(PCTSPgraph& graph, EdgeCostMap& cost_map, py::dict& cost_dict) {
+    py::list cost_list = cost_dict.items();
+    int n = py::len(cost_list);
+    for (int i = 0; i < n; i++) {
+        py::tuple cost_tuple = py::extract<py::tuple>(cost_list[i]);
+        py::tuple py_edge = py::extract<py::tuple>(cost_tuple[0]);
+        int py_source = py::extract<int>(py_edge[0]);
+        int py_target = py::extract<int>(py_edge[1]);
+        int cost = py::extract<int>(cost_tuple[1]);
+        auto edge = boost::edge(py_source, py_target, graph);
+        if (edge.second == false) {
+            throw EdgeNotFoundException(std::to_string(py_source),
+                std::to_string(py_target));
+        }
+        cost_map[edge.first] = cost;
     }
 }
 

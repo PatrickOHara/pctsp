@@ -138,6 +138,26 @@ SCIP_RETCODE PCTSPmodelWithoutSECs(
     return SCIP_OKAY;
 }
 
+SCIP_RETCODE modelPrizeCollectingTSP(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    std::vector<PCTSPedge>& solution_edges,
+    EdgeCostMap& cost_map,
+    VertexPrizeMap& prize_map,
+    PrizeNumberType& quota,
+    PCTSPvertex& root_vertex
+);
+
+SCIP_RETCODE modelPrizeCollectingTSP(
+    SCIP* scip,
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
+    std::vector<PCTSPedge>& solution_edges,
+    std::map<PCTSPvertex, int>& prize_dict,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, int>& cost_dict,
+    PrizeNumberType& quota,
+    PCTSPvertex& root_vertex
+);
+
 /** Solve the Prize Collecting TSP problem using a branch and cut algorithm
  */
 template <typename TGraph, typename TCostMap, typename TPrizeMap>

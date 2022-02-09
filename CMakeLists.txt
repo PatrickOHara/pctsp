@@ -25,8 +25,6 @@ find_package(Readline REQUIRED)
 find_package(GMP REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(YAML_CPP REQUIRED FOUND_VAR YAML_CPP_FOUND)
-message(YAML_CPP_INCLUDE_DIRS: ${YAML_CPP_INCLUDE_DIRS})
-message(YAML_CPP_LIBRARIES: ${YAML_CPP_LIBRARIES})
 
 # find the python sitelibs
 set(FindSitePkgCommand "import site; print(site.getsitepackages()[0])")
@@ -37,6 +35,8 @@ set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
 # depends upon scikit-build being installed
 list(APPEND CMAKE_MODULE_PATH "${Python3_SITE_PACKAGES}/skbuild/resources/cmake;")
 
+message("pybind11 " $ENV{pybind11_ROOT})
+find_package(pybind11 CONFIG)
 find_package(PythonExtensions REQUIRED)
 
 set(PCTSP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)

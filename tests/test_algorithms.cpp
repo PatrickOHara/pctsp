@@ -133,13 +133,18 @@ TEST_P(SuurballeGraphFixture, testPCTSPbranchAndCut) {
 TEST_P(AlgorithmsFixture, testAddHeuristicVarsToSolver) {
     PCTSPgraph graph = getGraph();
     addSelfLoopsToGraph(graph);
-    int quota = 6;
-    PCTSPvertex root_vertex = boost::vertex(0, graph);
-    auto cost_map = get(edge_weight, graph);
-    auto prize_map = get(vertex_distance, graph);
+    int quota = getQuota();
+    PCTSPvertex root_vertex = getRootVertex();
+    auto cost_map = getCostMap(graph);
+    auto prize_map = getPrizeMap(graph);
     assignZeroCostToSelfLoops(graph, cost_map);
 
-    std::vector<PCTSPvertex> tour = { 0, 1, 4, 6, 7, 5, 3, 2, 0 };
+    std::vector<PCTSPvertex> tour;
+    switch (GetParam()) {
+        case GraphType::GRID8: tour = { 0, 1, 4, 6, 7, 5, 3, 2, 0 }; break;
+        case GraphType::SUURBALLE: tour = {0, 1, 3, 6, 7, 5, 2, 0}; break;
+        default: tour = {0, 1, 3, 2, 0}; break;
+    }
     auto first = tour.begin();
     auto last = tour.end();
     std::vector<PCTSPedge> solution_edges = getEdgesInWalk(graph, first, last);
@@ -163,11 +168,33 @@ TEST_P(AlgorithmsFixture, testAddHeuristicVarsToSolver) {
     addHeuristicEdgesToSolver(scip_model, graph, NULL, variable_map, first_edges, last_edges);
 }
 
+TEST_P(AlgorithmsFixture, testModelPrizeCollectingTSP) {
+    auto graph = getGraph();
+    auto quota = getQuota();
+    auto root_vertex = getRootVertex();
+    auto cost_map = getCostMap(graph);
+    auto prize_map = getPrizeMap(graph);
+
+    SCIP* scip = NULL;
+    std::vector<PCTSPvertex> tour;
+    switch (GetParam()) {
+        case GraphType::GRID8: tour = { 0, 1, 4, 6, 7, 5, 3, 2, 0 }; break;
+        case GraphType::SUURBALLE: tour = {0, 1, 3, 6, 7, 5, 2, 0}; break;
+        default: tour = {0, 1, 3, 2, 0}; break;
+    }
+    auto first_it = tour.begin();
+    auto last_it = tour.end();
+    auto solution_edges = getEdgesInWalk(graph, first_it, last_it);
+
+    modelPrizeCollectingTSP(scip, graph, solution_edges, cost_map, prize_map, quota, root_vertex);
+}
+
 INSTANTIATE_TEST_SUITE_P(
     TestAlgorithms,
     AlgorithmsFixture,
-    ::testing::Values(GraphType::GRID8)
+    ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5, GraphType::GRID8, GraphType::SUURBALLE)
 );
+
 INSTANTIATE_TEST_SUITE_P(TestAlgorithms, SuurballeGraphFixture,
     ::testing::Values(GraphType::SUURBALLE)
 );

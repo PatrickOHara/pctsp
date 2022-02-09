@@ -22,10 +22,29 @@ from .constants import (
 )
 
 # pylint: disable=import-error
-from .libpypctsp import pctsp_branch_and_cut_bind
+from .libpypctsp import pctsp_branch_and_cut_bind, model_pctsp_bind
 
 # pylint: enable=import-error
 
+
+from pyscipopt import Model
+
+def model_pctsp(
+    graph: nx.Graph,
+    quota: int,
+    root_vertex: Vertex,
+    initial_solution: Optional[EdgeList] = None,
+) -> Model:
+    model = Model()
+    model_ptr = model.to_ptr(False)
+    cost_dict = nx.get_edge_attributes(graph, EdgeFunctionName.cost.value)
+    prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
+    initial_yes_instance = []
+    if initial_solution and is_pctsp_yes_instance(
+        graph, quota, root_vertex, initial_solution
+    ):
+        initial_yes_instance = initial_solution
+    model_pctsp_bind(model_ptr, list(graph.edges()), prize_dict, cost_dict, quota, root_vertex, initial_yes_instance)
 
 def pctsp_disjoint_tours_relaxation(
     graph: nx.Graph,
