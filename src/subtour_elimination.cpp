@@ -99,7 +99,7 @@ SCIP_RETCODE addSubtourEliminationConstraint(
 
     // the name of the constraint contains every vertex in the set
     std::string cons_name = "SubtourElimination_" + joinVariableNames(all_vars);
-    BOOST_LOG_TRIVIAL(debug) << edge_variables.size() << " edge variables and " << vertex_variables.size() << " vertex variables added to new constraint " << cons_name;
+    BOOST_LOG_TRIVIAL(debug) << edge_variables.size() << " edge variables and " << vertex_variables.size() << " vertex variables added to new subtour elimination constraint.";
 
     // create the subtour elimination constraint
     double lhs = -SCIPinfinity(scip);
@@ -210,7 +210,6 @@ SCIP_DECL_CONSENFOLP(PCTSPconshdlrSubtour::scip_enfolp) {
 }
 
 SCIP_DECL_CONSTRANS(PCTSPconshdlrSubtour::scip_trans) {
-    BOOST_LOG_TRIVIAL(debug) << "SCIP trans method";
     SCIP_CONSDATA* sourcedata;
     SCIP_CONSDATA* targetdata = NULL;
 
@@ -224,7 +223,6 @@ SCIP_DECL_CONSTRANS(PCTSPconshdlrSubtour::scip_trans) {
 }
 
 SCIP_DECL_CONSLOCK(PCTSPconshdlrSubtour::scip_lock) {
-    BOOST_LOG_TRIVIAL(debug) << "SCIP lock method";
     return SCIP_OKAY;
 }
 
@@ -253,13 +251,11 @@ SCIP_DECL_CONSPRINT(PCTSPconshdlrSubtour::scip_print) {
 }
 
 SCIP_DECL_CONSSEPALP(PCTSPconshdlrSubtour::scip_sepalp) {
-    BOOST_LOG_TRIVIAL(debug) << "scip_sepalp";
     SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq));
     return SCIP_OKAY;
 }
 
 SCIP_DECL_CONSSEPASOL(PCTSPconshdlrSubtour::scip_sepasol) {
-    BOOST_LOG_TRIVIAL(debug) << "scip_sepsol";
     SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, sol, result, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq));
     return SCIP_OKAY;
 }

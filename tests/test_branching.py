@@ -1,13 +1,11 @@
-from pctsp.libpypctsp import model_pctsp_bind
+from pctsp.libpypctsp import basic_solve_pctsp
 from pyscipopt import Model, SCIP_STAGE, SCIP_STATUS
 import networkx as nx
 import faulthandler
-from tspwplib import is_pctsp_yes_instance, total_prize
+from tspwplib import is_pctsp_yes_instance, order_edge_list, reorder_edge_list_from_root, total_cost_networkx, total_prize, walk_from_edge_list
 
 def test_model_pctsp(suurballes_undirected_graph, root):
     quota = 6
-    faulthandler.enable()
-    assert faulthandler.is_enabled()
     graph = suurballes_undirected_graph
     # model = Model()
     # model_ptr = model.to_ptr(False)
@@ -21,14 +19,32 @@ def test_model_pctsp(suurballes_undirected_graph, root):
         initial_yes_instance = initial_solution
     # print(type(model_ptr))
     # model_pctsp_bind(model_ptr, list(graph.edges()), prize_dict, cost_dict, quota, root, initial_yes_instance)
-    model: Model = model_pctsp_bind("scip", list(graph.edges()), prize_dict, cost_dict, quota, root, initial_yes_instance)
+    model = Model()
+    sol_edges = basic_solve_pctsp(model, list(graph.edges()), cost_dict, prize_dict, quota, root, initial_yes_instance)
     print(model)
     assert model.getProbName() == "modelPrizeCollectingTSP"
     assert model.getNTotalNodes() == 1
     assert model.getNVars() == suurballes_undirected_graph.number_of_edges() + suurballes_undirected_graph.number_of_nodes()
-    # model.optimize()
+    assert model.getStage() == SCIP_STAGE.SOLVED
+    assert model.getStatus() == "optimal"
+    sol_edges = order_edge_list(sol_edges)
+    tour = walk_from_edge_list(sol_edges)
+    sol = model.getBestSol()
+    assert total_cost_networkx(suurballes_undirected_graph, tour) == model.getSolObjVal(sol)
+
+def test_model_pctsp_tsplib(tspwplib_graph, root):
+    graph = tspwplib_graph
+    quota = 10
+    cost_dict = nx.get_edge_attributes(graph, "cost")
+    prize_dict = nx.get_node_attributes(graph, "prize")
+    initial_solution = []
+    model = Model()
+    sol_edges = basic_solve_pctsp(model, list(graph.edges()), cost_dict, prize_dict, quota, root, initial_solution)
+    assert model.getNVars() == graph.number_of_edges()  # self loops already added
     assert model.getStage() == SCIP_STAGE.SOLVED
     assert model.getStatus() == "optimal"
 
-def test_model_pctsp_tsplib(tspwplib_graph, root):
-    quota = (int) 0.5 * total_prize(tspwplib_graph) 
+    sol_edges = order_edge_list(sol_edges)
+    tour = walk_from_edge_list(sol_edges)
+    sol = model.getBestSol()
+    assert total_cost_networkx(graph, tour) == model.getSolObjVal(sol)

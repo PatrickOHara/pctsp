@@ -23,7 +23,40 @@ SCIP_RETCODE addHeuristicVarsToSolver(
     return SCIP_OKAY;
 }
 
-SCIP_RETCODE modelPrizeCollectingTSP(
+std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    std::vector<PCTSPedge>& heuristic_edges,
+    EdgeCostMap& cost_map,
+    VertexPrizeMap& prize_map,
+    PrizeNumberType& quota,
+    PCTSPvertex& root_vertex
+) {
+    auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex);
+    SCIPsolve(scip);
+    SCIP_SOL* sol = SCIPgetBestSol(scip);
+    auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+    return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+}
+
+std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& heuristic_edges,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    PrizeNumberType& quota,
+    PCTSPvertex& root_vertex
+) {
+    auto edge_var_map = modelPrizeCollectingTSP(scip, graph, edge_list, heuristic_edges, cost_dict, prize_dict, quota, root_vertex);
+    SCIPsolve(scip);
+    SCIP_SOL* sol = SCIPgetBestSol(scip);
+    auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+    return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+}
+
+std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     SCIP* scip,
     PCTSPgraph& graph,
     std::vector<PCTSPedge>& solution_edges,
@@ -46,11 +79,11 @@ SCIP_RETCODE modelPrizeCollectingTSP(
 
     // initialise empty model
     const char* name = "modelPrizeCollectingTSP";
-    SCIP_CALL(SCIPincludeDefaultPlugins(scip));
-    SCIP_CALL(SCIPcreateObjProb(scip, name, probdata, true));
+    SCIPincludeDefaultPlugins(scip);
+    SCIPcreateObjProb(scip, name, probdata, true);
 
-    SCIP_CALL(PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota, root_vertex, edge_variable_map));
-    SCIP_CALL(SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, true, 1, true, 1), TRUE));
+    PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota, root_vertex, edge_variable_map);
+    SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, true, 1, true, 1), TRUE);
 
     // turn off presolving
     SCIPsetIntParam(scip, "presolving/maxrounds", 0);
@@ -71,20 +104,20 @@ SCIP_RETCODE modelPrizeCollectingTSP(
         addHeuristicEdgesToSolver(scip, graph, heur, edge_variable_map, first, last);
     }
     SCIPsolve(scip);
-    return SCIP_OKAY;
+    return edge_variable_map;
 }
 
-SCIP_RETCODE modelPrizeCollectingTSP(
+std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     SCIP* scip,
+    PCTSPgraph& graph,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& solution_edges,
-    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex
 ) {
     // add edges to empty graph
-    PCTSPgraph graph;
     auto start = edge_list.begin();
     auto end = edge_list.end();
     addEdgesToGraph(graph, start, end);

@@ -138,7 +138,7 @@ SCIP_RETCODE PCTSPmodelWithoutSECs(
     return SCIP_OKAY;
 }
 
-SCIP_RETCODE modelPrizeCollectingTSP(
+std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     SCIP* scip,
     PCTSPgraph& graph,
     std::vector<PCTSPedge>& solution_edges,
@@ -148,12 +148,34 @@ SCIP_RETCODE modelPrizeCollectingTSP(
     PCTSPvertex& root_vertex
 );
 
-SCIP_RETCODE modelPrizeCollectingTSP(
+std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     SCIP* scip,
+    PCTSPgraph& graph,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& solution_edges,
-    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    PrizeNumberType& quota,
+    PCTSPvertex& root_vertex
+);
+
+std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    std::vector<PCTSPedge>& solution_edges,
+    EdgeCostMap& cost_map,
+    VertexPrizeMap& prize_map,
+    PrizeNumberType& quota,
+    PCTSPvertex& root_vertex
+);
+
+std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& solution_edges,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex
 );

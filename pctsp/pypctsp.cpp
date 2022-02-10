@@ -8,31 +8,63 @@
 
 // algorithms binding
 
-// pybind11::object model_pctsp_bind(
-//     // pybind11::capsule& py_scip,
-//     // PyObject* capsule,
-//     std::string& name,
-//     pybind11::list& py_edge_list,
-//     pybind11::dict& prize_dict,
-//     pybind11::dict& cost_dict,
-//     PrizeNumberType& quota,
-//     int& root_vertex,
-//     pybind11::list& initial_solution_py
-// ) {
-
-pybind11::object model_pctsp_bind(
-    std::string& name,
+std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pyBasicSolvePrizeCollectingTSP(
+    pybind11::object& model,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
-    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
-    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& solution_edges
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& heuristic_edges
 ) {
+    PyObject* capsule = model.attr("to_ptr")(false).ptr();
+    SCIP* scip = (SCIP*) PyCapsule_GetPointer(capsule, "scip");
+    PCTSPgraph graph;
+    return solvePrizeCollectingTSP(scip, graph, edge_list, heuristic_edges, cost_dict, prize_dict, quota, root_vertex);
+}
+
+std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
+    pybind11::object& model,
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    PrizeNumberType& quota,
+    PCTSPvertex& root_vertex,
+    std::string& bounds_csv_filepath_py,
+    bool cost_cover_disjoint_paths,
+    bool cost_cover_shortest_path,
+    bool cost_cover_steiner_tree,
+    bool cycle_cover,
+    std::map<PCTSPvertex, CostNumberType>& disjoint_paths_cost,
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& heuristic_edges,
+    std::string& log_boost_filepath_py,
+    std::string& log_scip_filepath_py,
+    int logging_level_py,
+    std::string& metrics_csv_filepath_py,
+    std::string& name_py,
+    bool sec_disjoint_tour,
+    int sec_disjoint_tour_freq,
+    bool sec_maxflow_mincut,
+    int sec_maxflow_mincut_freq,
+    std::string& summary_yaml_filepath_py,
+    float time_limit
+) {
+    // get the model from python
+
+    // rename vertices if they are not in range [0, n-1]
+
+    // call the branch and cut algorithm
+
+    // give old names to vertices in returned edges
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>> tour;
+    return tour;
+}
+
+/** Example of creating a pyscipopt model in CPP then exposing it to python */
+pybind11::object modelFromCpp() {
     SCIP* scip = NULL;
     SCIPcreate(&scip);
-    modelPrizeCollectingTSP(scip, edge_list, solution_edges, prize_dict, cost_dict, quota, root_vertex);
-    PyObject * capsule = PyCapsule_New((void*)scip, name.c_str(), NULL);
+    PyObject * capsule = PyCapsule_New((void*)scip, "scip", NULL);
     auto pyscipopt = pybind11::module::import("pyscipopt.scip");
     auto Model = pyscipopt.attr("Model");
     auto from_ptr = Model.attr("from_ptr");
@@ -257,11 +289,8 @@ py::list extend_until_prize_feasible_bind(py::list& edge_list, py::list& py_tour
 //     def("pctsp_branch_and_cut_bind", pctsp_branch_and_cut_bind);
 // }
 
-int add(int i, int j) {
-    return i + j;
-}
 
 PYBIND11_MODULE(libpypctsp, m) {
-    m.def("add", &add, "A function that adds two numbers");
-    m.def("model_pctsp_bind", &model_pctsp_bind, "Model PCTSP");
+    m.def("basic_solve_pctsp", &pyBasicSolvePrizeCollectingTSP, "Solve PCTSP with basic branch and cut");
+    m.def("solve_pctsp", &pySolvePrizeCollectingTSP, "Solve PCTSP.");
 }
