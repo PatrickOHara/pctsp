@@ -15,12 +15,19 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pyBasicSolvePrizeCollectingTSP(
     std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
     std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
-    PCTSPvertex& root_vertex
+    PCTSPvertex& root_vertex,
+    std::string& name
 ) {
-    PyObject* capsule = model.attr("to_ptr")(false).ptr();
-    SCIP* scip = (SCIP*) PyCapsule_GetPointer(capsule, "scip");
+    // PyObject* capsule = model.attr("to_ptr")(false).ptr();
+    // SCIP* scip = (SCIP*) PyCapsule_GetPointer(capsule, "scip");
+    SCIP* scip = NULL;
+    SCIPcreate(&scip);
     PCTSPgraph graph;
-    return solvePrizeCollectingTSP(scip, graph, edge_list, heuristic_edges, cost_dict, prize_dict, quota, root_vertex);
+    auto sol_edges = solvePrizeCollectingTSP(scip, graph, edge_list, heuristic_edges, cost_dict, prize_dict, quota, root_vertex, name);
+    // if (PyCapsule_SetPointer(capsule, (void*) scip) > 0) {
+    //     std::cerr << "Pointer didn't set!" << std::endl;
+    // }
+    return sol_edges;
 }
 
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
@@ -53,7 +60,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
     addEdgesToGraph(graph, new_edges);
 
     // rename the edges in the heuristic solution and the root vertex
-    auto heur_edges_renamed = renameEdges(vertex_bimap, heuristic_edges);
+    auto heur_edges_renamed = getNewEdges(vertex_bimap, heuristic_edges);
     auto heur_edges = edgesFromVertexPairs(graph, heur_edges_renamed);
     auto new_root = getNewVertex(vertex_bimap, root_vertex);
 
@@ -321,5 +328,5 @@ pybind11::object modelFromCpp() {
 
 PYBIND11_MODULE(libpypctsp, m) {
     m.def("basic_solve_pctsp", &pyBasicSolvePrizeCollectingTSP, "Solve PCTSP with basic branch and cut");
-    m.def("solve_pctsp", &pySolvePrizeCollectingTSP, "Solve PCTSP.");
+    // m.def("solve_pctsp", &pySolvePrizeCollectingTSP, "Solve PCTSP.");
 }

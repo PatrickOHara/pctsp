@@ -141,22 +141,24 @@ SCIP_RETCODE PCTSPmodelWithoutSECs(
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     SCIP* scip,
     PCTSPgraph& graph,
-    std::vector<PCTSPedge>& solution_edges,
+    std::vector<PCTSPedge>& heuristic_edges,
     EdgeCostMap& cost_map,
     VertexPrizeMap& prize_map,
     PrizeNumberType& quota,
-    PCTSPvertex& root_vertex
+    PCTSPvertex& root_vertex,
+    std::string& name
 );
 
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     SCIP* scip,
     PCTSPgraph& graph,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
-    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& solution_edges,
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& heuristic_edges,
     std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
     std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
-    PCTSPvertex& root_vertex
+    PCTSPvertex& root_vertex,
+    std::string& name
 );
 
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
@@ -186,7 +188,7 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     VertexPrizeMap& prize_map,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
-    std::string name = "pctsp"
+    std::string& name
 );
 
 std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
@@ -198,7 +200,7 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
-    std::string name = "pctsp"
+    std::string& name
 );
 
 /** Solve the Prize Collecting TSP problem using a branch and cut algorithm

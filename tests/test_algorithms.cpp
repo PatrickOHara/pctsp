@@ -183,7 +183,8 @@ TEST_P(AlgorithmsFixture, testModelPrizeCollectingTSP) {
     auto last_it = tour.end();
     auto solution_edges = getEdgesInWalk(graph, first_it, last_it);
 
-    modelPrizeCollectingTSP(scip, graph, solution_edges, cost_map, prize_map, quota, root_vertex);
+    std::string name = "testModelPCTSP";
+    modelPrizeCollectingTSP(scip, graph, solution_edges, cost_map, prize_map, quota, root_vertex, name);
     EXPECT_EQ(SCIPgetNVars(scip), boost::num_edges(graph));
 }
 

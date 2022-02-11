@@ -200,3 +200,34 @@ std::list<PCTSPvertex> GraphFixture::getSmallTour() {
     }
     return small_tour;
 }
+
+std::vector<std::pair<PCTSPvertex, PCTSPvertex>> BadlyNamedFixture::getBadlyNamedEdges() {
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>> edges;
+    switch (GetParam()) {
+        case BadlyNamedEdges::WELL_NAMED: edges = { {0, 1}, {1, 2}, {2, 3} }; break;
+        case BadlyNamedEdges::BADLY_NAMED: edges = { {10, 11}, {11, 12}, {12, 13}}; break;
+        case BadlyNamedEdges::EMPTY: edges = {}; break;
+        case BadlyNamedEdges::REVERSE_NAMED: edges = { {5, 4}, {5, 3}, {4, 3}, {3,2}, {2,1}, {2, 0}}; break;
+    }
+	return edges;
+}
+
+std::map<std::pair<PCTSPvertex, PCTSPvertex>, int> BadlyNamedFixture::getOldCostMap() {
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, int> cost_map;
+    auto old_edges = BadlyNamedFixture::getBadlyNamedEdges();
+    for (int i = 0; i < old_edges.size(); i ++) {
+        cost_map[old_edges[i]] = i;
+    }
+    return cost_map;
+}
+
+std::map<PCTSPvertex, int> BadlyNamedFixture::getOldPrizeMap() {
+    std::map<PCTSPvertex, int> old_prize;
+    switch (GetParam()) {
+        case BadlyNamedEdges::WELL_NAMED: old_prize = {{0, 5}, {1, 4}, {2, 3}, {3, 2}}; break;
+        case BadlyNamedEdges::BADLY_NAMED: old_prize = { {10, 1}, {11, 2}, {12, 3}, {13, 4}}; break;
+        case BadlyNamedEdges::EMPTY: old_prize = {}; break;
+        case BadlyNamedEdges::REVERSE_NAMED: old_prize = { {5, 1}, {4, 2}, {3, 3}, {2, 4}, {1, 5}, {0, 6}}; break;
+    }
+    return old_prize;
+}
