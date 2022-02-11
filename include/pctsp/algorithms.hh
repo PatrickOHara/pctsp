@@ -159,6 +159,25 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     PCTSPvertex& root_vertex
 );
 
+std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    std::vector<PCTSPedge>& heuristic_edges,
+    EdgeCostMap& cost_map,
+    VertexPrizeMap& prize_map,
+    PrizeNumberType& quota,
+    PCTSPvertex& root_vertex,
+    bool cost_cover_disjoint_paths = false,
+    bool cost_cover_shortest_path = false,
+    bool cycle_cover = false,
+    std::vector<int> disjoint_paths_distances = std::vector<int>(),
+    std::string name = "pctsp",
+    bool sec_disjoint_tour = true,
+    bool sec_maxflow_mincut = true,
+    std::filesystem::path solver_dir = "./pctsp",
+    float time_limit = 14400
+);
+
 std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     SCIP* scip,
     PCTSPgraph& graph,
@@ -166,7 +185,8 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     EdgeCostMap& cost_map,
     VertexPrizeMap& prize_map,
     PrizeNumberType& quota,
-    PCTSPvertex& root_vertex
+    PCTSPvertex& root_vertex,
+    std::string name = "pctsp"
 );
 
 std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
@@ -177,7 +197,8 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
     std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
-    PCTSPvertex& root_vertex
+    PCTSPvertex& root_vertex,
+    std::string name = "pctsp"
 );
 
 /** Solve the Prize Collecting TSP problem using a branch and cut algorithm

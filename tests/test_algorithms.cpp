@@ -51,53 +51,49 @@ TEST_P(SuurballeGraphFixture, testPCTSPwithoutSECs) {
     EXPECT_EQ(code, SCIP_OKAY);
 }
 
-TEST_P(SuurballeGraphFixture, testPCTSPbranchAndCut) {
+TEST_P(AlgorithmsFixture, testSolvePrizeCollectingTSP) {
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
     auto cost_map = getCostMap(graph);
-    addSelfLoopsToGraph(graph);
-    int quota = 6;
+    int quota = getQuota();
     PCTSPvertex root_vertex = boost::vertex(0, graph);
+    addSelfLoopsToGraph(graph);
     assignZeroCostToSelfLoops(graph, cost_map);
 
     typedef typename boost::graph_traits<PCTSPgraph>::vertex_descriptor vd;
     std::vector<vd> tour;
-    std::vector<int> ids = { 0, 1, 3, 6, 7, 2, 0 };
-    for (auto id : ids) {
-        tour.push_back(boost::vertex(id, graph));
+    switch (GetParam()) {
+        case GraphType::GRID8: tour = { 0, 1, 4, 6, 7, 5, 3, 2, 0 }; break;
+        case GraphType::SUURBALLE: tour = {0, 1, 3, 6, 7, 5, 2, 0}; break;
+        default: tour = {0, 1, 3, 2, 0}; break;
     }
     auto first = tour.begin();
     auto last = tour.end();
-    std::vector<PCTSPedge> solution_edges = getEdgesInWalk(graph, first, last);
+    std::vector<PCTSPedge> heuristic_edges = getEdgesInWalk(graph, first, last);
     std::string name = "test-branch-and-cut";
-    std::string bounds_filepath = ".logs/" + name + "-bounds.csv";
-    std::string log_filepath = ".logs/" + name + ".txt";
-    std::string metrics_csv_filepath = ".logs/test_branch_and_cut.csv";
-    std::string summary_yaml_filepath = ".logs/" + name + "-summary-stats.yaml";
-    SCIP_RETCODE code = PCTSPbranchAndCut(
+    std::filesystem::path log_dir = ".logs";
+
+    SCIP* scip = NULL;
+    SCIPcreate(&scip);
+    auto pairs = solvePrizeCollectingTSP(
+        scip,
         graph,
-        solution_edges,
+        heuristic_edges,
         cost_map,
         prize_map,
         quota,
         root_vertex,
-        bounds_filepath,
-        false,
         false,
         false,
         false,
         {},
-        log_filepath,
-        metrics_csv_filepath,
         name,
         true,
-        1,
         true,
-        1,
-        summary_yaml_filepath,
+        log_dir,
         60
     );
-    EXPECT_EQ(SCIP_OKAY, code);
+    auto solution_edges = edgesFromVertexPairs(graph, pairs);
     EXPECT_GT(solution_edges.size(), 0); // check the list is not empty
 
     // every vertex should be connected to either 2 or 0 edges
@@ -188,6 +184,7 @@ TEST_P(AlgorithmsFixture, testModelPrizeCollectingTSP) {
     auto solution_edges = getEdgesInWalk(graph, first_it, last_it);
 
     modelPrizeCollectingTSP(scip, graph, solution_edges, cost_map, prize_map, quota, root_vertex);
+    EXPECT_EQ(SCIPgetNVars(scip), boost::num_edges(graph));
 }
 
 INSTANTIATE_TEST_SUITE_P(

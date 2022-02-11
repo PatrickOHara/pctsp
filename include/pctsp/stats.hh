@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <objscip/objscip.h>
+#include "pctsp/filepath.hh"
 
 struct SummaryStats {
     SCIP_Status status;
@@ -76,16 +77,6 @@ void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_p
 void writeNodeStatsColumnNames(std::ofstream& csv_file);
 
 void writeNodeStatsRow(NodeStats& node_stats, std::ofstream& csv_file);
-
-template<typename StringIt>
-void writeRowCSV(std::ofstream& csv_file, StringIt& first, StringIt& last) {
-    auto num_items = std::distance(first, last);
-    for (int i = 0; i < num_items; i++) {
-        csv_file << *first++;
-        if (i < num_items - 1) csv_file << ",";
-    }
-    csv_file << "\n";
-}
 
 typedef typename std::chrono::milliseconds SubSeconds;
 typedef typename std::chrono::time_point<std::chrono::system_clock, SubSeconds> TimePointUTC;

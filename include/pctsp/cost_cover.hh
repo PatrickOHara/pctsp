@@ -144,4 +144,13 @@ SCIP_RETCODE includeShortestPathCostCover(
     return includeShortestPathCostCover(scip, distances);
 }
 
+CostCoverEventHandler getDisjointPathsCostCoverEventHandler(SCIP* scip);
+
+CostCoverEventHandler getShortestPathCostCoverEventHandler(SCIP* scip);
+
+unsigned int getNShortestPathCostCoverCutsAdded(SCIP* scip);
+
+unsigned int getNDisjointPathsCostCoverCutsAdded(SCIP* scip);
+
+
 #endif

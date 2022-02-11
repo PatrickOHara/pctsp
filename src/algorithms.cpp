@@ -56,6 +56,71 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
 }
 
+std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
+    SCIP* scip,
+    PCTSPgraph& graph,
+    std::vector<PCTSPedge>& heuristic_edges,
+    EdgeCostMap& cost_map,
+    VertexPrizeMap& prize_map,
+    PrizeNumberType& quota,
+    PCTSPvertex& root_vertex,
+    bool cost_cover_disjoint_paths,
+    bool cost_cover_shortest_path,
+    bool cycle_cover,
+    std::vector<int> disjoint_paths_distances,
+    std::string name,
+    bool sec_disjoint_tour,
+    bool sec_maxflow_mincut,
+    std::filesystem::path solver_dir,
+    float time_limit
+) {
+    // build filepaths
+    std::filesystem::path bounds_csv_filepath = solver_dir / BOUNDS_CSV_FILENAME;
+    std::filesystem::path metrics_csv_filepath = solver_dir / METRICS_CSV_FILENAME;
+    std::filesystem::path scip_logs_filepath = solver_dir / SCIP_LOGS_FILENAME;
+    std::filesystem::path summary_stats_filepath = solver_dir / SUMMARY_STATS_FILENAME;
+
+    // add custom message handler
+    SCIP_MESSAGEHDLR* handler;
+    SCIPcreateMessagehdlrDefault(&handler, false, scip_logs_filepath.c_str(), true);
+    SCIPsetMessagehdlr(scip, handler);
+
+    // add variables, constraints and the SEC cutting plane
+    auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name);
+
+    // add the cost cover inequalities when a new solution is found
+    if (cost_cover_disjoint_paths) {
+        includeDisjointPathsCostCover(scip, disjoint_paths_distances);
+    }
+    if (cost_cover_shortest_path) {
+        includeShortestPathCostCover(scip, graph, cost_map, root_vertex);
+    }
+    // add cycle cover constraint
+    auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
+    if (cycle_cover) {
+        SCIPincludeObjConshdlr(scip, cycle_cover_conshdlr, true);
+        SCIP_CONS* cycle_cover_cons;
+        createBasicCycleCoverCons(scip, &cycle_cover_cons);
+        SCIPaddCons(scip, cycle_cover_cons);
+        SCIPreleaseCons(scip, &cycle_cover_cons);
+    }
+    // add event handlers
+    SCIPincludeObjEventhdlr(scip, new NodeEventhdlr(scip), TRUE);
+    BoundsEventHandler* bounds_handler = new BoundsEventHandler(scip);
+    SCIPincludeObjEventhdlr(scip, bounds_handler, TRUE);
+
+    // time limit
+    SCIPsetRealParam(scip, "limits/time", time_limit);
+
+    // solve the model
+    SCIPsolve(scip);
+
+    // get the solution
+    SCIP_SOL* sol = SCIPgetBestSol(scip);
+    auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+    return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+}
+
 std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     SCIP* scip,
     PCTSPgraph& graph,
@@ -63,7 +128,8 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     EdgeCostMap& cost_map,
     VertexPrizeMap& prize_map,
     PrizeNumberType& quota,
-    PCTSPvertex& root_vertex
+    PCTSPvertex& root_vertex,
+    std::string name
 ) {
     // add self loops to graph - we assume the input graph is simple
     if (hasSelfLoopsOnAllVertices(graph) == false) {
@@ -78,9 +144,8 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota, &node_stats);
 
     // initialise empty model
-    const char* name = "modelPrizeCollectingTSP";
     SCIPincludeDefaultPlugins(scip);
-    SCIPcreateObjProb(scip, name, probdata, true);
+    SCIPcreateObjProb(scip, name.c_str(), probdata, true);
 
     PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota, root_vertex, edge_variable_map);
     SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, true, 1, true, 1), TRUE);
@@ -103,7 +168,6 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
         SCIP_HEUR* heur = NULL;
         addHeuristicEdgesToSolver(scip, graph, heur, edge_variable_map, first, last);
     }
-    SCIPsolve(scip);
     return edge_variable_map;
 }
 
@@ -115,7 +179,8 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
     std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
-    PCTSPvertex& root_vertex
+    PCTSPvertex& root_vertex,
+    std::string name
 ) {
     // add edges to empty graph
     auto start = edge_list.begin();
