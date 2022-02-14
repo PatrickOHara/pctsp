@@ -5,6 +5,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/stl/filesystem.h>
 
 // algorithms binding
 
@@ -18,10 +19,10 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pyBasicSolvePrizeCollectingTSP(
     PCTSPvertex& root_vertex,
     std::string& name
 ) {
-    // PyObject* capsule = model.attr("to_ptr")(false).ptr();
-    // SCIP* scip = (SCIP*) PyCapsule_GetPointer(capsule, "scip");
-    SCIP* scip = NULL;
-    SCIPcreate(&scip);
+    PyObject* capsule = model.attr("to_ptr")(false).ptr();
+    SCIP* scip = (SCIP*) PyCapsule_GetPointer(capsule, "scip");
+    // SCIP* scip = NULL;
+    // SCIPcreate(&scip);
     PCTSPgraph graph;
     auto sol_edges = solvePrizeCollectingTSP(scip, graph, edge_list, heuristic_edges, cost_dict, prize_dict, quota, root_vertex, name);
     // if (PyCapsule_SetPointer(capsule, (void*) scip) > 0) {
@@ -92,6 +93,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
         time_limit
     );
     // give old names to vertices in returned edges
+    std::cout << "Hello, world!" << std::endl;
     return getOldEdges(vertex_bimap, solution_edges);
 
 }
@@ -327,6 +329,6 @@ pybind11::object modelFromCpp() {
 
 
 PYBIND11_MODULE(libpypctsp, m) {
-    m.def("basic_solve_pctsp", &pyBasicSolvePrizeCollectingTSP, "Solve PCTSP with basic branch and cut");
-    // m.def("solve_pctsp", &pySolvePrizeCollectingTSP, "Solve PCTSP.");
+    m.def("basic_solve_pctsp_bind", &pyBasicSolvePrizeCollectingTSP, "Solve PCTSP with basic branch and cut");
+    m.def("solve_pctsp_bind", &pySolvePrizeCollectingTSP, "Solve PCTSP.");
 }

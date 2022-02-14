@@ -2,7 +2,6 @@
 #define __PCTSP_DATA_STRUCTURES__
 
 #include "graph.hh"
-#include "stats.hh"
 #include <boost/graph/filtered_graph.hpp>
 
 /** SCIP user problem data for PCTSP */
@@ -16,22 +15,20 @@ class ProbDataPCTSP : public scip::ObjProbData
     PCTSPgraph* graph_;
     Vertex* root_vertex_;
     EdgeVarLookup* edge_variable_map_;
-    std::vector<NodeStats>* node_stats_;
+
 public:
     /** default constructor */
     ProbDataPCTSP(
         PCTSPgraph* graph,
         Vertex* root_vertex,
         EdgeVarLookup* edge_variable_map,
-        int* quota,
-        std::vector<NodeStats>* node_stats
+        int* quota
     )
     {
         graph_ = graph;
         root_vertex_ = root_vertex;
         edge_variable_map_ = edge_variable_map;
         quota_ = quota;
-        node_stats_ = node_stats;
     };
 
     /** Get the input graph */
@@ -46,8 +43,6 @@ public:
     /** Get the mapping from edges to variables */
     EdgeVarLookup* getEdgeVariableMap();
 
-    /** Get the node statistics */
-    std::vector<NodeStats>* getNodeStats();
 };
 
 template <typename TGraph>

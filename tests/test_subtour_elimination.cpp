@@ -55,8 +55,7 @@ TEST(TestSubtourElimination, testProbDataPCTSP) {
     PCTSPedgeVariableMap edge_variable_map;
     int quota = 2;
     auto root_vertex = boost::vertex(0, graph);
-    std::vector<NodeStats> node_stats;
-    auto probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota, &node_stats);
+    auto probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota);
     SCIPcreateObjProb(
         scip,
         "test-prob-data",
@@ -86,7 +85,6 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
     assignZeroCostToSelfLoops(graph, cost_map);
-    std::vector<NodeStats> node_stats;
 
     std::map<PCTSPedge, SCIP_VAR*> variable_map;
     std::map<PCTSPedge, int> weight_map;
@@ -97,7 +95,7 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     SCIPcreate(&scip);
     SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, true, 1, true, 1), TRUE);
     SCIPincludeDefaultPlugins(scip);
-    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &variable_map, &quota, &node_stats);
+    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &variable_map, &quota);
     SCIPcreateObjProb(
         scip,
         "test-pctsp-with-secs",

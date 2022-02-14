@@ -1,21 +1,41 @@
 #ifndef __PCTSP_EVENT_HANDLERS__
 #define __PCTSP_EVENT_HANDLERS__
 
-#include "data_structures.hh"
 #include "graph.hh"
 #include "stats.hh"
+
+const std::string NODE_EVENTHDLR_NAME = "pctsp_node_handler";
+
+NodeStats newStatsForNode(SCIP* scip, SCIP_NODE* node);
+
+unsigned int currentNodeId(SCIP* scip);
 
 /** Event handler for nodes of the branch and bound tree */
 class NodeEventhdlr : public scip::ObjEventhdlr
 {
+   std::vector<NodeStats> node_stats_;
 public:
    /** default constructor */
    NodeEventhdlr(
       SCIP* scip
       )
-      : ObjEventhdlr(scip, "pctsp_node_handler","event handler for nodes in branch and bound tree for PCTSP")
+      : ObjEventhdlr(scip, NODE_EVENTHDLR_NAME.c_str() ,"event handler for nodes in branch and bound tree for PCTSP")
    {
+      node_stats_ = {};
    }
+
+   /** Get the node statistics */
+   std::vector<NodeStats> getNodeStatsVector();
+
+   NodeStats getNodeStats(SCIP_NODE* node);
+
+   NodeStats getNodeStats(SCIP* scip);
+
+   void addCurrentNode(SCIP* scip);
+
+   void incrementNumSecDisjointTour(SCIP* scip, unsigned int n_cuts);
+
+   void incrementNumSecMaxflowMincut(SCIP* scip, unsigned int n_cuts);
 
    /** destructor of event handler to free user data (called when SCIP is exiting) */
    virtual SCIP_DECL_EVENTFREE(scip_free);

@@ -63,6 +63,48 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
 }
 
+SummaryStats getSummaryStatsFromSCIP(SCIP* scip) {
+    // get the node event handler
+    auto objeventhdlr = SCIPfindObjEventhdlr(scip, NODE_EVENTHDLR_NAME.c_str());
+    unsigned int n_disjoint_sec = 0;
+    unsigned int n_flow_sec = 0;
+    if (objeventhdlr != 0) {
+        NodeEventhdlr* node_eventhdlr =  dynamic_cast<NodeEventhdlr*>(objeventhdlr);
+        auto node_stats = node_eventhdlr->getNodeStatsVector();
+        n_disjoint_sec = numDisjointTourSECs(node_stats);
+        n_flow_sec = numMaxflowMincutSECs(node_stats);
+    }
+
+    // get cost cover event handlers
+    auto spcc = SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str());
+    unsigned int num_cost_cover_shortest_paths = 0;
+    if (spcc != 0) {
+        CostCoverEventHandler* shortest_path_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(spcc);
+        num_cost_cover_shortest_paths = shortest_path_cc_hdlr->getNumConssAdded();
+    }
+    unsigned int num_cost_cover_disjoint_paths = 0;
+    auto dpcc = SCIPfindObjEventhdlr(scip, DISJOINT_PATHS_COST_COVER_NAME.c_str());
+    if (dpcc != 0) {
+        CostCoverEventHandler* disjoint_paths_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(dpcc);
+        num_cost_cover_disjoint_paths = disjoint_paths_cc_hdlr->getNumConssAdded();
+    }
+    // get cycle cover event handler
+    auto cc = SCIPfindObjEventhdlr(scip, CYCLE_COVER_NAME.c_str());
+    unsigned int num_cycle_cover = 0;
+    if (cc != 0) {
+        auto hdlr = dynamic_cast<CycleCoverConshdlr*>(cc);
+        num_cycle_cover = hdlr->getNumConssAdded();
+    }
+    return getSummaryStatsFromSCIP(
+        scip,
+        num_cost_cover_disjoint_paths,
+        num_cost_cover_shortest_paths,
+        num_cycle_cover,
+        n_disjoint_sec,
+        n_flow_sec
+    );
+}
+
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     SCIP* scip,
     PCTSPgraph& graph,
@@ -103,16 +145,17 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
         includeShortestPathCostCover(scip, graph, cost_map, root_vertex);
     }
     // add cycle cover constraint
-    auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
-    if (cycle_cover) {
-        SCIPincludeObjConshdlr(scip, cycle_cover_conshdlr, true);
-        SCIP_CONS* cycle_cover_cons;
-        createBasicCycleCoverCons(scip, &cycle_cover_cons);
-        SCIPaddCons(scip, cycle_cover_cons);
-        SCIPreleaseCons(scip, &cycle_cover_cons);
-    }
+    // auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
+    // if (cycle_cover) {
+    //     SCIPincludeObjConshdlr(scip, cycle_cover_conshdlr, true);
+    //     SCIP_CONS* cycle_cover_cons;
+    //     createBasicCycleCoverCons(scip, &cycle_cover_cons);
+    //     SCIPaddCons(scip, cycle_cover_cons);
+    //     SCIPreleaseCons(scip, &cycle_cover_cons);
+    // }
     // add event handlers
-    SCIPincludeObjEventhdlr(scip, new NodeEventhdlr(scip), TRUE);
+    auto node_eventhdlr = new NodeEventhdlr(scip);
+    SCIPincludeObjEventhdlr(scip, node_eventhdlr, TRUE);
     BoundsEventHandler* bounds_handler = new BoundsEventHandler(scip);
     SCIPincludeObjEventhdlr(scip, bounds_handler, TRUE);
 
@@ -125,6 +168,15 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     // get the solution
     SCIP_SOL* sol = SCIPgetBestSol(scip);
     auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+
+    // Get the metrics and statistics of the solver
+    auto node_stats = node_eventhdlr->getNodeStatsVector();
+    writeNodeStatsToCSV(node_stats, metrics_csv_filepath);
+
+    // Get the summary statistics and write then to file
+    auto summary = getSummaryStatsFromSCIP(scip);
+    writeSummaryStatsToYaml(summary, summary_stats_filepath);
+
     return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
 }
 
@@ -150,8 +202,7 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     std::map<PCTSPedge, SCIP_VAR*> edge_variable_map;
     std::map<PCTSPedge, PrizeNumberType> weight_map;
     putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
-    std::vector<NodeStats> node_stats;  // save node statistics
-    ProbDataPCTSP* objprobdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota, &node_stats);
+    ProbDataPCTSP* objprobdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota);
 
     SCIPcreateObjProb(scip, name.c_str(), objprobdata, true);
 

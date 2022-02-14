@@ -238,10 +238,9 @@ SCIP_RETCODE PCTSPbranchAndCut(
     SCIP_CALL(SCIPincludeDefaultPlugins(scip));
 
     // datastructures needed for the MIP solver
-    std::vector<NodeStats> node_stats;  // save node statistics
     std::map<Edge, SCIP_VAR*> edge_variable_map;
     std::map<Edge, int> weight_map;
-    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota, &node_stats);
+    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota);
     SCIPcreateObjProb(
         scip,
         name.c_str(),
@@ -258,7 +257,8 @@ SCIP_RETCODE PCTSPbranchAndCut(
     SCIP_CALL(SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE));
 
     // add event handlers
-    SCIP_CALL( SCIPincludeObjEventhdlr(scip, new NodeEventhdlr(scip), TRUE) );
+    auto node_event_handler = new NodeEventhdlr(scip);
+    SCIP_CALL( SCIPincludeObjEventhdlr(scip, node_event_handler, TRUE ));
     BoundsEventHandler* bounds_handler = new BoundsEventHandler(scip);
     SCIP_CALL( SCIPincludeObjEventhdlr(scip, bounds_handler, TRUE));
 
@@ -333,6 +333,7 @@ SCIP_RETCODE PCTSPbranchAndCut(
     writeBoundsToCSV(bounds_vector, bounds_csv_filepath);
 
     // Get the metrics and statistics of the solver
+    auto node_stats = node_event_handler->getNodeStatsVector();
     writeNodeStatsToCSV(node_stats, metrics_csv_filepath);
 
     // Get the summary statistics

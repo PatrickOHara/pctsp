@@ -1,7 +1,7 @@
 """Package for pctsp"""
 
 
-# from .algorithms import pctsp_branch_and_cut
+from .algorithms import solve_pctsp
 from .constants import (
     BOOST_LOGS_TXT,
     FOUR_HOURS,
@@ -12,6 +12,7 @@ from .constants import (
     SCIP_METRICS_CSV,
 )
 from .data_structures import SummaryStats
+
 # from .heuristic import (
 #     collapse,
 #     extend,

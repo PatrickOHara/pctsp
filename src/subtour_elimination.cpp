@@ -5,6 +5,7 @@
 #include "pctsp/subtour_elimination.hh"
 #include "pctsp/exception.hh"
 #include "pctsp/logger.hh"
+#include "pctsp/event_handlers.hh"
 #include <boost/graph/push_relabel_max_flow.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/strong_components.hpp>
@@ -403,15 +404,6 @@ SCIP_RETCODE PCTSPseparateSubtour(
     auto& edge_variable_map = *(probdata->getEdgeVariableMap());
     auto& root_vertex = *(probdata->getRootVertex());
 
-    // data for node statistics
-    auto& node_stats = *(probdata->getNodeStats());
-    SCIP_NODE* node = SCIPgetCurrentNode(scip);
-    unsigned int node_id = SCIPnodeGetNumber(node);
-    if (node_stats.size() < node_id) {
-        // resize stats array
-        node_stats.resize(node_id);
-    }
-
     // connected components
     auto support_graph = filterGraphByPositiveEdgeVars(scip, input_graph, sol, edge_variable_map);
     std::vector< int > component(boost::num_vertices(support_graph));
@@ -419,20 +411,27 @@ SCIP_RETCODE PCTSPseparateSubtour(
     auto component_vectors = getConnectedComponentsVectors(support_graph, n_components, component);
     auto v_index = boost::get(vertex_index, support_graph);
     int root_component_id = component[v_index[root_vertex]];
+
+    bool node_eventhdlr_ready = false;
+    auto objeventhdlr = SCIPfindObjEventhdlr(scip, NODE_EVENTHDLR_NAME.c_str());
+    NodeEventhdlr* node_eventhdlr;
+    if (objeventhdlr != 0) {
+        node_eventhdlr =  dynamic_cast<NodeEventhdlr*>(objeventhdlr);
+        node_eventhdlr_ready = true;
+    }
+
     if (sec_disjoint_tour) {
 
         int num_disjoint_tour_secs_added = 0;
         PCTSPseparateDisjointTour(
             scip, conshdlr, input_graph, edge_variable_map, root_vertex, component_vectors, sol, result, root_component_id, num_disjoint_tour_secs_added
         );
-        // increment node stats with num constraints added
-        node_stats[node_id-1].num_sec_disjoint_tour += num_disjoint_tour_secs_added;
-
+        if (node_eventhdlr_ready) node_eventhdlr->incrementNumSecDisjointTour(scip, num_disjoint_tour_secs_added);
+    }
     if (sec_maxflow_mincut)
     {
         // create a set from the root component vector
         std::set<PCTSPvertex> root_component;
-        // std::copy(root_component.begin(), root_component.end(), std::back_inserter(component_vectors[root_component_id]));
         std::copy(component_vectors[root_component_id].begin(), component_vectors[root_component_id].end(), std::inserter(root_component, root_component.begin()));
     
         // separate SEC using maxflow mincut
@@ -440,8 +439,7 @@ SCIP_RETCODE PCTSPseparateSubtour(
         PCTSPseparateMaxflowMincut(
             scip, conshdlr, input_graph, edge_variable_map, root_vertex, sol, result, root_component, num_maxflow_mincut_secs_added, sec_maxflow_mincut_freq
         );
-        node_stats[node_id-1].num_sec_maxflow_mincut += num_maxflow_mincut_secs_added;
-    }
+        if (node_eventhdlr_ready) node_eventhdlr->incrementNumSecMaxflowMincut(scip, num_maxflow_mincut_secs_added);
     }
     return SCIP_OKAY;
 }

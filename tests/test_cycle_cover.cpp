@@ -27,10 +27,9 @@ TEST_P(CycleCoverFixture, testCycleCover) {
     SCIPincludeDefaultPlugins(scip);
 
     // setup the solver with minimal add ons
-    std::vector<NodeStats> node_stats;  // save node statistics
     std::map<PCTSPedge, SCIP_VAR*> edge_variable_map;
     std::map<PCTSPedge, int> weight_map;
-    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota, &node_stats);
+    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota);
     SCIPcreateObjProb(
         scip,
         name.c_str(),

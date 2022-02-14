@@ -74,6 +74,8 @@ unsigned int numMaxflowMincutSECs(std::vector<NodeStats>& node_stats);
 
 void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_path);
 
+void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::filesystem::path& file_path);
+
 void writeNodeStatsColumnNames(std::ofstream& csv_file);
 
 void writeNodeStatsRow(NodeStats& node_stats, std::ofstream& csv_file);

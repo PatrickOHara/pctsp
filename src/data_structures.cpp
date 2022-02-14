@@ -15,7 +15,3 @@ PCTSPvertex* ProbDataPCTSP::getRootVertex() {
 PCTSPedgeVariableMap* ProbDataPCTSP::getEdgeVariableMap() {
     return edge_variable_map_;
 }
-
-std::vector<NodeStats>* ProbDataPCTSP::getNodeStats() {
-    return node_stats_;
-}

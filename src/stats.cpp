@@ -80,6 +80,14 @@ void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_p
     }
 }
 
+void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::filesystem::path& file_path) {
+    std::ofstream csv_file(file_path.c_str());
+    writeNodeStatsColumnNames(csv_file);
+    for (NodeStats& stat : node_stats) {
+        writeNodeStatsRow(stat, csv_file);
+    }
+}
+
 void writeNodeStatsRow(NodeStats& node_stats, std::ofstream& csv_file) {
     csv_file << node_stats.lower_bound << ",";
     csv_file << node_stats.node_id << ",";
