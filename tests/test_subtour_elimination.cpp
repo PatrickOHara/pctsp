@@ -146,42 +146,39 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
     auto cost_map = getCostMap(graph);
-    addSelfLoopsToGraph(graph);
+    auto root_vertex = getRootVertex();
     int quota = 3;
-    PCTSPvertex root_vertex = boost::vertex(0, graph);
+
+    addSelfLoopsToGraph(graph);
     assignZeroCostToSelfLoops(graph, cost_map);
 
-    // get filenames
-    std::string name = "test-subtour-with-params";
-    std::string bounds_filepath = ".logs/" + name + "-bounds.csv";
-    std::string log_filepath = ".logs/" + name + ".txt";
-    std::string metrics_csv_filepath = ".logs/" + name + "-metrics.csv";
-    std::string summary_yaml_filepath = ".logs/" + name + "-summary-stats.yaml";
-    std::vector<PCTSPedge> solution_edges;
-    SCIP_RETCODE code = PCTSPbranchAndCut(
+    std::vector<PCTSPedge> heuristic_edges;
+    std::filesystem::path logger_dir = ".logs";
+
+    SCIP* scip = NULL;
+    SCIPcreate(&scip);
+    std::string name = "testSubtourParams";
+
+    auto solution_edges = solvePrizeCollectingTSP(
+        scip,
         graph,
-        solution_edges,
+        heuristic_edges,
         cost_map,
         prize_map,
         quota,
         root_vertex,
-        bounds_filepath,
-        false,
         false,
         false,
         false,
         {},
-        log_filepath,
-        metrics_csv_filepath,
         name,
         sec_disjoint_tour,
-        1,
         sec_maxflow_mincut,
-        1,
-        summary_yaml_filepath,
+        logger_dir,
         60
     );
-    int actual_cost = totalCost(solution_edges, cost_map);
+    auto sol_edges = edgesFromVertexPairs(graph, solution_edges);
+    int actual_cost = totalCost(sol_edges, cost_map);
     int expected_cost;
     int expected_num_sec_maxflow_mincut;
     switch (GetParam()) {
@@ -212,7 +209,8 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
         }
     }
     EXPECT_EQ(expected_cost, actual_cost);
-    auto stats = readSummaryStatsFromYaml(summary_yaml_filepath);
+    auto summary_yaml = logger_dir / PCTSP_SUMMARY_STATS_YAML;
+    auto stats = readSummaryStatsFromYaml(summary_yaml);
     EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
 }
 

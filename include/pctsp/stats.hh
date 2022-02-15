@@ -21,9 +21,9 @@ struct SummaryStats {
     unsigned int num_sec_maxflow_mincut;        // number of SECs added with max flow
 };
 
-SummaryStats readSummaryStatsFromYaml(std::string& filename);
+SummaryStats readSummaryStatsFromYaml(std::filesystem::path& filename);
 
-void writeSummaryStatsToYaml(SummaryStats& summary, std::string& filename);
+void writeSummaryStatsToYaml(SummaryStats& summary, std::filesystem::path& filename);
 
 SummaryStats getSummaryStatsFromSCIP(
     SCIP* scip,
@@ -72,7 +72,7 @@ unsigned int numDisjointTourSECs(std::vector<NodeStats>& node_stats);
 
 unsigned int numMaxflowMincutSECs(std::vector<NodeStats>& node_stats);
 
-void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_path);
+// void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_path);
 
 void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::filesystem::path& file_path);
 
@@ -101,7 +101,7 @@ struct Bounds {
    unsigned int node_id;
 };
 
-void writeBoundsToCSV(std::vector<Bounds>& bounds_vector, std::string& file_path);
+void writeBoundsToCSV(std::vector<Bounds>& bounds_vector, std::filesystem::path& file_path);
 
 void writeBoundsColumnsNames(std::ofstream& csv_file);
 

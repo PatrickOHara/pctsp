@@ -1,22 +1,27 @@
+#include "pctsp/exception.hh"
 #include "pctsp/stats.hh"
 #include <yaml-cpp/yaml.h>
 
-void writeSummaryStatsToYaml(SummaryStats& summary, std::string& filename) {
-    YAML::Node node;
-    node["status"] = enum_as_integer(summary.status);
-    node["lower_bound"] = summary.lower_bound;
-    node["upper_bound"] = summary.upper_bound;
-    node["num_cost_cover_disjoint_paths"] = summary.num_cost_cover_disjoint_paths;
-    node["num_cost_cover_shortest_paths"] = summary.num_cost_cover_shortest_paths;
-    node["num_cycle_cover"] = summary.num_cycle_cover;
-    node["num_nodes"] = summary.num_nodes;
-    node["num_sec_disjoint_tour"] = summary.num_sec_disjoint_tour;
-    node["num_sec_maxflow_mincut"] = summary.num_sec_maxflow_mincut;
-    std::ofstream fout(filename);
-    fout << node;
+void writeSummaryStatsToYaml(SummaryStats& summary, std::filesystem::path& filename) {
+    if (std::filesystem::exists(filename.parent_path())) {
+        YAML::Node node;
+        node["status"] = enum_as_integer(summary.status);
+        node["lower_bound"] = summary.lower_bound;
+        node["upper_bound"] = summary.upper_bound;
+        node["num_cost_cover_disjoint_paths"] = summary.num_cost_cover_disjoint_paths;
+        node["num_cost_cover_shortest_paths"] = summary.num_cost_cover_shortest_paths;
+        node["num_cycle_cover"] = summary.num_cycle_cover;
+        node["num_nodes"] = summary.num_nodes;
+        node["num_sec_disjoint_tour"] = summary.num_sec_disjoint_tour;
+        node["num_sec_maxflow_mincut"] = summary.num_sec_maxflow_mincut;
+        std::ofstream fout(filename.string());
+        fout << node;
+    }
 }
 
-SummaryStats readSummaryStatsFromYaml(std::string& filename) {
+SummaryStats readSummaryStatsFromYaml(std::filesystem::path& filename) {
+    if (! std::filesystem::exists(filename))
+        throw FileDoesNotExistError(filename);
     YAML::Node stats_yaml = YAML::LoadFile(filename);
     SCIP_Status status = (SCIP_Status) stats_yaml["status"].as<int>();
     SummaryStats summary = {
@@ -72,19 +77,13 @@ unsigned int numMaxflowMincutSECs(std::vector<NodeStats>& node_stats) {
     return total;
 }
 
-void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_path) {
-    std::ofstream csv_file(file_path);
-    writeNodeStatsColumnNames(csv_file);
-    for (NodeStats& stat : node_stats) {
-        writeNodeStatsRow(stat, csv_file);
-    }
-}
-
 void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::filesystem::path& file_path) {
-    std::ofstream csv_file(file_path.c_str());
-    writeNodeStatsColumnNames(csv_file);
-    for (NodeStats& stat : node_stats) {
-        writeNodeStatsRow(stat, csv_file);
+    if (std::filesystem::exists(file_path.parent_path())) {
+        std::ofstream csv_file(file_path.string());
+        writeNodeStatsColumnNames(csv_file);
+        for (NodeStats& stat : node_stats) {
+            writeNodeStatsRow(stat, csv_file);
+        }
     }
 }
 
@@ -106,11 +105,13 @@ void writeNodeStatsColumnNames(std::ofstream& csv_file) {
     writeRowCSV(csv_file, first, last);
 }
 
-void writeBoundsToCSV(std::vector<Bounds>& bounds_vector, std::string& file_path) {
-    std::ofstream csv_file(file_path);
-    writeBoundsColumnsNames(csv_file);
-    for (Bounds& bounds : bounds_vector) {
-        writeBoundsRow(bounds, csv_file);
+void writeBoundsToCSV(std::vector<Bounds>& bounds_vector, std::filesystem::path& file_path) {
+    if (std::filesystem::exists(file_path.parent_path())) {
+        std::ofstream csv_file(file_path);
+        writeBoundsColumnsNames(csv_file);
+        for (Bounds& bounds : bounds_vector) {
+            writeBoundsRow(bounds, csv_file);
+        }
     }
 }
 

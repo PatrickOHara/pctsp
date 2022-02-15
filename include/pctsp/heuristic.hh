@@ -17,7 +17,7 @@ using namespace std;
 
 // Extension and collapse heuristic
 
-float unitary_gain(int prize_v, int cost_uw, int cost_uv, int cost_vw);
+float unitaryGain(int prize_v, int cost_uw, int cost_uv, int cost_vw);
 
 struct ExtensionVertex {
     int index;
@@ -387,7 +387,7 @@ ExtensionVertex unitaryGainOfVertex(
             int cost_uv = cost_map[edge_uv];
             int cost_vw = cost_map[edge_vw];
             int cost_uw = cost_map[edge_uw];
-            float gain = unitary_gain(prize_of_v, cost_uw, cost_uv, cost_vw);
+            float gain = unitaryGain(prize_of_v, cost_uw, cost_uv, cost_vw);
             if (gain > max_gain) {
                 max_gain = gain;
                 index_of_extension = i;

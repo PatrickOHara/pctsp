@@ -3,6 +3,7 @@
 // Custom exceptions for the TSP with Profits
 
 #include <exception>
+#include <filesystem>
 #include <string>
 
 using namespace std;
@@ -80,6 +81,21 @@ class TargetVertexFound : public std::exception {
         const char* what() const throw() {
             return message.c_str();
         }
+};
+
+class FileDoesNotExistError : public std::filesystem::filesystem_error {
+    private:
+        const std::string message = "File does not exist: ";
+    
+    public:
+        FileDoesNotExistError(const std::string& what_arg, const std::filesystem::path& p1, std::error_code ec) : std::filesystem::filesystem_error(what_arg, p1, ec) {};
+
+        FileDoesNotExistError(std::filesystem::path& filepath): FileDoesNotExistError(
+            message, filepath, std::make_error_code(std::errc::no_such_file_or_directory)
+        ) {};            
+        // const char* what() const throw() {
+        //     return message.c_str();
+        // }
 };
 
 #endif

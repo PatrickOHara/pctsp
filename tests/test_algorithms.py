@@ -1,6 +1,5 @@
 """Tests for exact algorithms for PCTSP"""
 
-import networkx as nx
 from pyscipopt import Model
 from tspwplib import (
     asymmetric_from_undirected,
@@ -208,26 +207,7 @@ def test_cycle_cover_grid8(grid8, root, logger_dir):
     summary_path = logger_dir / PCTSP_SUMMARY_STATS_YAML
     summary = SummaryStats.from_yaml(summary_path)
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
+    assert summary.num_sec_disjoint_tour == 0
+    assert summary.num_sec_maxflow_mincut == 0
     assert summary.num_cycle_cover == 1
     assert is_pctsp_yes_instance(grid8, quota, root, ordered_edges)
-
-if __name__ == "__main__":
-    suurballes_edges = [
-        (0, 1, 3),
-        (0, 4, 8),
-        (0, 2, 2),
-        (1, 3, 1),
-        (1, 4, 4),
-        (1, 5, 6),
-        (2, 5, 5),
-        (3, 6, 5),
-        (4, 6, 1),
-        (5, 7, 2),
-        (7, 2, 3),
-        (7, 6, 7),
-    ]
-    from pathlib import Path
-    G = nx.Graph()
-    G.add_weighted_edges_from(suurballes_edges, weight="cost")
-    nx.set_node_attributes(G, 1, name="prize")
-    test_pctsp_on_suurballes_graph(G, 0, Path(".logs"))

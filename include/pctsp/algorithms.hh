@@ -188,7 +188,9 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     VertexPrizeMap& prize_map,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
-    std::string& name
+    std::string& name,
+    bool sec_disjoint_tour = true,
+    bool sec_maxflow_mincut = true
 );
 
 std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
@@ -200,173 +202,9 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
-    std::string& name
+    std::string& name,
+    bool sec_disjoint_tour = true,
+    bool sec_maxflow_mincut = true
 );
 
-/** Solve the Prize Collecting TSP problem using a branch and cut algorithm
- */
-template <typename TGraph, typename TCostMap, typename TPrizeMap>
-SCIP_RETCODE PCTSPbranchAndCut(
-    TGraph& graph,
-    std::vector<typename boost::graph_traits<TGraph>::edge_descriptor>& solution_edges,
-    TCostMap& cost_map,
-    TPrizeMap& prize_map,
-    int quota,
-    typename boost::graph_traits<TGraph>::vertex_descriptor root_vertex,
-    std::string bounds_csv_filepath = "bounds.csv",
-    bool cost_cover_disjoint_paths = false,
-    bool cost_cover_shortest_path = false,
-    bool cost_cover_steiner_tree = false,
-    bool cycle_cover = false,
-    std::vector<int> disjoint_paths_distances = std::vector<int>(),
-    std::string log_filepath = "scip_logs.txt",
-    std::string metrics_csv_filepath = "metrics.csv",
-    std::string name = "pctsp",
-    bool sec_disjoint_tour = true,
-    int sec_disjoint_tour_freq = 1,
-    bool sec_maxflow_mincut = true,
-    int sec_maxflow_mincut_freq = 1,
-    std::string summary_yaml_filepath = "summary_stats.yaml",
-    float time_limit = 14400    //  seconds (default 4 hours)
-) {
-    typedef typename boost::graph_traits<TGraph>::edge_descriptor Edge;
-    typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
-
-    // initialise empty model
-    SCIP* scip = NULL;
-    SCIP_CALL(SCIPcreate(&scip));
-    SCIP_CALL(SCIPincludeDefaultPlugins(scip));
-
-    // datastructures needed for the MIP solver
-    std::map<Edge, SCIP_VAR*> edge_variable_map;
-    std::map<Edge, int> weight_map;
-    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota);
-    SCIPcreateObjProb(
-        scip,
-        name.c_str(),
-        probdata,
-        true
-    );
-
-    // add custom message handler
-    SCIP_MESSAGEHDLR* handler;
-    SCIP_CALL(SCIPcreateMessagehdlrDefault(&handler, false, log_filepath.c_str(), true));
-    SCIP_CALL(SCIPsetMessagehdlr(scip, handler));
-
-    // add custom cutting plane handlers
-    SCIP_CALL(SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq), TRUE));
-
-    // add event handlers
-    auto node_event_handler = new NodeEventhdlr(scip);
-    SCIP_CALL( SCIPincludeObjEventhdlr(scip, node_event_handler, TRUE ));
-    BoundsEventHandler* bounds_handler = new BoundsEventHandler(scip);
-    SCIP_CALL( SCIPincludeObjEventhdlr(scip, bounds_handler, TRUE));
-
-    // add the cost cover inequalities when a new solution is found
-    if (cost_cover_disjoint_paths) {
-        SCIP_CALL(includeDisjointPathsCostCover(scip, disjoint_paths_distances));
-    }
-    if (cost_cover_shortest_path) {
-        SCIP_CALL(includeShortestPathCostCover(scip, graph, cost_map, root_vertex));
-    }
-
-
-    BOOST_LOG_TRIVIAL(info) << "Created SCIP program. Adding constraints and variables.";
-
-    // move prizes of vertices onto the weight of an edge
-    putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
-
-    // add variables and constraints to SCIP model
-    SCIP_CALL(PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota,
-        root_vertex, edge_variable_map));
-    int nvars = SCIPgetNVars(scip);
-
-    // turn off presolving
-    SCIPsetIntParam(scip, "presolving/maxrounds", 0);
-
-    // time limit
-    SCIPsetRealParam(scip, "limits/time", time_limit);
-
-    // add the subtour elimination constraints as cutting planes
-    SCIP_CONS* cons;
-    std::string cons_name("subtour-constraint");
-    PCTSPcreateBasicConsSubtour(scip, &cons, cons_name, graph, root_vertex);
-    SCIPaddCons(scip, cons);
-    SCIPreleaseCons(scip, &cons);
-
-    // add cycle cover constraint
-    auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
-    if (cycle_cover) {
-        SCIP_CALL(SCIPincludeObjConshdlr(scip, cycle_cover_conshdlr, true));
-        SCIP_CONS* cycle_cover_cons;
-        createBasicCycleCoverCons(scip, &cycle_cover_cons);
-        SCIPaddCons(scip, cycle_cover_cons);
-        SCIPreleaseCons(scip, &cycle_cover_cons);
-    }
-    // add selected heuristics to reduce the upper bound on the optimal
-    if (solution_edges.size() > 0) {
-        auto first = solution_edges.begin();
-        auto last = solution_edges.end();
-        BOOST_LOG_TRIVIAL(info) << "Adding starting solution to solver.";
-        SCIP_HEUR* heur = NULL;
-        addHeuristicEdgesToSolver(scip, graph, heur, edge_variable_map, first, last);
-    }
-
-    // TODO adjust parameters for the branching strategy
-
-    BOOST_LOG_TRIVIAL(info) << "Added contraints and variables. Solving model.";
-    // Solve the model
-    SCIP_CALL(SCIPsolve(scip));
-    BOOST_LOG_TRIVIAL(info) << "Model solved. Getting edge list of best solution.";
-
-    // Get the solution
-    SCIP_SOL* sol = SCIPgetBestSol(scip);
-    solution_edges = getSolutionEdges(scip, graph, sol, edge_variable_map);
-    BOOST_LOG_TRIVIAL(info) << "Saving SCIP logs to: " << log_filepath;
-    FILE* log_file = fopen(log_filepath.c_str(), "w");
-    // SCIP_CALL(SCIPprintOrigProblem(scip, log_file, NULL, true));
-    // SCIP_CALL(SCIPprintBestSol(scip, log_file, true));
-    SCIP_CALL(SCIPprintStatistics(scip, log_file));
-
-    // Write the bounds to file
-    std::vector<Bounds> bounds_vector = bounds_handler->getBoundsVector();
-    writeBoundsToCSV(bounds_vector, bounds_csv_filepath);
-
-    // Get the metrics and statistics of the solver
-    auto node_stats = node_event_handler->getNodeStatsVector();
-    writeNodeStatsToCSV(node_stats, metrics_csv_filepath);
-
-    // Get the summary statistics
-    unsigned int num_cost_cover_disjoint_paths = 0;
-    if (cost_cover_disjoint_paths) {
-        CostCoverEventHandler* disjoint_paths_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(
-            SCIPfindObjEventhdlr(scip, DISJOINT_PATHS_COST_COVER_NAME.c_str())
-        );
-        num_cost_cover_disjoint_paths = disjoint_paths_cc_hdlr->getNumConssAdded();
-    }
-    unsigned int num_cost_cover_shortest_paths = 0;
-    if (cost_cover_shortest_path) {
-        CostCoverEventHandler* shortest_path_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(
-            SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str())
-        );
-        num_cost_cover_shortest_paths = shortest_path_cc_hdlr->getNumConssAdded();
-    }
-    auto summary = getSummaryStatsFromSCIP(
-        scip,
-        num_cost_cover_disjoint_paths,
-        num_cost_cover_shortest_paths,
-        cycle_cover_conshdlr->getNumConssAdded(),
-        numDisjointTourSECs(node_stats),
-        numMaxflowMincutSECs(node_stats)
-    );
-    writeSummaryStatsToYaml(summary, summary_yaml_filepath);
-
-    // release handlers and SCIP
-    BOOST_LOG_TRIVIAL(debug) << "Releasing constraint handler.";
-    SCIP_CALL(SCIPmessagehdlrRelease(&handler));
-    BOOST_LOG_TRIVIAL(debug) << "Releasing SCIP model.";
-    SCIP_CALL(SCIPfree(&scip));
-    BOOST_LOG_TRIVIAL(debug) << "Done releasing model. Returning status SCIP_OKAY.";
-    return SCIP_OKAY;
-}
 #endif

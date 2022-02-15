@@ -4,10 +4,11 @@
 #include <filesystem>
 #include <string>
 
-const std::string BOUNDS_CSV_FILENAME = "bounds.csv";
-const std::string METRICS_CSV_FILENAME = "metrics.csv";
-const std::string SCIP_LOGS_FILENAME = "scip_logs.txt";
-const std::string SUMMARY_STATS_FILENAME = "summary_stats.yml";
+const std::string BOOST_LOGS_FILENAME = "boost_logs.txt";
+const std::string SCIP_BOUNDS_CSV = "lower_upper_bounds.csv";
+const std::string SCIP_LOGS_TXT = "scip_logs.txt";
+const std::string SCIP_NODE_STATS_CSV = "scip_node_stats.csv";
+const std::string PCTSP_SUMMARY_STATS_YAML = "pctsp_summary_stats.yaml";
 
 template<typename StringIt>
 void writeRowCSV(std::ofstream& csv_file, StringIt& first, StringIt& last) {

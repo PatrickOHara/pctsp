@@ -88,13 +88,8 @@ SummaryStats getSummaryStatsFromSCIP(SCIP* scip) {
         CostCoverEventHandler* disjoint_paths_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(dpcc);
         num_cost_cover_disjoint_paths = disjoint_paths_cc_hdlr->getNumConssAdded();
     }
-    // get cycle cover event handler
-    auto cc = SCIPfindObjEventhdlr(scip, CYCLE_COVER_NAME.c_str());
-    unsigned int num_cycle_cover = 0;
-    if (cc != 0) {
-        auto hdlr = dynamic_cast<CycleCoverConshdlr*>(cc);
-        num_cycle_cover = hdlr->getNumConssAdded();
-    }
+    unsigned int num_cycle_cover = getNumCycleCoverCutsAdded(scip);
+
     return getSummaryStatsFromSCIP(
         scip,
         num_cost_cover_disjoint_paths,
@@ -124,18 +119,19 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     float time_limit
 ) {
     // build filepaths
-    std::filesystem::path bounds_csv_filepath = solver_dir / BOUNDS_CSV_FILENAME;
-    std::filesystem::path metrics_csv_filepath = solver_dir / METRICS_CSV_FILENAME;
-    std::filesystem::path scip_logs_filepath = solver_dir / SCIP_LOGS_FILENAME;
-    std::filesystem::path summary_stats_filepath = solver_dir / SUMMARY_STATS_FILENAME;
+    std::filesystem::create_directory(solver_dir);
+    std::filesystem::path scip_bounds_csv = solver_dir / SCIP_BOUNDS_CSV;
+    std::filesystem::path scip_node_stats_csv = solver_dir / SCIP_NODE_STATS_CSV;
+    std::filesystem::path scip_logs_txt = solver_dir / SCIP_LOGS_TXT;
+    std::filesystem::path pctsp_summary_stats_yaml = solver_dir / PCTSP_SUMMARY_STATS_YAML;
 
     // add custom message handler
     SCIP_MESSAGEHDLR* handler;
-    SCIPcreateMessagehdlrDefault(&handler, false, scip_logs_filepath.c_str(), true);
+    SCIPcreateMessagehdlrDefault(&handler, false, scip_logs_txt.c_str(), true);
     SCIPsetMessagehdlr(scip, handler);
 
     // add variables, constraints and the SEC cutting plane
-    auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name);
+    auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name, sec_disjoint_tour, sec_maxflow_mincut);
 
     // add the cost cover inequalities when a new solution is found
     if (cost_cover_disjoint_paths) {
@@ -145,16 +141,16 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
         includeShortestPathCostCover(scip, graph, cost_map, root_vertex);
     }
     // add cycle cover constraint
-    // auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
-    // if (cycle_cover) {
-    //     SCIPincludeObjConshdlr(scip, cycle_cover_conshdlr, true);
-    //     SCIP_CONS* cycle_cover_cons;
-    //     createBasicCycleCoverCons(scip, &cycle_cover_cons);
-    //     SCIPaddCons(scip, cycle_cover_cons);
-    //     SCIPreleaseCons(scip, &cycle_cover_cons);
-    // }
+    auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
+    if (cycle_cover) {
+        SCIPincludeObjConshdlr(scip, cycle_cover_conshdlr, true);
+        SCIP_CONS* cycle_cover_cons;
+        createBasicCycleCoverCons(scip, &cycle_cover_cons);
+        SCIPaddCons(scip, cycle_cover_cons);
+        SCIPreleaseCons(scip, &cycle_cover_cons);
+    }
     // add event handlers
-    auto node_eventhdlr = new NodeEventhdlr(scip);
+    NodeEventhdlr* node_eventhdlr = new NodeEventhdlr(scip);
     SCIPincludeObjEventhdlr(scip, node_eventhdlr, TRUE);
     BoundsEventHandler* bounds_handler = new BoundsEventHandler(scip);
     SCIPincludeObjEventhdlr(scip, bounds_handler, TRUE);
@@ -169,13 +165,25 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     SCIP_SOL* sol = SCIPgetBestSol(scip);
     auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
 
-    // Get the metrics and statistics of the solver
+    // get the node stats of the solver
     auto node_stats = node_eventhdlr->getNodeStatsVector();
-    writeNodeStatsToCSV(node_stats, metrics_csv_filepath);
+    writeNodeStatsToCSV(node_stats, scip_node_stats_csv);
 
-    // Get the summary statistics and write then to file
+    // get the summary statistics and write then to file
     auto summary = getSummaryStatsFromSCIP(scip);
-    writeSummaryStatsToYaml(summary, summary_stats_filepath);
+    writeNodeStatsToCSV(node_stats, scip_node_stats_csv);
+    writeSummaryStatsToYaml(summary, pctsp_summary_stats_yaml);
+
+    // write the logs to txt
+    FILE* log_file = fopen(scip_logs_txt.c_str(), "w");
+    SCIPprintStatistics(scip, log_file);
+
+    // write the bounds CSV
+    std::vector<Bounds> bounds_vector = bounds_handler->getBoundsVector();
+    writeBoundsToCSV(bounds_vector, scip_bounds_csv);
+
+    // release any variable we no longer need
+    SCIPmessagehdlrRelease(&handler);
 
     return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
 }
@@ -188,7 +196,9 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     VertexPrizeMap& prize_map,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
-    std::string& name
+    std::string& name,
+    bool sec_disjoint_tour,
+    bool sec_maxflow_mincut
 ) {
     // initialise empty model
     SCIPincludeDefaultPlugins(scip);
@@ -207,7 +217,7 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     SCIPcreateObjProb(scip, name.c_str(), objprobdata, true);
 
     PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota, root_vertex, edge_variable_map);
-    SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, true, 1, true, 1), TRUE);
+    SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, sec_disjoint_tour, 1, sec_maxflow_mincut, 1), TRUE);
 
     // turn off presolving
     SCIPsetIntParam(scip, "presolving/maxrounds", 0);
@@ -223,7 +233,7 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     if (heuristic_edges.size() > 0) {
         auto first = heuristic_edges.begin();
         auto last = heuristic_edges.end();
-        BOOST_LOG_TRIVIAL(info) << "Adding starting solution to solver.";
+        BOOST_LOG_TRIVIAL(info) << "Adding starting solution with " << heuristic_edges.size() << " edges to solver.";
         SCIP_HEUR* heur = NULL;
         addHeuristicEdgesToSolver(scip, graph, heur, edge_variable_map, first, last);
     }
@@ -239,7 +249,9 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
-    std::string& name
+    std::string& name,
+    bool sec_disjoint_tour,
+    bool sec_maxflow_mincut
 ) {
     // add edges to empty graph
     auto start = edge_list.begin();
@@ -265,5 +277,5 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
         solution = edgesFromVertexPairs(graph, pairs_first, pairs_last);
     }
 
-    return modelPrizeCollectingTSP(scip, graph, solution, cost_map, prize_map, quota, root_vertex, name);
+    return modelPrizeCollectingTSP(scip, graph, solution, cost_map, prize_map, quota, root_vertex, name, sec_disjoint_tour, sec_maxflow_mincut);
 }

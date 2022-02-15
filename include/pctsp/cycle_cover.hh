@@ -140,6 +140,7 @@ SCIP_RETCODE separateCycleCover(
     return SCIP_OKAY;
 }
 
+unsigned int getNumCycleCoverCutsAdded(SCIP* scip);
 
 const std::string CYCLE_COVER_NAME = "Cycle cover";
 const std::string CYCLE_COVER_DESCRIPTION = "Inequalities are added if a set of vertices cannot contain a feasible cycle";

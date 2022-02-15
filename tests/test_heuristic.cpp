@@ -21,10 +21,10 @@ typedef GraphFixture SuurballeGraphFixture;
 typedef GraphFixture HeuristicFixture;
 
 TEST(TestExpandCollapse, testUnitaryGain) {
-    EXPECT_EQ(unitary_gain(10, 2, 2, 2), 5);
-    EXPECT_EQ(unitary_gain(2, 0, 1, 3), 0.5);
+    EXPECT_EQ(unitaryGain(10, 2, 2, 2), 5);
+    EXPECT_EQ(unitaryGain(2, 0, 1, 3), 0.5);
     // triangle inequality does not hold
-    EXPECT_EQ(unitary_gain(10, 15, 5, 5), -2);
+    EXPECT_EQ(unitaryGain(10, 15, 5, 5), -2);
 }
 
 TEST(TestExpandCollapse, testCalculateAverageGain) {

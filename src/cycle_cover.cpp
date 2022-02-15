@@ -93,6 +93,17 @@ SCIP_RETCODE separateCycleCover(SCIP* scip, SCIP_CONSHDLR* conshdlr, SCIP_SOL* s
     return separateCycleCover(scip, conshdlr, sol, result, input_graph, prize_map, quota, root_vertex, edge_variable_map);
 }
 
+unsigned int getNumCycleCoverCutsAdded(SCIP* scip) {
+    // get cycle cover event handler
+    auto cc = SCIPfindObjConshdlr(scip, CYCLE_COVER_NAME.c_str());
+    unsigned int num_cycle_cover = 0;
+    if (cc != 0) {
+        auto hdlr = dynamic_cast<CycleCoverConshdlr*>(cc);
+        num_cycle_cover = hdlr->getNumConssAdded();
+    }
+    return num_cycle_cover;
+}
+
 unsigned int CycleCoverConshdlr::getNumConssAdded() {
     return _num_conss_added;
 }

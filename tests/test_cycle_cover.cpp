@@ -16,6 +16,7 @@ TEST_P(CycleCoverFixture, testCycleCover) {
     auto test_case = GetParam();
     int quota = getQuota();
     std::string name = "testCycleCover" + getParamName();
+    std::filesystem::path logs_dir = ".logs";
 
     // assign zero cost to self loops
     addSelfLoopsToGraph(graph);
@@ -24,48 +25,12 @@ TEST_P(CycleCoverFixture, testCycleCover) {
     // initialise empty model
     SCIP* scip = NULL;
     SCIPcreate(&scip);
-    SCIPincludeDefaultPlugins(scip);
+    std::vector<PCTSPedge> heuristic_edges = {};
 
-    // setup the solver with minimal add ons
-    std::map<PCTSPedge, SCIP_VAR*> edge_variable_map;
-    std::map<PCTSPedge, int> weight_map;
-    ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota);
-    SCIPcreateObjProb(
-        scip,
-        name.c_str(),
-        probdata,
-        true
-    );
-    // add cycle cover constraint handler
-    auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
-    SCIPincludeObjConshdlr(scip, cycle_cover_conshdlr, true);
-
-    // add custom message handler
-    SCIP_MESSAGEHDLR* message_handler;
-    std::string log_filepath = ".logs/" + name + ".txt";
-    SCIPcreateMessagehdlrDefault(&message_handler, false, log_filepath.c_str(), true);
-    SCIPsetMessagehdlr(scip, message_handler);
-
-    // move prizes of vertices onto the weight of an edge
-    putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
-
-    // add variables and constraints to SCIP model
-    PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota, root_vertex, edge_variable_map);
-
-    // add basic cycle cover constraint
-    SCIP_CONS* cons;
-    createBasicCycleCoverCons(scip, &cons);
-    SCIPaddCons(scip, cons);
-    SCIPreleaseCons(scip, &cons);
-
-    SCIPsetIntParam(scip, "presolving/maxrounds", 0);
-
-    // solve the model
-    // NOTE no subtour elimination constraints are added!
-    SCIPsolve(scip);
+    solvePrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, false, false, true, {}, name, false, false, logs_dir, 60);
 
     int num_expected_cc_conss;
-    int num_actual_cc_conss = cycle_cover_conshdlr->getNumConssAdded();
+    int num_actual_cc_conss = getNumCycleCoverCutsAdded(scip);
     double opt_value = SCIPsolGetOrigObj(SCIPgetBestSol(scip));
     double expected_opt;
     switch (test_case) {
