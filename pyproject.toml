@@ -1,2 +1,2 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm", "wheel", "scikit-build", "cmake", "ninja", "python-dotenv"]
+requires = ["setuptools", "setuptools-scm", "wheel", "scikit-build", "cmake", "ninja", "python-dotenv", "pybind11"]
