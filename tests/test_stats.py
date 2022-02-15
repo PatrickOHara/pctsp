@@ -1,28 +1,30 @@
 """Make sure stats from solver can be read by python"""
 
 import pandas as pd
-from pctsp import pctsp_branch_and_cut
+from pyscipopt import Model
+from pctsp import SCIP_BOUNDS_CSV, SCIP_NODE_STATS_CSV, solve_pctsp
 
 
-def test_read_node_stats(
-    suurballes_undirected_graph, root, stats_dir, bounds_filename, metrics_filename
-):
+def test_read_node_stats(suurballes_undirected_graph, root, stats_dir):
     """Test reading stats from csv"""
-    pctsp_branch_and_cut(
+    model = Model(
+        problemName="test_read_node_stats", createscip=True, defaultPlugins=False
+    )
+    solve_pctsp(
+        model,
         suurballes_undirected_graph,
+        [],
         6,
         root,
-        bounds_csv_filename=bounds_filename,
-        output_dir=stats_dir,
-        metrics_filename=metrics_filename,
+        solver_dir=stats_dir,
     )
-    filepath = stats_dir / metrics_filename
+    filepath = stats_dir / SCIP_NODE_STATS_CSV
     assert filepath.exists()
     stats_df = pd.read_csv(filepath)
     assert "node_id" in stats_df
     assert "lower_bound" in stats_df
 
-    bounds_filepath = stats_dir / bounds_filename
+    bounds_filepath = stats_dir / SCIP_BOUNDS_CSV
     assert bounds_filepath.exists()
     bounds_df = pd.read_csv(bounds_filepath)
     assert len(bounds_df) > 0

@@ -16,8 +16,6 @@ from tspwplib import (
 from pctsp import (
     suurballe_shortest_vertex_disjoint_paths,
     collapse,
-    extend,
-    extend_until_prize_feasible,
     extension,
     extension_until_prize_feasible,
     find_cycle_from_bfs,
@@ -41,36 +39,6 @@ def test_collapse(suurballes_undirected_graph, root):
         >= quota
     )
     assert new_tour[0] == new_tour[len(new_tour) - 1] == root
-
-
-def test_extend(suurballes_undirected_graph):
-    """Test if a tour is extended"""
-    tour = [0, 1, 3, 6, 7, 2, 0]
-    for vertex in tour:
-        assert suurballes_undirected_graph.has_node(vertex)
-    for edge in edge_list_from_walk(tour):
-        assert suurballes_undirected_graph.has_edge(edge[0], edge[1])
-
-    extended_tour = extend(suurballes_undirected_graph, tour)
-    assert 4 not in extended_tour
-    assert 5 in extended_tour
-    assert len(extended_tour) == len(tour) + 1
-
-
-def test_extend_until_prize_feasible(suurballes_undirected_graph):
-    """Test is a tour is extended until its prize is above the threshold"""
-    tour = [0, 1, 5, 2, 0]
-    quota = 6
-    extended_tour = extend_until_prize_feasible(
-        suurballes_undirected_graph, tour, quota
-    )
-    assert 7 in extended_tour
-    assert (
-        total_prize(
-            nx.get_node_attributes(suurballes_undirected_graph, "prize"), extended_tour
-        )
-        >= quota
-    )
 
 
 def test_extension(suurballes_undirected_graph, root):

@@ -18,6 +18,7 @@ from .constants import (
 
 # pylint: disable=import-error
 from .libpypctsp import solve_pctsp_bind
+
 # pylint: enable=import-error
 
 

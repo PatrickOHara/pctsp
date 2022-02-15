@@ -1,6 +1,6 @@
 """Tests for exact algorithms for PCTSP"""
 
-from pyscipopt import Model
+from pyscipopt import Model, SCIP_STAGE
 from tspwplib import (
     asymmetric_from_undirected,
     biggest_vertex_id_from_graph,
@@ -13,6 +13,7 @@ from tspwplib import (
     walk_from_edge_list,
 )
 from pctsp import (
+    random_tour_complete_graph,
     solve_pctsp,
     suurballe_shortest_vertex_disjoint_paths,
     vertex_disjoint_cost_map,
@@ -32,6 +33,7 @@ def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root, logger_dir
         [],
         quota,
         root,
+        name=name,
         solver_dir=logger_dir,
     )
     assert len(edge_list) > 0
@@ -41,6 +43,14 @@ def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root, logger_dir
         suurballes_undirected_graph, quota, root, ordered_edges
     )
     assert total_cost_networkx(suurballes_undirected_graph, optimal_tour) == 20
+    assert model.getProbName() == name
+    assert (
+        model.getNVars()
+        == suurballes_undirected_graph.number_of_edges()
+        + suurballes_undirected_graph.number_of_nodes()
+    )
+    assert model.getStage() == SCIP_STAGE.SOLVED
+    assert model.getStatus() == "optimal"
 
 
 def test_pctsp_on_tspwplib(tspwplib_graph, root, logger_dir):
@@ -54,6 +64,7 @@ def test_pctsp_on_tspwplib(tspwplib_graph, root, logger_dir):
         [],
         quota,
         root,
+        name=name,
         solver_dir=logger_dir,
     )
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
@@ -61,25 +72,28 @@ def test_pctsp_on_tspwplib(tspwplib_graph, root, logger_dir):
     optimal_tour = walk_from_edge_list(ordered_edges)
     assert is_pctsp_yes_instance(tspwplib_graph, quota, root, ordered_edges)
     assert total_cost_networkx(tspwplib_graph, optimal_tour) > 0
+    assert model.getProbName() == name
+    assert model.getNVars() == tspwplib_graph.number_of_edges()
+    assert model.getStage() == SCIP_STAGE.SOLVED
+    assert model.getStatus() == "optimal"
 
 
-# def test_pctsp_with_heuristic(
-#     tspwplib_graph, root, logger_dir
-# ):
-#     """Test adding an initial solution to solver"""
-#     quota = 30
-#     tour = random_tour_complete_graph(tspwplib_graph, root, quota)
-#     name = "test_pctsp_with_heuristic"
-#     model = Model(problemName=name, createscip=True, defaultPlugins=False)
-#     edge_list = edge_list_from_walk(tour)
-#     solve_pctsp(
-#         model,
-#         tspwplib_graph,
-#         edge_list,
-#         quota,
-#         root,
-#         solver_dir=logger_dir,
-#     )
+def test_pctsp_with_heuristic(tspwplib_graph, root, logger_dir):
+    """Test adding an initial solution to solver"""
+    quota = 30
+    tour = random_tour_complete_graph(tspwplib_graph, root, quota)
+    name = "test_pctsp_with_heuristic"
+    model = Model(problemName=name, createscip=True, defaultPlugins=False)
+    edge_list = edge_list_from_walk(tour)
+    solve_pctsp(
+        model,
+        tspwplib_graph,
+        edge_list,
+        quota,
+        root,
+        name=name,
+        solver_dir=logger_dir,
+    )
 
 
 def test_pctsp_cost_cover_shortest_path(

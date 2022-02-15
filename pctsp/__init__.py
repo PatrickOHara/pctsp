@@ -14,11 +14,9 @@ from .constants import (
 from .data_structures import SummaryStats
 
 from .heuristic import (
-#     collapse,
-#     extend,
-#     extend_until_prize_feasible,
-#     extension,
-#     extension_until_prize_feasible,
+    collapse,
+    extension,
+    extension_until_prize_feasible,
     find_cycle_from_bfs,
     random_tour_complete_graph,
     random_tour_from_disjoint_paths_map,
@@ -28,6 +26,7 @@ from .heuristic import (
 
 # pylint: disable=import-error
 from .libpypctsp import unitary_gain, unitary_loss
+
 # pylint: enable=import-error
 
 from .preprocessing import (
@@ -55,13 +54,10 @@ from .suurballe import (
 __all__ = [
     "adjust_edge_cost",
     "adjust_edge_cost_for_graph",
-    # "collapse",
-    # "extend",
-    # "extend_until_prize_feasible",
-    # "extension",
-    # "extension_until_prize_feasible",
+    "collapse",
+    "extension",
+    "extension_until_prize_feasible",
     "edge_disjoint_path_cost",
-    # "extend",
     "extract_suurballe_edge_disjoint_paths",
     "find_cycle_from_bfs",
     "find_parents_in_shortest_path_tree",
