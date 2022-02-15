@@ -26,6 +26,8 @@ std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getEdgesFromC
     return edges;
 }
 
+bool isSolSimpleCycle(SCIP* scip, SCIP_SOL* sol, SCIP_RESULT* result);
+
 SCIP_RETCODE addSubtourEliminationConstraint(
     SCIP* scip,
     SCIP_CONSHDLR* conshdlr,

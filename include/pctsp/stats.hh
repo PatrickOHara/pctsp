@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <objscip/objscip.h>
+#include "pctsp/filepath.hh"
 
 struct SummaryStats {
     SCIP_Status status;
@@ -20,9 +21,9 @@ struct SummaryStats {
     unsigned int num_sec_maxflow_mincut;        // number of SECs added with max flow
 };
 
-SummaryStats readSummaryStatsFromYaml(std::string& filename);
+SummaryStats readSummaryStatsFromYaml(std::filesystem::path& filename);
 
-void writeSummaryStatsToYaml(SummaryStats& summary, std::string& filename);
+void writeSummaryStatsToYaml(SummaryStats& summary, std::filesystem::path& filename);
 
 SummaryStats getSummaryStatsFromSCIP(
     SCIP* scip,
@@ -71,21 +72,13 @@ unsigned int numDisjointTourSECs(std::vector<NodeStats>& node_stats);
 
 unsigned int numMaxflowMincutSECs(std::vector<NodeStats>& node_stats);
 
-void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_path);
+// void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::string& file_path);
+
+void writeNodeStatsToCSV(std::vector<NodeStats>& node_stats, std::filesystem::path& file_path);
 
 void writeNodeStatsColumnNames(std::ofstream& csv_file);
 
 void writeNodeStatsRow(NodeStats& node_stats, std::ofstream& csv_file);
-
-template<typename StringIt>
-void writeRowCSV(std::ofstream& csv_file, StringIt& first, StringIt& last) {
-    auto num_items = std::distance(first, last);
-    for (int i = 0; i < num_items; i++) {
-        csv_file << *first++;
-        if (i < num_items - 1) csv_file << ",";
-    }
-    csv_file << "\n";
-}
 
 typedef typename std::chrono::milliseconds SubSeconds;
 typedef typename std::chrono::time_point<std::chrono::system_clock, SubSeconds> TimePointUTC;
@@ -108,7 +101,7 @@ struct Bounds {
    unsigned int node_id;
 };
 
-void writeBoundsToCSV(std::vector<Bounds>& bounds_vector, std::string& file_path);
+void writeBoundsToCSV(std::vector<Bounds>& bounds_vector, std::filesystem::path& file_path);
 
 void writeBoundsColumnsNames(std::ofstream& csv_file);
 

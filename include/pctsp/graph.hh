@@ -59,6 +59,15 @@ void addEdgesToGraph(TGraph& graph, EdgeIt& start, EdgeIt& end) {
     }
 }
 
+template<typename TGraph>
+void addEdgesToGraph(
+    TGraph& graph,
+    std::vector<std::pair<typename TGraph::vertex_descriptor, typename TGraph::vertex_descriptor>>& edge_pairs
+) {
+    auto first = edge_pairs.begin();
+    auto last = edge_pairs.end();
+    addEdgesToGraph(graph, first, last);
+}
 
 template<typename TGraph>
 VertexPairVector getVertexPairVectorFromGraph(TGraph& graph) {
@@ -95,6 +104,19 @@ std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> edgesFromVert
         first++;
     }
     return edge_vector;
+}
+
+template <typename TGraph>
+std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> edgesFromVertexPairs(
+    TGraph& graph,
+    std::vector<std::pair<
+        typename boost::graph_traits<TGraph>::vertex_descriptor,
+        typename boost::graph_traits<TGraph>::vertex_descriptor
+    >>& vertex_pairs
+) {
+    auto first = vertex_pairs.begin();
+    auto last = vertex_pairs.end();
+    return edgesFromVertexPairs(graph, first, last);
 }
 
 /**

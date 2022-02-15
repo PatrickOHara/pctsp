@@ -13,7 +13,7 @@ jobs:
     - name: Build dependencies
       run: |
         python3 -m pip install --upgrade pip
-        pip3 install scikit-build ninja
+        pip3 install scikit-build ninja pybind11
     - name: Build
       run: |
         mkdir build
@@ -39,6 +39,7 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
         pip3 install -r requirements.txt
+        pip3 install pybind11
     - name: Install pctsp
       run: pip3 install .
     - name: Download test data

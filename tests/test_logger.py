@@ -1,22 +1,25 @@
 """Tests to ensure C++ is writing logs to file"""
 
-from pctsp import pctsp_branch_and_cut
+from pyscipopt import Model
+from pctsp import SCIP_LOGS_TXT, solve_pctsp
 
 
-def test_branch_and_cut_logger(
-    suurballes_undirected_graph, root, logger_dir, logger_filename
-):
+def test_branch_and_cut_logger(suurballes_undirected_graph, root, logger_dir):
     """Test the logs are saved from SCIP"""
-    logger_path = logger_dir / logger_filename
+    logger_path = logger_dir / SCIP_LOGS_TXT
     assert logger_path.parent.exists()
     assert not logger_path.exists()
 
-    pctsp_branch_and_cut(
+    model = Model(
+        problemName="test_branch_and_cut_logger", createscip=True, defaultPlugins=False
+    )
+    solve_pctsp(
+        model,
         suurballes_undirected_graph,
+        [],
         5,
         root,
-        log_scip_filename=logger_filename,
-        output_dir=logger_dir,
+        solver_dir=logger_dir,
     )
     assert logger_path.exists()
 

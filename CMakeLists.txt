@@ -19,14 +19,12 @@ option(PCTSP_BUILD_TESTS "Turn on/off building the tests." ON)
 
 # required dependencies
 find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development REQUIRED)
-find_package(Boost 1.71.0 REQUIRED COMPONENTS python3 graph log log_setup thread filesystem system REQUIRED)
+find_package(Boost 1.71.0 REQUIRED COMPONENTS graph log log_setup thread filesystem system REQUIRED)
 find_package(SCIP REQUIRED)
 find_package(Readline REQUIRED)
 find_package(GMP REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(YAML_CPP REQUIRED FOUND_VAR YAML_CPP_FOUND)
-message(YAML_CPP_INCLUDE_DIRS: ${YAML_CPP_INCLUDE_DIRS})
-message(YAML_CPP_LIBRARIES: ${YAML_CPP_LIBRARIES})
 
 # find the python sitelibs
 set(FindSitePkgCommand "import site; print(site.getsitepackages()[0])")
@@ -37,6 +35,8 @@ set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
 # depends upon scikit-build being installed
 list(APPEND CMAKE_MODULE_PATH "${Python3_SITE_PACKAGES}/skbuild/resources/cmake;")
 
+message("pybind11_DIR: " $ENV{pybind11_DIR})
+find_package(pybind11 CONFIG HINTS ${Python3_SITE_PACKAGES} PATH_SUFFIXES "pybind11")
 find_package(PythonExtensions REQUIRED)
 
 set(PCTSP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)

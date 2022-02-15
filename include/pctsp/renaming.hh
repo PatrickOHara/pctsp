@@ -143,4 +143,35 @@ std::vector<std::pair<NewVertex, NewVertex>> getNewEdges(
     return new_edges;
 }
 
+template<typename TGraph, typename TCostType, typename TNewCostMap, typename NewVertex, typename OldVertex>
+void fillCostMapFromRenamedMap(
+    TGraph& graph,
+    TNewCostMap& new_cost_map,
+    std::map<std::pair<OldVertex, OldVertex>, TCostType>& old_cost_map,
+    boost::bimap<NewVertex, OldVertex>& vertex_id_map
+) {
+    for (auto& [key, value] : old_cost_map) {
+        OldVertex old_source = key.first;
+        OldVertex old_target = key.second;
+        NewVertex source = getNewVertex(vertex_id_map, old_source);
+        NewVertex target = getNewVertex(vertex_id_map, old_target);
+        auto new_edge = boost::edge(source, target, graph);
+        if (new_edge.second == false) throw EdgeNotFoundException(source, target);
+        new_cost_map[new_edge.first] = value;
+    }
+}
+
+template <typename TPrize, typename NewPrizeMap, typename OldVertex, typename NewVertex>
+void fillRenamedVertexMap(
+    NewPrizeMap& new_prize_map,
+    std::map<OldVertex, TPrize>& old_prize_map,
+    boost::bimap<NewVertex, OldVertex>& vertex_id_map
+) {
+    for (const auto& [key, value] : old_prize_map) {
+        OldVertex old = key;
+        NewVertex v = getNewVertex(vertex_id_map, old);
+        new_prize_map[v] = value;
+    }
+}
+ 
 #endif

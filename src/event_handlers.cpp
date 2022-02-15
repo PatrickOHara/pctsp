@@ -2,6 +2,65 @@
 #include "pctsp/event_handlers.hh"
 
 
+unsigned int currentNodeId(SCIP* scip) {
+    SCIP_NODE* node = SCIPgetCurrentNode(scip);
+    unsigned int node_id = SCIPnodeGetNumber(node);
+    return node_id;
+}
+
+NodeStats newStatsForNode(SCIP* scip, SCIP_NODE* node) {
+   unsigned int node_id = SCIPnodeGetNumber(node);
+   unsigned int parent_id = 1;
+   if (node_id > 1) parent_id = SCIPnodeGetNumber(SCIPnodeGetParent(node));
+   NodeStats stats = {
+      SCIPnodeGetLowerbound(node),
+      node_id,
+      0,
+      0,
+      0,
+      0,
+      0,
+      parent_id,
+      SCIPgetUpperbound(scip)
+   };
+   return stats;
+}
+
+NodeStats NodeEventhdlr::getNodeStats(SCIP* scip) {
+    SCIP_NODE* node = SCIPgetCurrentNode(scip);
+    return getNodeStats(node);
+}
+
+NodeStats NodeEventhdlr::getNodeStats(SCIP_NODE* node) {
+    unsigned int node_id = SCIPnodeGetNumber(node);
+    NodeStats stats = node_stats_[node_id - 1];
+    return stats;
+}
+
+std::vector<NodeStats> NodeEventhdlr::getNodeStatsVector() {
+    return node_stats_;
+}
+
+void NodeEventhdlr::addCurrentNode(SCIP* scip) {
+    SCIP_NODE* node = SCIPgetCurrentNode(scip);
+    NodeStats stats = newStatsForNode(scip, node);
+    auto node_id = SCIPnodeGetNumber(node);
+    auto node_index = node_id - 1;
+    if (node_stats_.size() < node_id) node_stats_.resize(node_id);
+    node_stats_[node_index] = stats;
+}
+
+void NodeEventhdlr::incrementNumSecDisjointTour(SCIP* scip, unsigned int n_cuts) {
+    auto node_index = currentNodeId(scip) - 1;
+    node_stats_[node_index].num_sec_disjoint_tour += n_cuts;
+}
+
+void NodeEventhdlr::incrementNumSecMaxflowMincut(SCIP* scip, unsigned int n_cuts) {
+    auto node_index = currentNodeId(scip) - 1;
+    node_stats_[node_index].num_sec_maxflow_mincut += n_cuts;
+}
+
+
 SCIP_DECL_EVENTFREE(NodeEventhdlr::scip_free) {
    return SCIP_OKAY;
 }
@@ -29,30 +88,10 @@ SCIP_DECL_EVENTDELETE(NodeEventhdlr::scip_delete) {
 }
 
 SCIP_DECL_EVENTEXEC(NodeEventhdlr::scip_exec) {
-    ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
-    std::vector<NodeStats> & stats_vector = *probdata->getNodeStats();
-    // int num_nodes = SCIPgetNTotalNodes(scip);
-    int stats_size = stats_vector.size();
-
-    // get current node and update info about current node
     SCIP_NODE* node = SCIPgetCurrentNode(scip);
-    unsigned int node_id = SCIPnodeGetNumber(node);
-    if (stats_size < node_id) {
-        // resize stats array
-        stats_vector.resize(node_id);
-    }
-    NodeStats node_stats = stats_vector.at(node_id-1);
-    // if id is zero then stats has not been initialised for this node
-    if (node_stats.node_id == 0) {
-        node_stats.node_id = node_id;
-        node_stats.lower_bound = SCIPnodeGetLowerbound(node);
-        node_stats.upper_bound = SCIPgetUpperbound(scip);
-        node_stats.parent_id = 1;
-        if (node_id > 1) {
-            SCIP_NODE* parent = SCIPnodeGetParent(node);
-            node_stats.parent_id = SCIPnodeGetNumber(parent);
-        }
-        stats_vector[node_id-1] = node_stats;
+    auto node_id = SCIPnodeGetNumber(node);
+    if (node_id >= node_stats_.size()) {
+        addCurrentNode(scip);
     }
     return SCIP_OKAY;
 }

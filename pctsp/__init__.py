@@ -1,7 +1,7 @@
 """Package for pctsp"""
 
 
-from .algorithms import pctsp_branch_and_cut
+from .algorithms import solve_pctsp
 from .constants import (
     BOOST_LOGS_TXT,
     FOUR_HOURS,
@@ -9,13 +9,12 @@ from .constants import (
     PCTSP_SUMMARY_STATS_YAML,
     SCIP_BOUNDS_CSV,
     SCIP_LOGS_TXT,
-    SCIP_METRICS_CSV,
+    SCIP_NODE_STATS_CSV,
 )
 from .data_structures import SummaryStats
+
 from .heuristic import (
     collapse,
-    extend,
-    extend_until_prize_feasible,
     extension,
     extension_until_prize_feasible,
     find_cycle_from_bfs,
@@ -26,10 +25,10 @@ from .heuristic import (
 )
 
 # pylint: disable=import-error
-
-from .libpypctsp import graph_from_edge_list, unitary_gain
+from .libpypctsp import unitary_gain, unitary_loss
 
 # pylint: enable=import-error
+
 from .preprocessing import (
     remove_components_disconnected_from_vertex,
     remove_leaves,
@@ -56,19 +55,15 @@ __all__ = [
     "adjust_edge_cost",
     "adjust_edge_cost_for_graph",
     "collapse",
-    "extend",
-    "extend_until_prize_feasible",
     "extension",
     "extension_until_prize_feasible",
     "edge_disjoint_path_cost",
-    "extend",
     "extract_suurballe_edge_disjoint_paths",
     "find_cycle_from_bfs",
     "find_parents_in_shortest_path_tree",
     "get_relative_prefered_site_package",
-    "graph_from_edge_list",
     "is_ancestor",
-    "pctsp_branch_and_cut",
+    "solve_pctsp",
     "preorder",
     "postorder",
     "random_tour_complete_graph",
@@ -83,6 +78,7 @@ __all__ = [
     "tour_from_vertex_disjoint_paths",
     "undirected_vertex_disjoint_paths_map",
     "unitary_gain",
+    "unitary_loss",
     "vertex_disjoint_cost_map",
     "BOOST_LOGS_TXT",
     "FOUR_HOURS",
@@ -90,5 +86,6 @@ __all__ = [
     "PCTSP_SUMMARY_STATS_YAML",
     "SCIP_BOUNDS_CSV",
     "SCIP_LOGS_TXT",
-    "SCIP_METRICS_CSV",
+    "SCIP_NODE_STATS_CSV",
+    "PCTSP_SUMMARY_STATS_YAML",
 ]

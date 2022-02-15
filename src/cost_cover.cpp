@@ -116,3 +116,27 @@ SCIP_RETCODE includeDisjointPathsCostCover(SCIP* scip, std::vector<int>& path_di
         path_distances
     );
 }
+
+CostCoverEventHandler getDisjointPathsCostCoverEventHandler(SCIP* scip) {
+    CostCoverEventHandler* cc_hdlr = dynamic_cast<CostCoverEventHandler*>(
+        SCIPfindObjEventhdlr(scip, DISJOINT_PATHS_COST_COVER_NAME.c_str())
+    );
+    return *cc_hdlr;
+}
+
+CostCoverEventHandler getShortestPathCostCoverEventHandler(SCIP* scip) {
+    CostCoverEventHandler* cc_hdlr = dynamic_cast<CostCoverEventHandler*>(
+        SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str())
+    );
+    return *cc_hdlr;
+}
+
+unsigned int getNShortestPathCostCoverCutsAdded(SCIP* scip) {
+    CostCoverEventHandler cc_hdlr = getShortestPathCostCoverEventHandler(scip);
+    return cc_hdlr.getNumConssAdded();
+}
+
+unsigned int getNDisjointPathsCostCoverCutsAdded(SCIP* scip) {
+    CostCoverEventHandler cc_hdlr = getDisjointPathsCostCoverEventHandler(scip);
+    return cc_hdlr.getNumConssAdded();
+}
