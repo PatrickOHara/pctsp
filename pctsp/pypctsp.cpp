@@ -7,10 +7,14 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl/filesystem.h>
 
+namespace py = pybind11; 
+
+typedef boost::bimap<PCTSPvertex, PCTSPvertex> VertexBimap;
+
 // algorithms binding
 
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pyBasicSolvePrizeCollectingTSP(
-    pybind11::object& model,
+    py::object& model,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& heuristic_edges,
     std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
@@ -26,8 +30,9 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pyBasicSolvePrizeCollectingTSP(
     return sol_edges;
 }
 
+/** Call the solving method from python with SCIP */
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
-    pybind11::object& model,
+    py::object& model,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& heuristic_edges,
     std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
@@ -51,7 +56,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
 
     // rename vertices if they are not in range [0, n-1]
     PCTSPgraph graph;
-    boost::bimap<PCTSPvertex, PCTSPvertex> vertex_bimap;
+    VertexBimap vertex_bimap;
     auto new_edges = renameEdges(vertex_bimap, edge_list);
     addEdgesToGraph(graph, new_edges);
 
@@ -92,126 +97,117 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
 }
 
 /** Example of creating a pyscipopt model in CPP then exposing it to python */
-pybind11::object modelFromCpp() {
+py::object modelFromCpp() {
     SCIP* scip = NULL;
     SCIPcreate(&scip);
     PyObject * capsule = PyCapsule_New((void*)scip, "scip", NULL);
-    auto pyscipopt = pybind11::module::import("pyscipopt.scip");
+    auto pyscipopt = py::module::import("pyscipopt.scip");
     auto Model = pyscipopt.attr("Model");
     auto from_ptr = Model.attr("from_ptr");
-    auto take_ownership = pybind11::bool_(true);
-    pybind11::object capsule_obj = pybind11::reinterpret_borrow<pybind11::object>(capsule);
-    pybind11::object model = from_ptr(capsule_obj, take_ownership);
+    auto take_ownership = py::bool_(true);
+    py::object capsule_obj = py::reinterpret_borrow<py::object>(capsule);
+    py::object model = from_ptr(capsule_obj, take_ownership);
     return model;
 }
 
+// heuristic bindings
 
-// // graph bindings
+std::vector<PCTSPvertex> collapseBind(
+    std::list<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
+    std::list<PCTSPvertex>& py_tour,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    PrizeNumberType& quota,
+    PCTSPvertex& py_root,
+    bool collapse_shortest_paths = false,
+    int log_level_py = PyLoggingLevels::WARNING
+) {
+    PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
 
-// bool graph_from_edge_list(py::list& edge_list, py::dict& prize_dict,
-//     py::dict& cost_dict) {
-//     BoostPyBimap vertex_id_map;
-//     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
-//     VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
-//     fillPrizeMapFromPyDict(prize_map, prize_dict, vertex_id_map);
-//     EdgeCostMap cost_map = boost::get(edge_weight, graph);
-//     fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
-//     BOOST_ASSERT(boost::num_edges(graph) == py::len(edge_list));
-//     return true;
-// }
+    // get renamed graph
+    PCTSPgraph graph;
+    VertexBimap vertex_bimap;
+    auto new_edges = renameEdges(vertex_bimap, edge_list);
+    addEdgesToGraph(graph, new_edges);
+    auto root_vertex = getNewVertex(vertex_bimap, py_root);
+    auto new_vertices = getNewVertices(vertex_bimap, py_tour);
+    std::list<PCTSPvertex> tour (new_vertices.begin(), new_vertices.end());
+ 
+    // fill the cost map and prize map using renamed vertices
+    EdgeCostMap cost_map = boost::get(edge_weight, graph);
+    VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
+    fillCostMapFromRenamedMap(graph, cost_map, cost_dict, vertex_bimap);
+    fillRenamedVertexMap(prize_map, prize_dict, vertex_bimap);
 
-// // heuristic bindings
+    // run the collapse algorithm and return renamed vertices
+    auto new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths);
+    return getOldVertices(vertex_bimap, new_tour);
+}
 
-// py::list collapse_bind(
-//     py::list& edge_list,
-//     py::list& py_tour,
-//     py::dict& cost_dict,
-//     py::dict& prize_dict,
-//     int quota,
-//     int py_root,
-//     bool collapse_shortest_paths = false,
-//     int log_level_py = PyLoggingLevels::INFO
-// ) {
-//     PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
-//     BoostPyBimap vertex_id_map;
-//     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
-//     auto tour = getBoostVertexList(vertex_id_map, py_tour);
-//     VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
-//     fillPrizeMapFromPyDict(prize_map, prize_dict, vertex_id_map);
-//     EdgeCostMap cost_map = boost::get(edge_weight, graph);
-//     fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
-//     auto root_vertex = getNewVertex(vertex_id_map, py_root);
-//     auto new_tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths);
-//     return getPyVertexList(vertex_id_map, new_tour);
-// }
+std::vector<PCTSPvertex> extensionBind(
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
+    std::list<PCTSPvertex>& py_tour,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    PCTSPvertex& py_root,
+    int step_size,
+    int path_depth_limit,
+    int log_level_py = PyLoggingLevels::WARNING
+) {
+    PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
 
-// py::list extend_bind(py::list& edge_list, py::list& py_tour,
-//     py::dict& cost_dict, py::dict& prize_dict) {
-//     BoostPyBimap vertex_id_map;
-//     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
-//     auto tour = getBoostVertexList(vertex_id_map, py_tour);
-//     VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
-//     fillPrizeMapFromPyDict(prize_map, prize_dict, vertex_id_map);
-//     EdgeCostMap cost_map = boost::get(edge_weight, graph);
-//     fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
-//     extend(graph, tour, cost_map, prize_map);
-//     return getPyVertexList(vertex_id_map, tour);
-// }
+    // get renamed graph
+    PCTSPgraph graph;
+    VertexBimap vertex_bimap;
+    auto new_edges = renameEdges(vertex_bimap, edge_list);
+    addEdgesToGraph(graph, new_edges);
+    auto root_vertex = getNewVertex(vertex_bimap, py_root);
+    auto new_vertices = getNewVertices(vertex_bimap, py_tour);
+    std::list<PCTSPvertex> tour (new_vertices.begin(), new_vertices.end());
 
-// py::list extension_bind(
-//     py::list& edge_list,
-//     py::list& py_tour,
-//     py::dict& cost_dict,
-//     py::dict& prize_dict,
-//     int py_root,
-//     int step_size,
-//     int path_depth_limit
-// ) {
-//     BoostPyBimap vertex_id_map;
-//     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
-//     auto tour = getBoostVertexList(vertex_id_map, py_tour);
-//     VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
-//     fillPrizeMapFromPyDict(prize_map, prize_dict, vertex_id_map);
-//     EdgeCostMap cost_map = boost::get(edge_weight, graph);
-//     fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
-//     auto root_vertex = getNewVertex(vertex_id_map, py_root);
-//     extension(graph, tour, cost_map, prize_map, root_vertex, step_size, path_depth_limit);
-//     return getPyVertexList(vertex_id_map, tour);
-// }
+    // fill the cost map and prize map using renamed vertices
+    EdgeCostMap cost_map = boost::get(edge_weight, graph);
+    VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
+    fillCostMapFromRenamedMap(graph, cost_map, cost_dict, vertex_bimap);
+    fillRenamedVertexMap(prize_map, prize_dict, vertex_bimap);
 
-// py::list extension_until_prize_feasible_bind(
-//     py::list& edge_list,
-//     py::list& py_tour,
-//     py::dict& cost_dict,
-//     py::dict& prize_dict,
-//     int py_root,
-//     int quota,
-//     int step_size,
-//     int path_depth_limit
-// ) {
-//     BoostPyBimap vertex_id_map;
-//     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
-//     auto tour = getBoostVertexList(vertex_id_map, py_tour);
-//     VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
-//     fillPrizeMapFromPyDict(prize_map, prize_dict, vertex_id_map);
-//     EdgeCostMap cost_map = boost::get(edge_weight, graph);
-//     fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
-//     auto root_vertex = getNewVertex(vertex_id_map, py_root);
-//     extensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, root_vertex, quota, step_size, path_depth_limit);
-//     return getPyVertexList(vertex_id_map, tour);
-// }
+    // run the extension algorithm
+    extension(graph, tour, cost_map, prize_map, root_vertex, step_size, path_depth_limit);
+    return getOldVertices(vertex_bimap, tour);
+}
 
-// py::list extend_until_prize_feasible_bind(py::list& edge_list, py::list& py_tour, py::dict& cost_dict, py::dict& prize_dict, int quota) {
-//     BoostPyBimap vertex_id_map;
-//     PCTSPgraph graph = graphFromPyEdgeList(edge_list, vertex_id_map);
-//     auto tour = getBoostVertexList(vertex_id_map, py_tour);
-//     VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
-//     fillPrizeMapFromPyDict(prize_map, prize_dict, vertex_id_map);
-//     EdgeCostMap cost_map = boost::get(edge_weight, graph);
-//     fillCostMapFromPyDict(graph, cost_map, cost_dict, vertex_id_map);
-//     extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
-//     return getPyVertexList(vertex_id_map, tour);
-// }
+std::vector<PCTSPvertex> extensionUntilPrizeFeasibleBind(
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
+    std::list<PCTSPvertex>& py_tour,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    PCTSPvertex& py_root,
+    PrizeNumberType& quota,
+    int step_size,
+    int path_depth_limit,
+    int log_level_py = PyLoggingLevels::WARNING
+) {
+    PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
+
+    // get renamed graph
+    PCTSPgraph graph;
+    VertexBimap vertex_bimap;
+    auto new_edges = renameEdges(vertex_bimap, edge_list);
+    addEdgesToGraph(graph, new_edges);
+    auto root_vertex = getNewVertex(vertex_bimap, py_root);
+    auto new_vertices = getNewVertices(vertex_bimap, py_tour);
+    std::list<PCTSPvertex> tour (new_vertices.begin(), new_vertices.end());
+
+    // fill the cost map and prize map using renamed vertices
+    EdgeCostMap cost_map = boost::get(edge_weight, graph);
+    VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
+    fillCostMapFromRenamedMap(graph, cost_map, cost_dict, vertex_bimap);
+    fillRenamedVertexMap(prize_map, prize_dict, vertex_bimap);
+
+    // run the extension algorithm
+    extensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, root_vertex, quota, step_size, path_depth_limit);
+    return getOldVertices(vertex_bimap, tour);
+}
 
 PYBIND11_MODULE(libpypctsp, m) {
     // functions for branch and cut
@@ -219,6 +215,9 @@ PYBIND11_MODULE(libpypctsp, m) {
     m.def("solve_pctsp_bind", &pySolvePrizeCollectingTSP, "Solve PCTSP.");
 
     // functions for heuristics
-    m.def("unitary_gain", unitaryGain, "Calculate the unitary loss of a vertex.");
-    m.def("unitary_loss", unitaryLoss, "Calculate the unitary gain of a vertex.");
+    m.def("collapse_bind", &collapseBind, "Collapse heuristic bind.");
+    m.def("extension_bind", &extensionBind, "Extension heuristic bind.");
+    m.def("extension_until_prize_feasible_bind", &extensionUntilPrizeFeasibleBind, "Extension until prize feasible find.");
+    m.def("unitary_gain", &unitaryGain, "Calculate the unitary loss of a vertex.");
+    m.def("unitary_loss", &unitaryLoss, "Calculate the unitary gain of a vertex.");
 }

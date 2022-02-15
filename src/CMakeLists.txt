@@ -11,7 +11,6 @@ add_library(${TARGET} SHARED
     "knapsack.cpp"
     "logger.cpp"
     "preprocessing.cpp"
-    "pygraph.cpp"
     "sciputils.cpp"
     "separation.cpp"
     "solution.cpp"
@@ -27,16 +26,13 @@ set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 17)
 target_include_directories(${TARGET} PUBLIC ${PCTSP_INCLUDE_DIRS})
 target_include_directories(${TARGET} PRIVATE
     ${Boost_INCLUDE_DIRS}
-    ${Python3_INCLUDE_DIRS}
     ${SCIP_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIRS}
-    ${pybind11_INCLUDE_DIRS}
 )
 target_link_libraries(${TARGET} PRIVATE
     ${Boost_LIBRARIES}
     ${SCIP_LIBRARIES}
     ${YAML_CPP_LIBRARIES}
-    pybind11::headers
 )
 
 file(GLOB_RECURSE PCTSP_HEADER_FILES "${PCTSP_INCLUDE_DIRS}/${TARGET}/*.hh")
