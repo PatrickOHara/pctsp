@@ -35,8 +35,8 @@ set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
 # depends upon scikit-build being installed
 list(APPEND CMAKE_MODULE_PATH "${Python3_SITE_PACKAGES}/skbuild/resources/cmake;")
 
-message("pybind11 " $ENV{pybind11_ROOT})
-find_package(pybind11 CONFIG)
+message("pybind11_DIR: " $ENV{pybind11_DIR})
+find_package(pybind11 CONFIG HINTS ${Python3_SITE_PACKAGES} PATH_SUFFIXES "pybind11")
 find_package(PythonExtensions REQUIRED)
 
 set(PCTSP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
