@@ -128,7 +128,7 @@ SCIP_RETCODE PCTSPcreateConsSubtour(
     SCIP_CONSDATA* consdata;
 
     /* find the subtour constraint handler */
-    conshdlr = SCIPfindConshdlr(scip, "subtour");
+    conshdlr = SCIPfindConshdlr(scip, SEC_CONSHDLR_NAME.c_str());
     if (conshdlr == NULL)
     {
         SCIPerrorMessage("subtour constraint handler not found\n");

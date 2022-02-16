@@ -198,6 +198,11 @@ TEST_P(HeuristicFixture, testCollapse) {
             expected_collapse = {0, 1, 2, 3, 0};
             break;
         }
+        default: {
+            tour = {};
+            expected_collapse = {};
+            break;
+        }
     }
 
     // run the collapse heuristic
@@ -259,6 +264,11 @@ TEST_P(HeuristicFixture, testCollapseShortestPath) {
         case GraphType::COMPLETE5: {
             tour = { 0, 1, 2, 3, 4, 0 };
             expected_collapse = {0, 1, 2, 3, 0};
+            break;
+        }
+        default: {
+            tour = {};
+            expected_collapse = {};
             break;
         }
     }

@@ -189,6 +189,19 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     int freq
 );
 
+const std::string SEC_CONSHDLR_NAME = "pctsp_sec_handler";
+const std::string SEC_CONSHDLR_DESC = "Subtour elimination constraint handler for Prize-collecting TSP.";
+const int SEC_CONSHDLR_SEPAPRIORITY = 1000000;  // used to be 1000000
+const int SEC_CONSHDLR_ENFOPRIORITY = -2000000; // used to be -2000000
+const int SEC_CONSHDLR_CHECKPRIORITY = -2000000; // used to be -2000000
+const int SEC_CONSHDLR_SEPAFREQ = 1;    // 1 : > 1 reduces number of SECs added
+const int SEC_CONSHDLR_PROPFREQ = -1;   // -1
+const int SEC_CONSHDLR_EAGERFREQ = 1;   // used to be 1
+const int SEC_CONSHDLR_MAXPREROUNDS = 0;
+const bool SEC_CONSHDLR_DELAYSEPA = false; // false
+const bool SEC_CONSHDLR_DELAYPROP = false;
+const bool SEC_CONSHDLR_NEEDSCONS = false;
+
 class PCTSPconshdlrSubtour : public scip::ObjConshdlr
 {
 
@@ -209,9 +222,11 @@ public:
         bool _sec_maxflow_mincut,
         int _sec_maxflow_mincut_freq
     )
-        : ObjConshdlr(scip, "subtour", "PCTSP subtour elimination constraints",
-            1000000, -2000000, -2000000, 1, -1, 1, 0,
-            FALSE, FALSE, TRUE, SCIP_PROPTIMING_BEFORELP, SCIP_PRESOLTIMING_FAST)
+        : ObjConshdlr(scip, SEC_CONSHDLR_NAME.c_str(), SEC_CONSHDLR_DESC.c_str(),
+            SEC_CONSHDLR_SEPAPRIORITY, SEC_CONSHDLR_ENFOPRIORITY, SEC_CONSHDLR_CHECKPRIORITY,
+            SEC_CONSHDLR_SEPAFREQ, SEC_CONSHDLR_PROPFREQ, SEC_CONSHDLR_EAGERFREQ, SEC_CONSHDLR_MAXPREROUNDS,
+            SEC_CONSHDLR_DELAYSEPA, SEC_CONSHDLR_DELAYPROP, SEC_CONSHDLR_NEEDSCONS,
+            SCIP_PROPTIMING_BEFORELP, SCIP_PRESOLTIMING_FAST)
     {
         sec_disjoint_tour = _sec_disjoint_tour;
         sec_disjoint_tour_freq = _sec_disjoint_tour_freq;

@@ -43,13 +43,15 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
     bool cost_cover_shortest_path,
     bool cycle_cover,
     std::map<PCTSPvertex, CostNumberType>& disjoint_paths_map,
-    int logging_level_py,
+    int log_level_py,
     std::string& name,
     bool sec_disjoint_tour,
     bool sec_maxflow_mincut,
     std::filesystem::path solver_dir,
     float time_limit
 ) {
+    PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
+
     // get the model from python
     PyObject* capsule = model.attr("to_ptr")(false).ptr();
     SCIP* scip = (SCIP*) PyCapsule_GetPointer(capsule, "scip");

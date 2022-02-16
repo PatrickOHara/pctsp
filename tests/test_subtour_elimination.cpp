@@ -147,7 +147,11 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     auto prize_map = getPrizeMap(graph);
     auto cost_map = getCostMap(graph);
     auto root_vertex = getRootVertex();
-    int quota = 3;
+    int quota;
+    switch (GetParam()) {
+        case GraphType::COMPLETE50: quota = totalPrizeOfGraph(graph, prize_map); break;
+        default: quota = 3; break;
+    }
 
     addSelfLoopsToGraph(graph);
     assignZeroCostToSelfLoops(graph, cost_map);
@@ -181,30 +185,42 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     int actual_cost = totalCost(sol_edges, cost_map);
     int expected_cost;
     int expected_num_sec_maxflow_mincut;
+    int expected_num_sec_disjoint_tour;
     switch (GetParam()) {
         case GraphType::COMPLETE4: {
             expected_cost = 4;
             expected_num_sec_maxflow_mincut = 3;
+            expected_num_sec_disjoint_tour = 0;
             break;
         }
         case GraphType::COMPLETE5: {
             expected_cost = 5;
             expected_num_sec_maxflow_mincut = 3;
+            expected_num_sec_disjoint_tour = 0;
             break;
         }
         case GraphType::GRID8: {
             expected_cost = 4;
             expected_num_sec_maxflow_mincut = 0;
+            expected_num_sec_disjoint_tour = 0;
             break;
         }
         case GraphType::SUURBALLE: {
             expected_cost = 15;
             expected_num_sec_maxflow_mincut = 15;
+            expected_num_sec_disjoint_tour = 0;
+            break;
+        }
+        case GraphType::COMPLETE50: {
+            expected_num_sec_maxflow_mincut = 0;
+            expected_cost = 212;
+            expected_num_sec_disjoint_tour = 11;
             break;
         }
         default: {
-            // on the complete graphs, no vertices are expected to be above the cost limit
+            expected_num_sec_maxflow_mincut = 0;
             expected_cost = 0;
+            expected_num_sec_disjoint_tour = 0;
             break;
         }
     }
@@ -212,6 +228,8 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     auto summary_yaml = logger_dir / PCTSP_SUMMARY_STATS_YAML;
     auto stats = readSummaryStatsFromYaml(summary_yaml);
     EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
+    EXPECT_EQ(stats.num_sec_disjoint_tour, expected_num_sec_disjoint_tour);
+    EXPECT_EQ(SCIPgetNNodes(scip), 1);
 }
 
 TEST(TestSubtourElimination, testGetUnreachableVertices) {
@@ -239,5 +257,5 @@ TEST(TestSubtourElimination, testGetUnreachableVertices) {
 INSTANTIATE_TEST_SUITE_P(
     TestSubtourElimination,
     SubtourGraphFixture,
-    ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE, GraphType::COMPLETE4, GraphType::COMPLETE5)
+    ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE, GraphType::COMPLETE4, GraphType::COMPLETE5, GraphType::COMPLETE50)
 );
