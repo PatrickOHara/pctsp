@@ -2,6 +2,7 @@
 set(TARGET "pctsp")
 add_library(${TARGET} SHARED 
     "algorithms.cpp"
+    "branching.cpp"
     "data_structures.cpp"
     "cost_cover.cpp"
     "cycle_cover.cpp"
