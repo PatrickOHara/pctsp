@@ -93,7 +93,7 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     // initialise and create the model without subtour elimiation constraints
     SCIP* scip = NULL;
     SCIPcreate(&scip);
-    SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, true, 1, true, 1), TRUE);
+    SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, true, true), TRUE);
     SCIPincludeDefaultPlugins(scip);
     ProbDataPCTSP* probdata = new ProbDataPCTSP(&graph, &root_vertex, &variable_map, &quota);
     SCIPcreateObjProb(
@@ -142,7 +142,10 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
 TEST_P(SubtourGraphFixture, testSubtourParams) {
     PCTSPinitLogging(logging::trivial::warning);
     bool sec_disjoint_tour = true;
+    double sec_lp_gap_improvement_threshold = 0.01;
     bool sec_maxflow_mincut = true;
+    int sec_max_tailing_off_iterations = -1;
+    int sec_sepafreq = 1;
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
     auto cost_map = getCostMap(graph);
@@ -171,44 +174,41 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
         prize_map,
         quota,
         root_vertex,
+        -1,
+        BranchingStrategy::RELPSCOST,
         false,
         false,
         false,
         {},
         name,
         sec_disjoint_tour,
+        sec_lp_gap_improvement_threshold,
         sec_maxflow_mincut,
+        sec_max_tailing_off_iterations,
+        sec_sepafreq,
         logger_dir,
         60
     );
     auto sol_edges = edgesFromVertexPairs(graph, solution_edges);
     int actual_cost = totalCost(sol_edges, cost_map);
     int expected_cost;
-    int expected_num_sec_maxflow_mincut;
-    int expected_num_sec_disjoint_tour;
+    int expected_num_sec_maxflow_mincut = 0;
+    int expected_num_sec_disjoint_tour = 0;
     switch (GetParam()) {
         case GraphType::COMPLETE4: {
             expected_cost = 4;
-            expected_num_sec_maxflow_mincut = 3;
-            expected_num_sec_disjoint_tour = 0;
             break;
         }
         case GraphType::COMPLETE5: {
             expected_cost = 5;
-            expected_num_sec_maxflow_mincut = 3;
-            expected_num_sec_disjoint_tour = 0;
             break;
         }
         case GraphType::GRID8: {
             expected_cost = 4;
-            expected_num_sec_maxflow_mincut = 0;
-            expected_num_sec_disjoint_tour = 0;
             break;
         }
         case GraphType::SUURBALLE: {
             expected_cost = 15;
-            expected_num_sec_maxflow_mincut = 15;
-            expected_num_sec_disjoint_tour = 0;
             break;
         }
         case GraphType::COMPLETE50: {
@@ -252,6 +252,131 @@ TEST(TestSubtourElimination, testGetUnreachableVertices) {
     auto end_it = unreachable.end();
     EXPECT_TRUE(std::find(unreachable.begin(), end_it, source) == end_it);
     EXPECT_TRUE(std::find(unreachable.begin(), end_it, boost::vertex(n_vertices - 1, graph)) != end_it);
+}
+
+TEST(TestSubtourElimination, testIsNodeTailingOff) {
+    std::list<double> rolling_gaps = {1.8, 1.6, 1.3, 1.2, 1.0};
+    double threshold = 1.0;
+    int max_iter = 5;
+    EXPECT_TRUE(isNodeTailingOff(rolling_gaps, threshold, max_iter));
+    threshold = 0.1;
+    EXPECT_FALSE(isNodeTailingOff(rolling_gaps, threshold, max_iter));
+    max_iter = 10;
+    threshold = 1.0;
+    EXPECT_FALSE(isNodeTailingOff(rolling_gaps, threshold, max_iter));
+}
+
+TEST(TestSubtourElimination, testPushIntoRollingLpGapList) {
+    std::list<double> rolling_gaps = {1.8, 1.6, 1.3, 1.2, 1.0};
+    int max_iter = 5;
+    double gap = 0.8;
+    EXPECT_EQ(rolling_gaps.size(), max_iter);
+    pushIntoRollingLpGapList(rolling_gaps, gap, max_iter);
+    EXPECT_EQ(rolling_gaps.size(), max_iter);
+    EXPECT_EQ(rolling_gaps.front(), 1.6);
+    EXPECT_EQ(rolling_gaps.back(), gap);
+}
+
+TEST_P(SubtourGraphFixture, testTailingOff) {
+    PCTSPinitLogging(logging::trivial::warning);
+    bool sec_disjoint_tour = true;
+    double sec_lp_gap_improvement_threshold = 0.1;  // 10% gap improvement required
+    bool sec_maxflow_mincut = true;
+    int sec_max_tailing_off_iterations = 3;         // every LP is checked for tailing off
+    int sec_sepafreq = 1;
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
+    auto root_vertex = getRootVertex();
+    int quota = getQuota();
+    // switch (GetParam()) {
+    //     case GraphType::COMPLETE50: quota = totalPrizeOfGraph(graph, prize_map); break;
+    //     default: quota = 3; break;
+    // }
+
+    std::vector<PCTSPedge> heuristic_edges = {};
+    std::filesystem::path logger_dir = ".logs";
+
+    SCIP* scip = NULL;
+    SCIPcreate(&scip);
+    std::string name = "testTailingOff";
+    SCIPinitializeRandomSeed(scip, 0);
+    setStrongBranchingStrategy(scip);
+
+    auto solution_edges = solvePrizeCollectingTSP(
+        scip,
+        graph,
+        heuristic_edges,
+        cost_map,
+        prize_map,
+        quota,
+        root_vertex,
+        -1,
+        BranchingStrategy::RELPSCOST,
+        false,
+        false,
+        false,
+        {},
+        name,
+        sec_disjoint_tour,
+        sec_lp_gap_improvement_threshold,
+        sec_maxflow_mincut,
+        sec_max_tailing_off_iterations,
+        sec_sepafreq,
+        logger_dir,
+        60
+    );
+    int expected_num_sec_disjoint_tour;
+    int expected_num_sec_maxflow_mincut;
+    int expected_cost;
+    int expected_nnodes = 1;
+    switch (GetParam()) {
+        case GraphType::COMPLETE4: {
+            expected_num_sec_disjoint_tour = 0;
+            expected_num_sec_maxflow_mincut = 0;
+            expected_cost = 6;
+            break;
+        }
+        case GraphType::COMPLETE5: {
+            expected_num_sec_disjoint_tour = 0;
+            expected_num_sec_maxflow_mincut = 0;
+            expected_cost = 7;
+            break;
+        }
+        case GraphType::GRID8: {
+            expected_num_sec_disjoint_tour = 0;
+            expected_num_sec_maxflow_mincut = 0;
+            expected_cost = 14;
+            break;
+        }
+        case GraphType::SUURBALLE: {
+            expected_num_sec_disjoint_tour = 0;
+            expected_num_sec_maxflow_mincut = 0;
+            expected_cost = 20;
+            break;
+        }
+        case GraphType::COMPLETE50: {
+            expected_num_sec_disjoint_tour = 0;
+            expected_num_sec_maxflow_mincut = 39;
+            expected_cost = 73;
+            expected_nnodes = 9;
+            break;
+        }
+        default: {
+            expected_num_sec_maxflow_mincut = 0;
+            expected_num_sec_disjoint_tour = 0;
+            expected_cost = 0;
+            break;
+        }
+    }
+    auto summary_yaml = logger_dir / PCTSP_SUMMARY_STATS_YAML;
+    auto stats = readSummaryStatsFromYaml(summary_yaml);
+    auto sol_edges = edgesFromVertexPairs(graph, solution_edges);
+    int actual_cost = totalCost(sol_edges, cost_map);
+    EXPECT_EQ(expected_cost, actual_cost);
+    EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
+    EXPECT_EQ(stats.num_sec_disjoint_tour, expected_num_sec_disjoint_tour);
+    EXPECT_EQ(SCIPgetNNodes(scip), expected_nnodes);
 }
 
 INSTANTIATE_TEST_SUITE_P(

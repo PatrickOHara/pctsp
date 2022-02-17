@@ -21,9 +21,9 @@ SCIP_BRANCHRULE* findRelPsCostBranchingRule(SCIP* scip);
 
 void setStrongBranchingStrategy(SCIP* scip);
 
-void setStrongAtTreeTopBranchingStrategy(SCIP* scip, unsigned int strong_branching_max_depth);
+void setStrongAtTreeTopBranchingStrategy(SCIP* scip, int strong_branching_max_depth);
 
-void setBranchingStrategy(SCIP* scip, unsigned int strategy, unsigned int max_depth);
+void setBranchingStrategy(SCIP* scip, unsigned int strategy, int max_depth);
 
 void setBranchingStrategy(SCIP* scip, unsigned int strategy);
 

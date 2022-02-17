@@ -204,8 +204,26 @@ SCIP_DECL_CONSENFOLP(PCTSPconshdlrSubtour::scip_enfolp) {
         *result = SCIP_FEASIBLE;
     }
     else {
-        BOOST_LOG_TRIVIAL(debug) << "SCIP enfolp: LP is not simple cycle";
-        *result = SCIP_INFEASIBLE;
+        SCIP_NODE* node = SCIPgetCurrentNode(scip);
+        double lower = SCIPnodeGetLowerbound(node);
+        double upper = SCIPgetUpperbound(scip);
+        double gap = (upper - lower)/ lower;
+        int node_id = SCIPnodeGetNumber(node);
+        int node_index = node_id - 1;
+        if (node_index >= node_rolling_lp_gap.size()) {
+            node_rolling_lp_gap.resize(node_id);
+        }
+        pushIntoRollingLpGapList(node_rolling_lp_gap[node_index], gap, sec_max_tailing_off_iterations);
+        if (isNodeTailingOff(node_rolling_lp_gap[node_index], sec_lp_gap_improvement_threshold, sec_max_tailing_off_iterations)) {
+            std::cout << "BRANCHING: Node " << node_id << " found to be tailing off. Gap is " << gap << ". Threshold is " << sec_lp_gap_improvement_threshold << std::endl;
+            // SCIPbranchLP(scip, result);
+            *result = SCIP_BRANCHED;
+        }
+        else {
+            BOOST_LOG_TRIVIAL(debug) << "SCIP enfolp: LP is not simple cycle";
+            SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result, sec_disjoint_tour, sec_maxflow_mincut));
+            // *result = SCIP_INFEASIBLE;
+        }
     }
     return SCIP_OKAY;
 }
@@ -251,13 +269,32 @@ SCIP_DECL_CONSPRINT(PCTSPconshdlrSubtour::scip_print) {
     return SCIP_OKAY;
 }
 
+void pushIntoRollingLpGapList(std::list<double>& rolling_gaps, double& gap, int& sec_max_tailing_off_iterations) {
+    if (sec_max_tailing_off_iterations >= 1) {
+        rolling_gaps.push_back(gap);
+        if (rolling_gaps.size() > sec_max_tailing_off_iterations)
+            rolling_gaps.pop_front();
+    }
+}
+
+bool isNodeTailingOff(
+    std::list<double>& rolling_gaps,
+    double& sec_lp_gap_improvement_threshold,
+    int& sec_max_tailing_off_iterations
+) {
+    return (sec_max_tailing_off_iterations >= 1)
+        && (rolling_gaps.front() - rolling_gaps.back() < sec_lp_gap_improvement_threshold)
+        && (rolling_gaps.size() == sec_max_tailing_off_iterations);
+}
+
+
 SCIP_DECL_CONSSEPALP(PCTSPconshdlrSubtour::scip_sepalp) {
-    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq));
+    // SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result, sec_disjoint_tour, sec_maxflow_mincut));
     return SCIP_OKAY;
 }
 
 SCIP_DECL_CONSSEPASOL(PCTSPconshdlrSubtour::scip_sepasol) {
-    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, sol, result, sec_disjoint_tour, sec_disjoint_tour_freq, sec_maxflow_mincut, sec_maxflow_mincut_freq));
+    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, sol, result, sec_disjoint_tour, sec_maxflow_mincut));
     return SCIP_OKAY;
 }
 
@@ -270,8 +307,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     SCIP_SOL* sol,
     SCIP_RESULT* result,
     std::set<PCTSPvertex>& root_component,
-    int& num_conss_added,
-    int freq
+    int& num_conss_added
 ) {
     typedef adjacency_list_traits< vecS, vecS, directedS > Traits;
     typedef boost::property< edge_reverse_t, Traits::edge_descriptor > ReverseEdges;
@@ -393,11 +429,9 @@ SCIP_RETCODE PCTSPseparateSubtour(
     SCIP_SOL* sol,                /**< primal solution that should be separated */
     SCIP_RESULT* result,              /**< pointer to store the result of the separation call */
     bool sec_disjoint_tour,
-    int sec_disjoint_tour_freq,
-    bool sec_maxflow_mincut,
-    int sec_maxflow_mincut_freq
+    bool sec_maxflow_mincut
 ) {
-    *result = SCIP_DIDNOTFIND;
+    // *result = SCIP_DIDNOTFIND;
     // load the constraint handler data
     ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
     auto& input_graph = *(probdata->getInputGraph());
@@ -437,7 +471,7 @@ SCIP_RETCODE PCTSPseparateSubtour(
         // separate SEC using maxflow mincut
         int num_maxflow_mincut_secs_added = 0;
         PCTSPseparateMaxflowMincut(
-            scip, conshdlr, input_graph, edge_variable_map, root_vertex, sol, result, root_component, num_maxflow_mincut_secs_added, sec_maxflow_mincut_freq
+            scip, conshdlr, input_graph, edge_variable_map, root_vertex, sol, result, root_component, num_maxflow_mincut_secs_added
         );
         if (node_eventhdlr_ready) node_eventhdlr->incrementNumSecMaxflowMincut(scip, num_maxflow_mincut_secs_added);
     }

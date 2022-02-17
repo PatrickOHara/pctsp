@@ -41,7 +41,7 @@ void setStrongBranchingStrategy(SCIP* scip) {
     }
 }
 
-void setStrongAtTreeTopBranchingStrategy(SCIP* scip, unsigned int strong_branching_max_depth) {
+void setStrongAtTreeTopBranchingStrategy(SCIP* scip, int strong_branching_max_depth) {
     // use the same priority for each branching rule
     setStrongBranchingStrategy(scip);
 
@@ -50,7 +50,7 @@ void setStrongAtTreeTopBranchingStrategy(SCIP* scip, unsigned int strong_branchi
     SCIPsetBranchruleMaxdepth(scip, strong, strong_branching_max_depth);
 }
 
-void setBranchingStrategy(SCIP* scip, unsigned int strategy, unsigned int max_depth) {
+void setBranchingStrategy(SCIP* scip, unsigned int strategy, int max_depth) {
     switch (strategy) {
         case BranchingStrategy::RELPSCOST: {
             break;

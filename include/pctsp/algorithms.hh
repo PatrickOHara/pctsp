@@ -5,6 +5,7 @@
 #include <iostream>
 #include "scip/message_default.h"
 
+#include "branching.hh"
 #include "constraint.hh"
 #include "cost_cover.hh"
 #include "cycle_cover.hh"
@@ -169,13 +170,18 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     VertexPrizeMap& prize_map,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
+    int branching_max_depth = -1,
+    unsigned int branching_strategy = BranchingStrategy::RELPSCOST,
     bool cost_cover_disjoint_paths = false,
     bool cost_cover_shortest_path = false,
     bool cycle_cover = false,
     std::vector<int> disjoint_paths_distances = std::vector<int>(),
     std::string name = "pctsp",
     bool sec_disjoint_tour = true,
+    double sec_lp_gap_improvement_threshold = 0.01,
     bool sec_maxflow_mincut = true,
+    int sec_max_tailing_off_iterations = -1,
+    int sec_sepafreq = 1,
     std::filesystem::path solver_dir = "./pctsp",
     float time_limit = 14400
 );
@@ -190,7 +196,10 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     PCTSPvertex& root_vertex,
     std::string& name,
     bool sec_disjoint_tour = true,
-    bool sec_maxflow_mincut = true
+    double sec_lp_gap_improvement_threshold = 0.01,
+    bool sec_maxflow_mincut = true,
+    int sec_max_tailing_off_iterations = -1,
+    int sec_sepafreq = 1
 );
 
 std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
@@ -204,7 +213,10 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     PCTSPvertex& root_vertex,
     std::string& name,
     bool sec_disjoint_tour = true,
-    bool sec_maxflow_mincut = true
+    double sec_lp_gap_improvement_threshold = 0.01,
+    bool sec_maxflow_mincut = true,
+    int sec_max_tailing_off_iterations = -1,
+    int sec_sepafreq = 1
 );
 
 #endif

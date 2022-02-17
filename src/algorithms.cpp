@@ -108,13 +108,18 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     VertexPrizeMap& prize_map,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
+    int branching_max_depth,
+    unsigned int branching_strategy,
     bool cost_cover_disjoint_paths,
     bool cost_cover_shortest_path,
     bool cycle_cover,
     std::vector<int> disjoint_paths_distances,
     std::string name,
     bool sec_disjoint_tour,
+    double sec_lp_gap_improvement_threshold,
     bool sec_maxflow_mincut,
+    int sec_max_tailing_off_iterations,
+    int sec_sepafreq,
     std::filesystem::path solver_dir,
     float time_limit
 ) {
@@ -131,7 +136,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     SCIPsetMessagehdlr(scip, handler);
 
     // add variables, constraints and the SEC cutting plane
-    auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name, sec_disjoint_tour, sec_maxflow_mincut);
+    auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name, sec_disjoint_tour, sec_lp_gap_improvement_threshold, sec_maxflow_mincut, sec_max_tailing_off_iterations, sec_sepafreq);
 
     // add the cost cover inequalities when a new solution is found
     if (cost_cover_disjoint_paths) {
@@ -198,7 +203,10 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     PCTSPvertex& root_vertex,
     std::string& name,
     bool sec_disjoint_tour,
-    bool sec_maxflow_mincut
+    double sec_lp_gap_improvement_threshold,
+    bool sec_maxflow_mincut,
+    int sec_max_tailing_off_iterations,
+    int sec_sepafreq
 ) {
     // initialise empty model
     SCIPincludeDefaultPlugins(scip);
@@ -217,7 +225,15 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     SCIPcreateObjProb(scip, name.c_str(), objprobdata, true);
 
     PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota, root_vertex, edge_variable_map);
-    SCIPincludeObjConshdlr(scip, new PCTSPconshdlrSubtour(scip, sec_disjoint_tour, 1, sec_maxflow_mincut, 1), TRUE);
+    auto conshdlr = new PCTSPconshdlrSubtour(
+        scip,
+        sec_disjoint_tour,
+        sec_lp_gap_improvement_threshold,
+        sec_maxflow_mincut,
+        sec_max_tailing_off_iterations,
+        sec_sepafreq
+    );
+    SCIPincludeObjConshdlr(scip, conshdlr, TRUE);
 
     // turn off presolving
     SCIPsetIntParam(scip, "presolving/maxrounds", 0);
@@ -251,7 +267,10 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     PCTSPvertex& root_vertex,
     std::string& name,
     bool sec_disjoint_tour,
-    bool sec_maxflow_mincut
+    double sec_lp_gap_improvement_threshold,
+    bool sec_maxflow_mincut,
+    int sec_max_tailing_off_iterations,
+    int sec_sepafreq
 ) {
     // add edges to empty graph
     auto start = edge_list.begin();

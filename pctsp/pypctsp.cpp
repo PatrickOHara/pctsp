@@ -39,6 +39,8 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
     std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
+    int branching_max_depth,
+    unsigned int branching_strategy,
     bool cost_cover_disjoint_paths,
     bool cost_cover_shortest_path,
     bool cycle_cover,
@@ -46,7 +48,10 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
     int log_level_py,
     std::string& name,
     bool sec_disjoint_tour,
+    double sec_lp_gap_improvement_threshold,
     bool sec_maxflow_mincut,
+    int sec_max_tailing_off_iterations,
+    int sec_sepafreq,
     std::filesystem::path solver_dir,
     float time_limit
 ) {
@@ -84,13 +89,18 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
         prize_map,
         quota,
         new_root,
+        branching_max_depth,
+        branching_strategy,
         cost_cover_disjoint_paths,
         cost_cover_shortest_path,
         cycle_cover,
         disjoint_paths_costs,
         name,
         sec_disjoint_tour,
+        sec_lp_gap_improvement_threshold,
         sec_maxflow_mincut,
+        sec_max_tailing_off_iterations,
+        sec_sepafreq,
         solver_dir,
         time_limit
     );

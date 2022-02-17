@@ -83,13 +83,18 @@ TEST_P(AlgorithmsFixture, testSolvePrizeCollectingTSP) {
         prize_map,
         quota,
         root_vertex,
+        -1,
+        BranchingStrategy::RELPSCOST,
         false,
         false,
         false,
         {},
         name,
         true,
+        0.01,
         true,
+        -1,
+        1,
         log_dir,
         60
     );
