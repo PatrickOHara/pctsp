@@ -138,6 +138,9 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     // add variables, constraints and the SEC cutting plane
     auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name, sec_disjoint_tour, sec_lp_gap_improvement_threshold, sec_maxflow_mincut, sec_max_tailing_off_iterations, sec_sepafreq);
 
+    // set seed to obtain reproducible randomness
+    SCIPinitializeRandomSeed(scip, 0);
+
     // add the cost cover inequalities when a new solution is found
     if (cost_cover_disjoint_paths) {
         includeDisjointPathsCostCover(scip, disjoint_paths_distances);
