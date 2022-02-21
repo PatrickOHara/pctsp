@@ -10,6 +10,7 @@ from tspwplib import (
 )
 from pctsp import solve_pctsp
 
+
 def test_strong_branching_at_tree_top(tspwplib_graph, root, logger_dir):
     """Test the branch and cut algorithm on a small, undirected sparse graph"""
     quota = 30
@@ -36,6 +37,7 @@ def test_strong_branching_at_tree_top(tspwplib_graph, root, logger_dir):
     assert model.getStage() == SCIP_STAGE.SOLVED
     assert model.getStatus() == "optimal"
 
+
 def test_avoid_tailing_off(tspwplib_graph, root, logger_dir):
     """Test the branch and cut algorithm on a small, undirected sparse graph"""
     quota = 30
@@ -48,11 +50,11 @@ def test_avoid_tailing_off(tspwplib_graph, root, logger_dir):
         quota,
         root,
         name=name,
-        sec_disjoint_tour = True,
-        sec_lp_gap_improvement_threshold = 0.1,
-        sec_maxflow_mincut = True,
-        sec_max_tailing_off_iterations = 2,
-        sec_sepafreq = 1,
+        sec_disjoint_tour=True,
+        sec_lp_gap_improvement_threshold=0.1,
+        sec_maxflow_mincut=True,
+        sec_max_tailing_off_iterations=2,
+        sec_sepafreq=1,
         solver_dir=logger_dir,
     )
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
@@ -63,12 +65,21 @@ def test_avoid_tailing_off(tspwplib_graph, root, logger_dir):
     assert model.getStage() == SCIP_STAGE.SOLVED
     assert model.getStatus() == "optimal"
 
+
 if __name__ == "__main__":
-    from tspwplib import build_path_to_oplib_instance, ProfitsProblem, Generation, GraphName
+    from tspwplib import (
+        build_path_to_oplib_instance,
+        ProfitsProblem,
+        Generation,
+        GraphName,
+    )
     from pathlib import Path
     import os
+
     oplib_root = Path(os.getenv("OPLIB_ROOT"))
-    filepath = build_path_to_oplib_instance(oplib_root, Generation.gen1, GraphName.eil76)
+    filepath = build_path_to_oplib_instance(
+        oplib_root, Generation.gen1, GraphName.eil76
+    )
     problem = ProfitsProblem.load(filepath)
     graph = problem.get_graph(normalize=True)
     test_avoid_tailing_off(graph, 0, oplib_root)

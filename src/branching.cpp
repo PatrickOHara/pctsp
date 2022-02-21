@@ -5,15 +5,19 @@
 const std::string BRANCHING_RULE_NAMES::LEAST_INFEASIBLE = "leastinf";
 const std::string BRANCHING_RULE_NAMES::MOST_INFEASIBLE = "mostinf";
 const std::string BRANCHING_RULE_NAMES::FULL_STRONG = "fullstrong";
+const std::string BRANCHING_RULE_NAMES::PSCOST = "pscost";
 const std::string BRANCHING_RULE_NAMES::RELPSCOST = "relpscost";
 
 const unsigned int BranchingStrategy::RELPSCOST = 0;
 const unsigned int BranchingStrategy::STRONG = 1;
 const unsigned int BranchingStrategy::STRONG_AT_TREE_TOP = 2;
+const unsigned int BranchingStrategy::PSCOST = 3;
+
 
 void includeBranchRules(SCIP* scip) {
-    SCIPincludeBranchruleMostinf(scip);
     SCIPincludeBranchruleFullstrong(scip);
+    SCIPincludeBranchrulePscost(scip);
+    SCIPincludeBranchruleMostinf(scip);
 }
 
 SCIP_BRANCHRULE* findStrongBranchingRule(SCIP* scip) {
@@ -50,6 +54,21 @@ void setBranchingRandomSeeds(SCIP* scip, unsigned int seed) {
  */
 void setBranchingRandomSeeds(SCIP* scip) {
     setBranchingRandomSeeds(scip, PCTSP_DEFAULT_SEED);
+}
+
+void setRelpscostBranchingStrategy(SCIP* scip) {
+    auto n = SCIPgetNBranchrules(scip);
+    SCIP_BRANCHRULE** rules = SCIPgetBranchrules(scip);
+    for (int i = 0; i < n; i++) {
+        SCIP_BRANCHRULE* rule = rules[i];
+        std::string name = SCIPbranchruleGetName(rule);
+        if (name == BRANCHING_RULE_NAMES::RELPSCOST) {
+            SCIPsetBranchrulePriority(scip, rule, 100000);
+        }
+        else {
+            SCIPsetBranchrulePriority(scip, rule, -10000);
+        }
+    }
 }
 
 void setStrongBranchingStrategy(SCIP* scip) {
@@ -94,7 +113,8 @@ void setStrongAtTreeTopBranchingStrategy(SCIP* scip, int strong_branching_max_de
 void setBranchingStrategy(SCIP* scip, unsigned int strategy, int max_depth) {
     switch (strategy) {
         case BranchingStrategy::RELPSCOST: {
-            break;
+            SCIPincludeBranchruleRelpscost(scip);
+            setRelpscostBranchingStrategy(scip);
         }
         case BranchingStrategy::STRONG: {
             setStrongBranchingStrategy(scip);
@@ -103,6 +123,9 @@ void setBranchingStrategy(SCIP* scip, unsigned int strategy, int max_depth) {
         case BranchingStrategy::STRONG_AT_TREE_TOP: {
             setStrongAtTreeTopBranchingStrategy(scip, max_depth);
             break;
+        }
+        case BranchingStrategy::PSCOST: {
+            break;      // TODO
         }
         default: break; // use existing strategy
     }

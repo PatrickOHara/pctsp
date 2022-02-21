@@ -7,6 +7,7 @@
 const unsigned int PCTSP_DEFAULT_SEED = 1;
 
 struct BranchingStrategy {
+    static const unsigned int PSCOST;
     static const unsigned int RELPSCOST;
     static const unsigned int STRONG;
     static const unsigned int STRONG_AT_TREE_TOP;
@@ -16,6 +17,7 @@ struct BRANCHING_RULE_NAMES {
     static const std::string LEAST_INFEASIBLE;
     static const std::string MOST_INFEASIBLE;
     static const std::string FULL_STRONG;
+    static const std::string PSCOST;
     static const std::string RELPSCOST;
 };
 
@@ -24,6 +26,8 @@ void includeBranchRules(SCIP* scip);
 SCIP_BRANCHRULE* findStrongBranchingRule(SCIP* scip);
 
 SCIP_BRANCHRULE* findRelPsCostBranchingRule(SCIP* scip);
+
+void setRelpscostBranchingStrategy(SCIP* scip);
 
 void setStrongBranchingStrategy(SCIP* scip);
 
