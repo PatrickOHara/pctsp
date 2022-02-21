@@ -4,6 +4,8 @@
 #include <string>
 #include <scip/scip.h>
 
+const unsigned int PCTSP_DEFAULT_SEED = 1;
+
 struct BranchingStrategy {
     static const unsigned int RELPSCOST;
     static const unsigned int STRONG;
@@ -11,6 +13,8 @@ struct BranchingStrategy {
 };
 
 struct BRANCHING_RULE_NAMES {
+    static const std::string LEAST_INFEASIBLE;
+    static const std::string MOST_INFEASIBLE;
     static const std::string FULL_STRONG;
     static const std::string RELPSCOST;
 };
@@ -26,5 +30,9 @@ void setStrongAtTreeTopBranchingStrategy(SCIP* scip, int strong_branching_max_de
 void setBranchingStrategy(SCIP* scip, unsigned int strategy, int max_depth);
 
 void setBranchingStrategy(SCIP* scip, unsigned int strategy);
+
+void setBranchingRandomSeeds(SCIP* scip, unsigned int seed);
+
+void setBranchingRandomSeeds(SCIP* scip);
 
 #endif

@@ -1,5 +1,7 @@
 #include "pctsp/branching.hh"
 
+const std::string BRANCHING_RULE_NAMES::LEAST_INFEASIBLE = "leastinf";
+const std::string BRANCHING_RULE_NAMES::MOST_INFEASIBLE = "mostinf";
 const std::string BRANCHING_RULE_NAMES::FULL_STRONG = "fullstrong";
 const std::string BRANCHING_RULE_NAMES::RELPSCOST = "relpscost";
 
@@ -17,6 +19,32 @@ SCIP_BRANCHRULE* findRelPsCostBranchingRule(SCIP* scip) {
     return branchrule;
 }
 
+/**
+ * @brief Set seed of every branching rule to predict randomness
+ */
+void setBranchingRandomSeeds(SCIP* scip, unsigned int seed) {
+    // SCIPsetIntParam(scip, "branching/random/seed", seed);
+    // SCIPsetIntParam(scip, "branching/relpscost/startrandseed", seed);
+    // SCIPsetIntParam(scip, "heuristics/alns/seed", seed);
+    // SCIPsetIntParam(scip, "randomization/lpseed", seed);
+    // SCIPsetIntParam(scip, "randomization/permutationseed", seed);
+    // SCIPsetIntParam(scip, "separating/zerohalf/initseed", seed);
+
+    // SCIPsetBoolParam(scip, "concurrent/changeseeds", false);
+    // SCIPsetIntParam(scip, "concurrent/initseed", seed);
+
+    // SCIP_BRANCHRULE* relpscost = findRelPsCostBranchingRule(scip);
+    // auto branchruledata = SCIPbranchruleGetData(relpscost);
+    // SCIPsetRandomSeed(scip, branchruledata->randnumgen, seed);
+}
+
+/**
+ * @brief Set the seed of all branching rules with randomness to be PCTSP_DEFAULT_SEED 
+ */
+void setBranchingRandomSeeds(SCIP* scip) {
+    setBranchingRandomSeeds(scip, PCTSP_DEFAULT_SEED);
+}
+
 void setStrongBranchingStrategy(SCIP* scip) {
     auto n = SCIPgetNBranchrules(scip);
     SCIP_BRANCHRULE** rules = SCIPgetBranchrules(scip);
@@ -29,7 +57,12 @@ void setStrongBranchingStrategy(SCIP* scip) {
         }
         else if (name == BRANCHING_RULE_NAMES::RELPSCOST) {
             // set relative psuedo cost to be second priority
+            // TODO change back to positive 3000
             SCIPsetBranchrulePriority(scip, rule, 3000);
+        }
+        else if (name == BRANCHING_RULE_NAMES::MOST_INFEASIBLE) {
+            // TODO set this to be something sensible
+            SCIPsetBranchrulePriority(scip, rule, 1000);
         }
         else {
             // set the priority of other rules that used to be high priority to be executed third

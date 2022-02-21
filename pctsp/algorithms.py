@@ -14,6 +14,7 @@ from tspwplib import (
 )
 from .constants import (
     FOUR_HOURS,
+    LP_GAP_IMPROVEMENT_THRESHOLD,
 )
 
 # pylint: disable=import-error
@@ -38,7 +39,7 @@ def solve_pctsp(
     name: str = "pctsp",
     solver_dir: Path = Path("."),
     sec_disjoint_tour: bool = True,
-    sec_lp_gap_improvement_threshold: float = 0.001,
+    sec_lp_gap_improvement_threshold: float = LP_GAP_IMPROVEMENT_THRESHOLD,
     sec_maxflow_mincut: bool = True,
     sec_max_tailing_off_iterations: int = -1,
     sec_sepafreq: int = 1,

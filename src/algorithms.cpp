@@ -18,13 +18,8 @@ SCIP_RETCODE addHeuristicVarsToSolver(
         SCIP_CALL(SCIPsetSolVal(scip, sol, var, 1.0));
     }
     SCIP_Bool success;
-    SCIP_RESULT* result;
     SCIP_CALL(SCIPaddSolFree(scip, &sol, &success));
 
-    // if (success)
-    //     *result = SCIP_FOUNDSOL;
-    // else
-    //     *result = SCIP_DIDNOTFIND;
     return SCIP_OKAY;
 }
 
@@ -138,9 +133,6 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     // add variables, constraints and the SEC cutting plane
     auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name, sec_disjoint_tour, sec_lp_gap_improvement_threshold, sec_maxflow_mincut, sec_max_tailing_off_iterations, sec_sepafreq);
 
-    // set seed to obtain reproducible randomness
-    SCIPinitializeRandomSeed(scip, 0);
-
     // add the cost cover inequalities when a new solution is found
     if (cost_cover_disjoint_paths) {
         includeDisjointPathsCostCover(scip, disjoint_paths_distances);
@@ -163,8 +155,15 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     BoundsEventHandler* bounds_handler = new BoundsEventHandler(scip);
     SCIPincludeObjEventhdlr(scip, bounds_handler, TRUE);
 
+    // set branching scheme
+    setBranchingStrategy(scip, branching_strategy, branching_max_depth);
+
     // time limit
     SCIPsetRealParam(scip, "limits/time", time_limit);
+
+    // set seed to obtain reproducible randomness
+    SCIPinitializeRandomSeed(scip, PCTSP_DEFAULT_SEED);
+    setBranchingRandomSeeds(scip);
 
     // solve the model
     SCIPsolve(scip);
@@ -212,7 +211,27 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     int sec_sepafreq
 ) {
     // initialise empty model
-    SCIPincludeDefaultPlugins(scip);
+    // SCIPincludeDefaultPlugins(scip);
+
+    SCIPincludeDialogDefaultBasic(scip);
+
+    // include branching rules
+    SCIPincludeBranchruleMostinf(scip);
+    SCIPincludeBranchruleFullstrong(scip);
+
+    // include constraint handlers
+    SCIPincludeConshdlrLinear(scip);
+    SCIPincludeConshdlrIntegral(scip);
+    SCIPincludeConshdlrKnapsack(scip);
+    SCIPincludeConshdlrVarbound(scip);
+
+    // node selection rules
+    SCIPincludeNodeselBreadthfirst(scip);
+    SCIPincludeNodeselDfs(scip);
+    SCIPincludeNodeselEstimate(scip);
+
+    // include heuristics
+    // SCIPincludeHeurDps(scip);
 
     // add self loops to graph - we assume the input graph is simple
     if (hasSelfLoopsOnAllVertices(graph) == false) {

@@ -129,6 +129,7 @@ TEST_P(AlgorithmsFixture, testSolvePrizeCollectingTSP) {
     for (auto const& [vertex, n] : vertex_count) {
         EXPECT_TRUE(n == 0 || n == 2);
     }
+    SCIPfree(&scip);
 }
 
 TEST_P(AlgorithmsFixture, testAddHeuristicVarsToSolver) {

@@ -174,8 +174,8 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
         prize_map,
         quota,
         root_vertex,
-        -1,
-        BranchingStrategy::RELPSCOST,
+        3,
+        BranchingStrategy::STRONG_AT_TREE_TOP,
         false,
         false,
         false,
@@ -195,20 +195,23 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     int expected_num_sec_maxflow_mincut = 0;
     int expected_num_sec_disjoint_tour = 0;
     switch (GetParam()) {
-        case GraphType::COMPLETE4: {
-            expected_cost = 4;
-            break;
-        }
-        case GraphType::COMPLETE5: {
-            expected_cost = 5;
-            break;
-        }
         case GraphType::GRID8: {
             expected_cost = 4;
             break;
         }
         case GraphType::SUURBALLE: {
             expected_cost = 15;
+            expected_num_sec_maxflow_mincut = 15;
+            break;
+        }
+        case GraphType::COMPLETE4: {
+            expected_cost = 4;
+            expected_num_sec_maxflow_mincut = 3;
+            break;
+        }
+        case GraphType::COMPLETE5: {
+            expected_cost = 5;
+            expected_num_sec_maxflow_mincut = 3;
             break;
         }
         case GraphType::COMPLETE50: {
@@ -230,6 +233,7 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
     EXPECT_EQ(stats.num_sec_disjoint_tour, expected_num_sec_disjoint_tour);
     EXPECT_EQ(SCIPgetNNodes(scip), 1);
+    SCIPfree(&scip);
 }
 
 TEST(TestSubtourElimination, testGetUnreachableVertices) {
@@ -289,10 +293,6 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
     auto cost_map = getCostMap(graph);
     auto root_vertex = getRootVertex();
     int quota = getQuota();
-    // switch (GetParam()) {
-    //     case GraphType::COMPLETE50: quota = totalPrizeOfGraph(graph, prize_map); break;
-    //     default: quota = 3; break;
-    // }
 
     std::vector<PCTSPedge> heuristic_edges = {};
     std::filesystem::path logger_dir = ".logs";
@@ -310,7 +310,7 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
         quota,
         root_vertex,
         -1,
-        BranchingStrategy::RELPSCOST,
+        BranchingStrategy::STRONG_AT_TREE_TOP,
         false,
         false,
         false,
@@ -324,11 +324,21 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
         logger_dir,
         60
     );
-    int expected_num_sec_disjoint_tour;
-    int expected_num_sec_maxflow_mincut;
+    int expected_num_sec_disjoint_tour =  0;
+    int expected_num_sec_maxflow_mincut = 0;
     int expected_cost;
     int expected_nnodes = 1;
     switch (GetParam()) {
+        case GraphType::GRID8: {
+            expected_num_sec_disjoint_tour = 13;
+            expected_cost = 14;
+            break;
+        }
+        case GraphType::SUURBALLE: {
+            expected_num_sec_disjoint_tour = 2;
+            expected_cost = 20;
+            break;
+        }
         case GraphType::COMPLETE4: {
             expected_num_sec_disjoint_tour = 0;
             expected_num_sec_maxflow_mincut = 0;
@@ -341,23 +351,11 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
             expected_cost = 7;
             break;
         }
-        case GraphType::GRID8: {
-            expected_num_sec_disjoint_tour = 0;
-            expected_num_sec_maxflow_mincut = 0;
-            expected_cost = 14;
-            break;
-        }
-        case GraphType::SUURBALLE: {
-            expected_num_sec_disjoint_tour = 0;
-            expected_num_sec_maxflow_mincut = 0;
-            expected_cost = 20;
-            break;
-        }
         case GraphType::COMPLETE50: {
-            expected_num_sec_disjoint_tour = 0;
+            expected_num_sec_disjoint_tour = 5653;
             expected_num_sec_maxflow_mincut = 39;
             expected_cost = 73;
-            expected_nnodes = 9;
+            expected_nnodes = 902;
             EXPECT_EQ(61, cost_map[boost::edge(0, 5, graph).first]);
             break;
         }
@@ -376,6 +374,17 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
     // EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
     EXPECT_EQ(stats.num_sec_disjoint_tour, expected_num_sec_disjoint_tour);
     EXPECT_EQ(SCIPgetNNodes(scip), expected_nnodes);
+    SCIPfree(&scip);
+}
+
+TEST(TestBeingDump, testAmIDump) {
+    std::vector<std::list<double>> v (5);
+    v[4].push_back(0.1);
+    EXPECT_EQ(v[4].front(), 0.1);
+    v.resize(10);
+    EXPECT_EQ(v[4].front(), 0.1);
+    EXPECT_EQ(v.size(), 10);
+    EXPECT_EQ(v[9].size(), 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(

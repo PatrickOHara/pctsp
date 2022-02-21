@@ -199,32 +199,46 @@ SCIP_DECL_CONSENFOPS(PCTSPconshdlrSubtour::scip_enfops) {
 }
 
 SCIP_DECL_CONSENFOLP(PCTSPconshdlrSubtour::scip_enfolp) {
+
     if (isSolSimpleCycle(scip, NULL, result)) {
         BOOST_LOG_TRIVIAL(debug) << "SCIP enfolp: LP is simple cycle";
         *result = SCIP_FEASIBLE;
     }
     else {
         SCIP_NODE* node = SCIPgetCurrentNode(scip);
-        double lower = SCIPnodeGetLowerbound(node);
-        double upper = SCIPgetUpperbound(scip);
-        double gap = (upper - lower)/ lower;
+        // double lower = SCIPnodeGetLowerbound(node);
+        // double upper = SCIPgetUpperbound(scip);
+        double gap = SCIPcomputeGap(SCIPepsilon(scip), SCIPinfinity(scip), SCIPgetPrimalbound(scip), SCIPnodeGetLowerbound(node));
+        
+        // double gap = (upper - lower)/ lower;
         int node_id = SCIPnodeGetNumber(node);
-        int node_index = node_id - 1;
-        if (node_index >= node_rolling_lp_gap.size()) {
-            node_rolling_lp_gap.resize(node_id);
+        if (node_id >= node_rolling_lp_gap.size()) {
+            auto new_size = node_id + 1;
+            // std::cout<< "Array size: " << node_rolling_lp_gap.size() << ". Resizing to be " << new_size << std::endl;
+            node_rolling_lp_gap.resize(new_size);
         }
-        pushIntoRollingLpGapList(node_rolling_lp_gap[node_index], gap, sec_max_tailing_off_iterations);
-        if (isNodeTailingOff(node_rolling_lp_gap[node_index], sec_lp_gap_improvement_threshold, sec_max_tailing_off_iterations)) {
-            std::cout << "BRANCHING: Node " << node_id << " found to be tailing off. Gap is " << gap << ". Threshold is " << sec_lp_gap_improvement_threshold << std::endl;
+        // std::cout<< "Pushing into rolling list..." << std::endl;
+        pushIntoRollingLpGapList(node_rolling_lp_gap[node_id], gap, sec_max_tailing_off_iterations);
+        // std::cout<< "LPSOLSTAT=" << SCIPgetLPSolstat(scip) << std::endl;
+        if (isNodeTailingOff(node_rolling_lp_gap[node_id], sec_lp_gap_improvement_threshold, sec_max_tailing_off_iterations)
+            && (SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_UNBOUNDEDRAY || SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL)) {
+            std::cout<< "BRANCHING: Node " << node_id << " found to be tailing off. Gap is " << gap << ". Threshold is " << sec_lp_gap_improvement_threshold << std::endl;
+            // std::cout<< ". Num Branching candidates: " << SCIPgetNLPBranchCands(scip) << std::endl;
             // SCIPbranchLP(scip, result);
             *result = SCIP_BRANCHED;
         }
         else {
             BOOST_LOG_TRIVIAL(debug) << "SCIP enfolp: LP is not simple cycle";
-            SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result, sec_disjoint_tour, sec_maxflow_mincut));
-            // *result = SCIP_INFEASIBLE;
+            // *result = SCIP_FEASIBLE;
+            // SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result, sec_disjoint_tour, sec_maxflow_mincut));
+            *result = SCIP_INFEASIBLE;
         }
     }
+    SCIP_NODE* n = SCIPgetCurrentNode(scip);
+    int nchildren;
+    SCIP_NODE** children;
+    SCIPgetChildren(scip, &children, &nchildren);
+    // std::cout<< "N children of node " <<  SCIPnodeGetNumber(n) << ": " << nchildren << std::endl;
     return SCIP_OKAY;
 }
 
@@ -271,6 +285,7 @@ SCIP_DECL_CONSPRINT(PCTSPconshdlrSubtour::scip_print) {
 
 void pushIntoRollingLpGapList(std::list<double>& rolling_gaps, double& gap, int& sec_max_tailing_off_iterations) {
     if (sec_max_tailing_off_iterations >= 1) {
+        // std::cout<< "Size of list: " << rolling_gaps.size() << std::endl;
         rolling_gaps.push_back(gap);
         if (rolling_gaps.size() > sec_max_tailing_off_iterations)
             rolling_gaps.pop_front();
@@ -282,14 +297,17 @@ bool isNodeTailingOff(
     double& sec_lp_gap_improvement_threshold,
     int& sec_max_tailing_off_iterations
 ) {
-    return (sec_max_tailing_off_iterations >= 1)
-        && (rolling_gaps.front() - rolling_gaps.back() < sec_lp_gap_improvement_threshold)
-        && (rolling_gaps.size() == sec_max_tailing_off_iterations);
+    if ((sec_max_tailing_off_iterations >= 1) && (rolling_gaps.size() >= 2)) {
+        return (rolling_gaps.front() - rolling_gaps.back() < sec_lp_gap_improvement_threshold)
+            && (rolling_gaps.size() == sec_max_tailing_off_iterations);
+    }
+    return false;
 }
 
 
 SCIP_DECL_CONSSEPALP(PCTSPconshdlrSubtour::scip_sepalp) {
-    // SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result, sec_disjoint_tour, sec_maxflow_mincut));
+    *result = SCIP_DIDNOTFIND;
+    SCIP_CALL(PCTSPseparateSubtour(scip, conshdlr, conss, nconss, nusefulconss, NULL, result, sec_disjoint_tour, sec_maxflow_mincut));
     return SCIP_OKAY;
 }
 
@@ -431,7 +449,6 @@ SCIP_RETCODE PCTSPseparateSubtour(
     bool sec_disjoint_tour,
     bool sec_maxflow_mincut
 ) {
-    // *result = SCIP_DIDNOTFIND;
     // load the constraint handler data
     ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
     auto& input_graph = *(probdata->getInputGraph());

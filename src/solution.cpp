@@ -10,6 +10,15 @@ bool isVarPositive(SCIP* scip, SCIP_SOL* sol, SCIP_VAR* var) {
     return (!SCIPisZero(scip, value)) && (value > 0);
 }
 
+bool isSolutionIntegral(SCIP* scip, SCIP_SOL* sol) {
+    SCIP_VAR** vars = SCIPgetVars(scip);
+    for (int i = 0; i < SCIPgetNVars(scip); i++) {
+        auto value = SCIPgetSolVal(scip, sol, vars[i]);
+        if (!SCIPisIntegral(scip, value)) return false;
+    }
+    return true;
+}
+
 std::vector<PCTSPvertex> getSolutionVertices(SCIP* scip, PCTSPgraph& graph, SCIP_SOL* sol, std::map<PCTSPedge, SCIP_VAR*>& edge_variable_map) {
     std::vector<PCTSPvertex> solution_vertices;
     for (auto vertex : boost::make_iterator_range(boost::vertices(graph))) {

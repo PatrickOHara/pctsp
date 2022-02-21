@@ -28,6 +28,7 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Operating System :: OS Independent",
     ],
+    # TODO remove debug flag
     cmake_args=['-DPCTSP_BUILD_TESTS:BOOL=OFF', '-DCMAKE_BUILD_TYPE=Debug'],
     cmake_source_dir=".",
 )
