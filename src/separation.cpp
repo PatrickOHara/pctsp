@@ -4,6 +4,11 @@
 #include <boost/property_map/property_map.hpp>
 #include <boost/typeof/typeof.hpp>
 #include <iostream>
+#include <scip/scipdefplugins.h>
+
+void includeSeparation(SCIP* scip) {
+    SCIPincludeSepaGomory(scip);
+}
 
 bool isGraphSimpleCycle(PCTSPgraph& graph, std::vector<int>& component_vector) {
     if (boost::num_vertices(graph) == 0) return false;

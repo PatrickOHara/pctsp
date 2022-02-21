@@ -1,4 +1,6 @@
+#include <iostream>
 #include "pctsp/branching.hh"
+#include <scip/scipdefplugins.h>
 
 const std::string BRANCHING_RULE_NAMES::LEAST_INFEASIBLE = "leastinf";
 const std::string BRANCHING_RULE_NAMES::MOST_INFEASIBLE = "mostinf";
@@ -8,6 +10,11 @@ const std::string BRANCHING_RULE_NAMES::RELPSCOST = "relpscost";
 const unsigned int BranchingStrategy::RELPSCOST = 0;
 const unsigned int BranchingStrategy::STRONG = 1;
 const unsigned int BranchingStrategy::STRONG_AT_TREE_TOP = 2;
+
+void includeBranchRules(SCIP* scip) {
+    SCIPincludeBranchruleMostinf(scip);
+    SCIPincludeBranchruleFullstrong(scip);
+}
 
 SCIP_BRANCHRULE* findStrongBranchingRule(SCIP* scip) {
     SCIP_BRANCHRULE* branchrule = SCIPfindBranchrule(scip, BRANCHING_RULE_NAMES::FULL_STRONG.c_str());
@@ -51,6 +58,7 @@ void setStrongBranchingStrategy(SCIP* scip) {
     for (int i = 0; i < n; i++) {
         SCIP_BRANCHRULE* rule = rules[i];
         std::string name = SCIPbranchruleGetName(rule);
+        std::cout << "Branching rule " << name << " included." << std::endl;
         if (name == BRANCHING_RULE_NAMES::FULL_STRONG) {
             // set strong branching to be highest priority
             SCIPsetBranchrulePriority(scip, rule, 4000);

@@ -19,6 +19,8 @@ struct BRANCHING_RULE_NAMES {
     static const std::string RELPSCOST;
 };
 
+void includeBranchRules(SCIP* scip);
+
 SCIP_BRANCHRULE* findStrongBranchingRule(SCIP* scip);
 
 SCIP_BRANCHRULE* findRelPsCostBranchingRule(SCIP* scip);

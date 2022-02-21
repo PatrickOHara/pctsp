@@ -11,6 +11,7 @@ add_library(${TARGET} SHARED
     "heuristic.cpp"
     "knapsack.cpp"
     "logger.cpp"
+    "node_selection.cpp"
     "preprocessing.cpp"
     "sciputils.cpp"
     "separation.cpp"

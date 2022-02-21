@@ -44,5 +44,5 @@ TEST(TestSCIPutils, testFillPositiveNegativeVars) {
         EXPECT_EQ(var_coefs[i], -1);
         EXPECT_EQ(vertex_variables[i - n_edge_vars], all_variables[i]);
     }
-
+    SCIPfree(&scip);
 }

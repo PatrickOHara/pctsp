@@ -1,6 +1,8 @@
 /** Algorithms for the prize collecting TSP */
 
 #include "pctsp/algorithms.hh"
+#include "pctsp/node_selection.hh"
+#include "pctsp/separation.hh"
 
 struct SCIP_ProbData {
    ProbDataPCTSP*    objprobdata;        /**< user problem data object */
@@ -216,22 +218,27 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     SCIPincludeDialogDefaultBasic(scip);
 
     // include branching rules
-    SCIPincludeBranchruleMostinf(scip);
-    SCIPincludeBranchruleFullstrong(scip);
+    std::cout << "Including branching rules." << std::endl;
+    includeBranchRules(scip);
 
     // include constraint handlers
+    std::cout << "Including constraint handlers." << std::endl;
     SCIPincludeConshdlrLinear(scip);
     SCIPincludeConshdlrIntegral(scip);
     SCIPincludeConshdlrKnapsack(scip);
     SCIPincludeConshdlrVarbound(scip);
 
     // node selection rules
-    SCIPincludeNodeselBreadthfirst(scip);
-    SCIPincludeNodeselDfs(scip);
-    SCIPincludeNodeselEstimate(scip);
+    std::cout << "Including node selection rules." << std::endl;
+    includeNodeSelection(scip);
+
+    // include separation methods
+    std::cout << "Including separation methods." << std::endl;
+    includeSeparation(scip);
 
     // include heuristics
-    // SCIPincludeHeurDps(scip);
+    std::cout << "Including heuristic methods." << std::endl;
+    includeHeuristics(scip);
 
     // add self loops to graph - we assume the input graph is simple
     if (hasSelfLoopsOnAllVertices(graph) == false) {
@@ -244,6 +251,7 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     putPrizeOntoEdgeWeights(graph, prize_map, weight_map);
     ProbDataPCTSP* objprobdata = new ProbDataPCTSP(&graph, &root_vertex, &edge_variable_map, &quota);
 
+    std::cout << "Creating problem with object data." << std::endl;
     SCIPcreateObjProb(scip, name.c_str(), objprobdata, true);
 
     PCTSPmodelWithoutSECs(scip, graph, cost_map, weight_map, quota, root_vertex, edge_variable_map);

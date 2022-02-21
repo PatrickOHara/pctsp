@@ -197,8 +197,8 @@ bool isNodeTailingOff(
 
 const std::string SEC_CONSHDLR_NAME = "pctsp_sec_handler";
 const std::string SEC_CONSHDLR_DESC = "Subtour elimination constraint handler for Prize-collecting TSP.";
-const int SEC_CONSHDLR_SEPAPRIORITY = -1000000;  // used to be 1000000
-const int SEC_CONSHDLR_ENFOPRIORITY = 2000000; // used to be -2000000
+const int SEC_CONSHDLR_SEPAPRIORITY = 1000000;  // used to be 1000000
+const int SEC_CONSHDLR_ENFOPRIORITY = 1000000; // used to be -2000000
 const int SEC_CONSHDLR_CHECKPRIORITY = -2000000; // used to be -2000000
 const int SEC_CONSHDLR_SEPAFREQ = 1;    // 1 : > 1 reduces number of SECs added
 const int SEC_CONSHDLR_PROPFREQ = -1;   // -1

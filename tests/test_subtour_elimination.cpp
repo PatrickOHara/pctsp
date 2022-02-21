@@ -137,6 +137,7 @@ TEST_P(SubtourGraphFixture, testPCTSPcreateBasicConsSubtour) {
     case GraphType::SUURBALLE: EXPECT_EQ(*second_it, second_edge); break;
     default: EXPECT_TRUE(true); break;
     }
+    SCIPfree(&scip);
 }
 
 TEST_P(SubtourGraphFixture, testSubtourParams) {
@@ -165,6 +166,7 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     SCIP* scip = NULL;
     SCIPcreate(&scip);
     std::string name = "testSubtourParams";
+    SCIPcreateProbBasic(scip, name.c_str());
 
     auto solution_edges = solvePrizeCollectingTSP(
         scip,
@@ -284,7 +286,7 @@ TEST(TestSubtourElimination, testPushIntoRollingLpGapList) {
 TEST_P(SubtourGraphFixture, testTailingOff) {
     PCTSPinitLogging(logging::trivial::warning);
     bool sec_disjoint_tour = true;
-    double sec_lp_gap_improvement_threshold = 0.1;  // 10% gap improvement required
+    double sec_lp_gap_improvement_threshold = 0.01;  // 10% gap improvement required
     bool sec_maxflow_mincut = true;
     int sec_max_tailing_off_iterations = 3;         // every LP is checked for tailing off
     int sec_sepafreq = 1;
@@ -352,10 +354,10 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
             break;
         }
         case GraphType::COMPLETE50: {
-            expected_num_sec_disjoint_tour = 5653;
+            expected_num_sec_disjoint_tour = 5283;
             expected_num_sec_maxflow_mincut = 39;
             expected_cost = 73;
-            expected_nnodes = 902;
+            expected_nnodes = 676;
             EXPECT_EQ(61, cost_map[boost::edge(0, 5, graph).first]);
             break;
         }

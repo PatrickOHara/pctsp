@@ -13,6 +13,7 @@ TEST(TestBranching, testSetStrongBranchingStrategy) {
     SCIP_BRANCHRULE* relpscost = findRelPsCostBranchingRule(scip);
     EXPECT_EQ(SCIPbranchruleGetPriority(strong), 4000);
     EXPECT_EQ(SCIPbranchruleGetPriority(relpscost), 3000);
+    SCIPfree(&scip);
 }
 
 TEST(TestBranching, testSetBranchingStrategy) {
@@ -26,4 +27,5 @@ TEST(TestBranching, testSetBranchingStrategy) {
     EXPECT_EQ(SCIPbranchruleGetPriority(strong), 4000);
     EXPECT_EQ(SCIPbranchruleGetMaxdepth(strong), max_depth);
     EXPECT_EQ(SCIPbranchruleGetPriority(relpscost), 3000);
+    SCIPfree(&scip);
 }
