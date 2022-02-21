@@ -215,7 +215,7 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     // initialise empty model
     // SCIPincludeDefaultPlugins(scip);
 
-    SCIPincludeDialogDefaultBasic(scip);
+    // SCIPincludeDialogDefaultBasic(scip);
 
     // include branching rules
     std::cout << "Including branching rules." << std::endl;

@@ -16,7 +16,7 @@ const unsigned int BranchingStrategy::PSCOST = 3;
 
 void includeBranchRules(SCIP* scip) {
     SCIPincludeBranchruleFullstrong(scip);
-    SCIPincludeBranchrulePscost(scip);
+    // SCIPincludeBranchrulePscost(scip);
     SCIPincludeBranchruleMostinf(scip);
 }
 
