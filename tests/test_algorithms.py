@@ -53,9 +53,10 @@ def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root, logger_dir
     assert model.getStatus() == "optimal"
 
 
-def test_pctsp_on_tspwplib(tspwplib_graph, root, logger_dir):
+def test_pctsp_on_tspwplib(sparse_tspwplib_graph, root, logger_dir):
     """Test the branch and cut algorithm on a small, undirected sparse graph"""
     quota = 30
+    tspwplib_graph = sparse_tspwplib_graph
     name = "test_pctsp_on_tspwplib"
     model = Model(problemName=name, createscip=True, defaultPlugins=False)
     edge_list = solve_pctsp(

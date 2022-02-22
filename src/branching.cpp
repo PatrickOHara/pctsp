@@ -77,7 +77,6 @@ void setStrongBranchingStrategy(SCIP* scip) {
     for (int i = 0; i < n; i++) {
         SCIP_BRANCHRULE* rule = rules[i];
         std::string name = SCIPbranchruleGetName(rule);
-        std::cout << "Branching rule " << name << " included." << std::endl;
         if (name == BRANCHING_RULE_NAMES::FULL_STRONG) {
             // set strong branching to be highest priority
             SCIPsetBranchrulePriority(scip, rule, 4000);

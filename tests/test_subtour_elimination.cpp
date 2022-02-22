@@ -194,6 +194,7 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     auto sol_edges = edgesFromVertexPairs(graph, solution_edges);
     int actual_cost = totalCost(sol_edges, cost_map);
     int expected_cost;
+    int expected_nnodes = 1;
     int expected_num_sec_maxflow_mincut = 0;
     int expected_num_sec_disjoint_tour = 0;
     switch (GetParam()) {
@@ -203,23 +204,23 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
         }
         case GraphType::SUURBALLE: {
             expected_cost = 15;
-            expected_num_sec_maxflow_mincut = 15;
+            expected_nnodes = 3;
+            expected_num_sec_maxflow_mincut = 4;
             break;
         }
         case GraphType::COMPLETE4: {
             expected_cost = 4;
-            expected_num_sec_maxflow_mincut = 3;
             break;
         }
         case GraphType::COMPLETE5: {
             expected_cost = 5;
-            expected_num_sec_maxflow_mincut = 3;
             break;
         }
         case GraphType::COMPLETE50: {
             expected_num_sec_maxflow_mincut = 0;
             expected_cost = 212;
-            expected_num_sec_disjoint_tour = 11;
+            expected_nnodes = 4146;
+            expected_num_sec_disjoint_tour = 23467;
             break;
         }
         default: {
@@ -234,7 +235,7 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     auto stats = readSummaryStatsFromYaml(summary_yaml);
     EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
     EXPECT_EQ(stats.num_sec_disjoint_tour, expected_num_sec_disjoint_tour);
-    EXPECT_EQ(SCIPgetNNodes(scip), 1);
+    EXPECT_EQ(SCIPgetNNodes(scip), expected_nnodes);
     SCIPfree(&scip);
 }
 
@@ -332,12 +333,11 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
     int expected_nnodes = 1;
     switch (GetParam()) {
         case GraphType::GRID8: {
-            expected_num_sec_disjoint_tour = 13;
             expected_cost = 14;
+            expected_nnodes = 5;
             break;
         }
         case GraphType::SUURBALLE: {
-            expected_num_sec_disjoint_tour = 2;
             expected_cost = 20;
             break;
         }

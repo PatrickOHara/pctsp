@@ -6,7 +6,7 @@ from typing import Dict, List, Set, Tuple
 import networkx as nx
 import pytest
 import tspwplib.types as tp
-from tspwplib import build_path_to_oplib_instance, ProfitsProblem
+from tspwplib import build_path_to_oplib_instance, ProfitsProblem, sparsify_uid
 from pctsp import NULL_VERTEX
 
 # pylint: disable=redefined-outer-name
@@ -27,6 +27,18 @@ def tspwplib_graph(
     graph = problem.get_graph(normalize=True)
     return graph
 
+@pytest.fixture(scope="function")
+def sparse_tspwplib_graph(
+    oplib_root,
+    generation,
+    graph_name,
+) -> nx.Graph:
+    """Test on a sparse instance of the TSPLIB dataset"""
+    filepath = build_path_to_oplib_instance(oplib_root, generation, graph_name)
+    problem = ProfitsProblem.load(filepath)
+    graph = problem.get_graph(normalize=True)
+    graph = sparsify_uid(graph, 5, seed=1)
+    return graph
 
 @pytest.fixture(scope="function")
 def disconnected_graph() -> nx.Graph:
