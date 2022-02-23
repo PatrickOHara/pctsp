@@ -164,7 +164,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     SCIPsetRealParam(scip, "limits/time", time_limit);
 
     // set seed to obtain reproducible randomness
-    SCIPinitializeRandomSeed(scip, PCTSP_DEFAULT_SEED);
+    // SCIPinitializeRandomSeed(scip, PCTSP_DEFAULT_SEED);
     setBranchingRandomSeeds(scip);
 
     // solve the model

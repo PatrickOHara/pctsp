@@ -14,9 +14,9 @@ TEST_P(GraphFixture, testGetGraph) {
         EXPECT_EQ(boost::num_vertices(graph), 5);
         break;
     }
-    case GraphType::COMPLETE50: {     
+    case GraphType::COMPLETE25: {     
         auto n = boost::num_vertices(graph);   
-        EXPECT_EQ(n, 50);
+        EXPECT_EQ(n, 25);
         auto prize_map = getPrizeMap(graph);
         EXPECT_EQ(totalPrizeOfGraph(graph, prize_map), (n * (n-1)) / 2);
         break;
@@ -38,4 +38,4 @@ TEST_P(GraphFixture, testGetGraph) {
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(TestFixtures, GraphFixture, ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5, GraphType::GRID8, GraphType::SUURBALLE, GraphType::COMPLETE50));
+INSTANTIATE_TEST_SUITE_P(TestFixtures, GraphFixture, ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5, GraphType::GRID8, GraphType::SUURBALLE, GraphType::COMPLETE25));

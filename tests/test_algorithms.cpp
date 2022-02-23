@@ -84,7 +84,7 @@ TEST_P(AlgorithmsFixture, testSolvePrizeCollectingTSP) {
         quota,
         root_vertex,
         -1,
-        BranchingStrategy::RELPSCOST,
+        BranchingStrategy::STRONG_AT_TREE_TOP,
         false,
         false,
         false,

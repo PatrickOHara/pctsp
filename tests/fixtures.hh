@@ -10,7 +10,7 @@ using namespace boost;
 enum class GraphType {
 	COMPLETE4,
 	COMPLETE5,
-	COMPLETE50,
+	COMPLETE25,
 	GRID8,
 	SUURBALLE,
 };

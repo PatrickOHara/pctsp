@@ -153,7 +153,7 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     auto root_vertex = getRootVertex();
     int quota;
     switch (GetParam()) {
-        case GraphType::COMPLETE50: quota = totalPrizeOfGraph(graph, prize_map); break;
+        case GraphType::COMPLETE25: quota = totalPrizeOfGraph(graph, prize_map); break;
         default: quota = 3; break;
     }
 
@@ -216,11 +216,8 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
             expected_cost = 5;
             break;
         }
-        case GraphType::COMPLETE50: {
-            expected_num_sec_maxflow_mincut = 0;
-            expected_cost = 212;
-            expected_nnodes = 4146;
-            expected_num_sec_disjoint_tour = 23467;
+        case GraphType::COMPLETE25: {
+            expected_cost = 41;
             break;
         }
         default: {
@@ -296,6 +293,7 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
     auto cost_map = getCostMap(graph);
     auto root_vertex = getRootVertex();
     int quota = getQuota();
+    float time_limit = 60.0;
 
     std::vector<PCTSPedge> heuristic_edges = {};
     std::filesystem::path logger_dir = ".logs";
@@ -312,7 +310,7 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
         prize_map,
         quota,
         root_vertex,
-        -1,
+        3,
         BranchingStrategy::STRONG_AT_TREE_TOP,
         false,
         false,
@@ -325,7 +323,7 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
         sec_max_tailing_off_iterations,
         sec_sepafreq,
         logger_dir,
-        60
+        time_limit
     );
     int expected_num_sec_disjoint_tour =  0;
     int expected_num_sec_maxflow_mincut = 0;
@@ -353,12 +351,12 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
             expected_cost = 7;
             break;
         }
-        case GraphType::COMPLETE50: {
-            expected_num_sec_disjoint_tour = 5283;
+        case GraphType::COMPLETE25: {
+            expected_num_sec_disjoint_tour = 1412;
             expected_num_sec_maxflow_mincut = 39;
-            expected_cost = 73;
-            expected_nnodes = 676;
-            EXPECT_EQ(61, cost_map[boost::edge(0, 5, graph).first]);
+            expected_cost = 12;
+            expected_nnodes = 1450;
+            EXPECT_EQ(7, cost_map[boost::edge(0, 5, graph).first]);
             break;
         }
         default: {
@@ -392,5 +390,5 @@ TEST(TestBeingDump, testAmIDump) {
 INSTANTIATE_TEST_SUITE_P(
     TestSubtourElimination,
     SubtourGraphFixture,
-    ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE, GraphType::COMPLETE4, GraphType::COMPLETE5, GraphType::COMPLETE50)
+    ::testing::Values(GraphType::GRID8, GraphType::SUURBALLE, GraphType::COMPLETE4, GraphType::COMPLETE5, GraphType::COMPLETE25)
 );

@@ -171,7 +171,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     PrizeNumberType& quota,
     PCTSPvertex& root_vertex,
     int branching_max_depth = -1,
-    unsigned int branching_strategy = BranchingStrategy::RELPSCOST,
+    unsigned int branching_strategy = BranchingStrategy::STRONG,
     bool cost_cover_disjoint_paths = false,
     bool cost_cover_shortest_path = false,
     bool cycle_cover = false,

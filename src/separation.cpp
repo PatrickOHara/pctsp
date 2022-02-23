@@ -7,7 +7,7 @@
 #include <scip/scipdefplugins.h>
 
 void includeSeparation(SCIP* scip) {
-    SCIPincludeSepaGomory(scip);
+    // SCIPincludeSepaGomory(scip);
 }
 
 bool isGraphSimpleCycle(PCTSPgraph& graph, std::vector<int>& component_vector) {
