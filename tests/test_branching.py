@@ -4,7 +4,6 @@ from pyscipopt import Model, SCIP_STAGE
 from tspwplib import (
     order_edge_list,
     reorder_edge_list_from_root,
-    sparsify_uid,
     total_cost_networkx,
     is_pctsp_yes_instance,
     walk_from_edge_list,
@@ -75,24 +74,3 @@ def test_avoid_tailing_off(sparse_tspwplib_graph, root, logger_dir):
     assert total_cost_networkx(tspwplib_graph, optimal_tour) > 0
     assert model.getStage() == SCIP_STAGE.SOLVED
     assert model.getStatus() == "optimal"
-
-
-if __name__ == "__main__":
-    from tspwplib import (
-        build_path_to_oplib_instance,
-        ProfitsProblem,
-        Generation,
-        GraphName,
-    )
-    from pathlib import Path
-    import os
-
-    oplib_root = Path(os.getenv("OPLIB_ROOT"))
-    filepath = build_path_to_oplib_instance(
-        oplib_root, Generation.gen2, GraphName.eil76
-    )
-    problem = ProfitsProblem.load(filepath)
-    graph = problem.get_graph(normalize=True)
-    graph = sparsify_uid(graph, 5, seed=1)
-    # test_avoid_tailing_off(graph, 0, oplib_root)
-    test_strong_branching_at_tree_top(graph, 0, ".logs", 20.0)
