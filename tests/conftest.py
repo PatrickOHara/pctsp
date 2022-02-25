@@ -6,13 +6,24 @@ from typing import Dict, List, Set, Tuple
 import networkx as nx
 import pytest
 import tspwplib.types as tp
-from tspwplib import build_path_to_oplib_instance, ProfitsProblem
+from tspwplib import (
+    build_path_to_oplib_instance,
+    Generation,
+    ProfitsProblem,
+    sparsify_uid,
+)
 from pctsp import NULL_VERTEX
 
 # pylint: disable=redefined-outer-name
 
 
 # fixtures that use the tspwplib
+
+
+@pytest.fixture(scope="function")
+def time_limit() -> float:
+    """Time limit in seconds for each test"""
+    return 20.0
 
 
 @pytest.fixture(scope="function")
@@ -25,6 +36,20 @@ def tspwplib_graph(
     filepath = build_path_to_oplib_instance(oplib_root, generation, graph_name)
     problem = ProfitsProblem.load(filepath)
     graph = problem.get_graph(normalize=True)
+    return graph
+
+
+@pytest.fixture(scope="function")
+def sparse_tspwplib_graph(
+    oplib_root,
+    # generation,
+    graph_name,
+) -> nx.Graph:
+    """Test on a sparse instance of the TSPLIB dataset"""
+    filepath = build_path_to_oplib_instance(oplib_root, Generation.gen2, graph_name)
+    problem = ProfitsProblem.load(filepath)
+    graph = problem.get_graph(normalize=True)
+    graph = sparsify_uid(graph, 5, seed=1)
     return graph
 
 

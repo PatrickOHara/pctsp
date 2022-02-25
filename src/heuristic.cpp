@@ -1,4 +1,10 @@
 #include "pctsp/heuristic.hh"
+#include <scip/scipdefplugins.h>
+
+void includeHeuristics(SCIP* scip) {
+    // SCIPincludeHeurFeaspump(scip);
+    // SCIPincludeHeurDps(scip);
+}
 
 float unitaryGain(int prize_v, int cost_uw, int cost_uv, int cost_vw) {
     // v is the new vertex to insert (denoted j by Dell'Amico et al. [1998])

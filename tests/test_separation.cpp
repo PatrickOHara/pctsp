@@ -94,6 +94,7 @@ TEST(TestSeparation, testGetSolutionGraph) {
         auto target = boost::target(edge, graph);
         EXPECT_TRUE(boost::edge(source, target, solution_graph).second);
     }
+    SCIPfree(&scip);
 }
 
 TEST(TestSeparation, testIsSimpleCycle) {

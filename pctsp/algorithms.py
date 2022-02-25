@@ -14,6 +14,7 @@ from tspwplib import (
 )
 from .constants import (
     FOUR_HOURS,
+    LP_GAP_IMPROVEMENT_THRESHOLD,
 )
 
 # pylint: disable=import-error
@@ -28,6 +29,8 @@ def solve_pctsp(
     heuristic_edges: EdgeList,
     quota: int,
     root_vertex: Vertex,
+    branching_max_depth: int = -1,
+    branching_strategy: int = 0,
     cost_cover_disjoint_paths: bool = False,
     cost_cover_shortest_path: bool = False,
     cycle_cover: bool = False,
@@ -36,7 +39,10 @@ def solve_pctsp(
     name: str = "pctsp",
     solver_dir: Path = Path("."),
     sec_disjoint_tour: bool = True,
+    sec_lp_gap_improvement_threshold: float = LP_GAP_IMPROVEMENT_THRESHOLD,
     sec_maxflow_mincut: bool = True,
+    sec_max_tailing_off_iterations: int = -1,
+    sec_sepafreq: int = 1,
     time_limit: float = FOUR_HOURS,
 ) -> EdgeList:
     """Solve Prize-collecting TSP with branch and cut
@@ -82,6 +88,8 @@ def solve_pctsp(
         prize_dict,
         quota,
         root_vertex,
+        branching_max_depth,
+        branching_strategy,
         cost_cover_disjoint_paths,
         cost_cover_shortest_path,
         cycle_cover,
@@ -89,7 +97,10 @@ def solve_pctsp(
         logging_level,
         name,
         sec_disjoint_tour,
+        sec_lp_gap_improvement_threshold,
         sec_maxflow_mincut,
+        sec_max_tailing_off_iterations,
+        sec_sepafreq,
         solver_dir,
         time_limit,
     )

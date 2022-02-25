@@ -22,7 +22,9 @@ from pctsp import (
 )
 
 
-def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root, logger_dir):
+def test_pctsp_on_suurballes_graph(
+    suurballes_undirected_graph, root, logger_dir, time_limit
+):
     """Test the branch and cut algorithm on a small, undirected sparse graph"""
     quota = 6
     name = "test_pctsp_on_suurballes_graph"
@@ -33,8 +35,11 @@ def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root, logger_dir
         [],
         quota,
         root,
+        # branching_max_depth=1,
+        branching_strategy=2,
         name=name,
         solver_dir=logger_dir,
+        time_limit=time_limit,
     )
     assert len(edge_list) > 0
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
@@ -53,9 +58,10 @@ def test_pctsp_on_suurballes_graph(suurballes_undirected_graph, root, logger_dir
     assert model.getStatus() == "optimal"
 
 
-def test_pctsp_on_tspwplib(tspwplib_graph, root, logger_dir):
+def test_pctsp_on_tspwplib(sparse_tspwplib_graph, root, logger_dir, time_limit):
     """Test the branch and cut algorithm on a small, undirected sparse graph"""
     quota = 30
+    tspwplib_graph = sparse_tspwplib_graph
     name = "test_pctsp_on_tspwplib"
     model = Model(problemName=name, createscip=True, defaultPlugins=False)
     edge_list = solve_pctsp(
@@ -66,6 +72,7 @@ def test_pctsp_on_tspwplib(tspwplib_graph, root, logger_dir):
         root,
         name=name,
         solver_dir=logger_dir,
+        time_limit=time_limit,
     )
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
     assert len(edge_list) > 0
@@ -75,10 +82,10 @@ def test_pctsp_on_tspwplib(tspwplib_graph, root, logger_dir):
     assert model.getProbName() == name
     assert model.getNVars() == tspwplib_graph.number_of_edges()
     assert model.getStage() == SCIP_STAGE.SOLVED
-    assert model.getStatus() == "optimal"
+    assert model.getStatus() in ("optimal", "timelimit")
 
 
-def test_pctsp_with_heuristic(tspwplib_graph, root, logger_dir):
+def test_pctsp_with_heuristic(tspwplib_graph, root, logger_dir, time_limit):
     """Test adding an initial solution to solver"""
     quota = 30
     tour = random_tour_complete_graph(tspwplib_graph, root, quota)
@@ -93,6 +100,7 @@ def test_pctsp_with_heuristic(tspwplib_graph, root, logger_dir):
         root,
         name=name,
         solver_dir=logger_dir,
+        time_limit=time_limit,
     )
 
 
@@ -100,6 +108,7 @@ def test_pctsp_cost_cover_shortest_path(
     tspwplib_graph,
     root,
     logger_dir,
+    time_limit,
 ):
     """Test adding shortest path cost cover inequalities"""
     quota = 10  # small quota should promote more cost cover inequalities added
@@ -113,10 +122,11 @@ def test_pctsp_cost_cover_shortest_path(
         root,
         cost_cover_shortest_path=True,
         solver_dir=logger_dir,
+        time_limit=time_limit,
     )
 
 
-def run_cost_cover_disjoint_path(graph, quota, root, logger_dir):
+def run_cost_cover_disjoint_path(graph, quota, root, logger_dir, time_limit):
     """Run all the tests for the cost cover disjoint paths"""
     biggest_vertex = biggest_vertex_id_from_graph(graph)
     # convert to asymmetric graph and run Suurballe's
@@ -143,6 +153,7 @@ def run_cost_cover_disjoint_path(graph, quota, root, logger_dir):
         solver_dir=logger_dir,
         sec_disjoint_tour=True,
         sec_maxflow_mincut=True,
+        time_limit=time_limit,
     )
     summary_path = logger_dir / PCTSP_SUMMARY_STATS_YAML
     assert summary_path.exists()
@@ -153,14 +164,16 @@ def run_cost_cover_disjoint_path(graph, quota, root, logger_dir):
     return optimal_tour
 
 
-def test_cost_cover_disjoint_paths_tspwplib(tspwplib_graph, root, logger_dir):
+def test_cost_cover_disjoint_paths_tspwplib(
+    tspwplib_graph, root, logger_dir, time_limit
+):
     """Test adding disjoint path cost cover inequalities"""
     quota = 10  # small quota should promote more cost cover inequalities added
-    run_cost_cover_disjoint_path(tspwplib_graph, quota, root, logger_dir)
+    run_cost_cover_disjoint_path(tspwplib_graph, quota, root, logger_dir, time_limit)
 
 
 def test_cost_cover_disjoint_paths_suurballes(
-    suurballes_undirected_graph, root, logger_dir
+    suurballes_undirected_graph, root, logger_dir, time_limit
 ):
     """Test adding disjoint path  cost covers on suurballes graph"""
     quota = 1  # optimal solution is a triangle
@@ -169,6 +182,7 @@ def test_cost_cover_disjoint_paths_suurballes(
         quota,
         root,
         logger_dir,
+        time_limit,
     )
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
     optimal_tour = walk_from_edge_list(ordered_edges)
@@ -179,7 +193,7 @@ def test_cost_cover_disjoint_paths_suurballes(
     assert summary.num_cost_cover_shortest_paths == 1
 
 
-def test_cycle_cover_tspwplib(tspwplib_graph, root, logger_dir):
+def test_cycle_cover_tspwplib(tspwplib_graph, root, logger_dir, time_limit):
     """Test adding cycle cover inequalities on tspwplib graphs"""
     quota = 30  # small quota should promote more cost cover inequalities added
     name = "test_cycle_cover_tspwplib"
@@ -192,6 +206,7 @@ def test_cycle_cover_tspwplib(tspwplib_graph, root, logger_dir):
         root,
         cycle_cover=True,
         solver_dir=logger_dir,
+        time_limit=time_limit,
     )
 
 
@@ -223,5 +238,6 @@ def test_cycle_cover_grid8(grid8, root, logger_dir):
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
     assert summary.num_sec_disjoint_tour == 0
     assert summary.num_sec_maxflow_mincut == 0
-    assert summary.num_cycle_cover == 1
+    assert summary.num_cycle_cover == 6
     assert is_pctsp_yes_instance(grid8, quota, root, ordered_edges)
+    assert model.getStatus() == "optimal"

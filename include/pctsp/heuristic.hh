@@ -7,6 +7,8 @@
 #include <iostream>
 #include <limits>
 
+#include <scip/scip.h>
+
 #include "exception.hh"
 #include "graph.hh"
 #include "logger.hh"
@@ -14,6 +16,10 @@
 
 using namespace boost;
 using namespace std;
+
+// Solver heuristics
+
+void includeHeuristics(SCIP* scip);
 
 // Extension and collapse heuristic
 

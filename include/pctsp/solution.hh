@@ -27,6 +27,8 @@ void getSolutionGraph(
 
 bool isVarPositive(SCIP* scip, SCIP_SOL* sol, SCIP_VAR* var);
 
+bool isSolutionIntegral(SCIP* scip, SCIP_SOL* sol);
+
 template <typename TEdgeVariableMap>
 struct PositiveEdgeVarFilter {
 

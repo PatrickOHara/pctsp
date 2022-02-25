@@ -83,13 +83,18 @@ TEST_P(AlgorithmsFixture, testSolvePrizeCollectingTSP) {
         prize_map,
         quota,
         root_vertex,
+        -1,
+        BranchingStrategy::STRONG_AT_TREE_TOP,
         false,
         false,
         false,
         {},
         name,
         true,
+        0.01,
         true,
+        -1,
+        1,
         log_dir,
         60
     );
@@ -124,6 +129,7 @@ TEST_P(AlgorithmsFixture, testSolvePrizeCollectingTSP) {
     for (auto const& [vertex, n] : vertex_count) {
         EXPECT_TRUE(n == 0 || n == 2);
     }
+    SCIPfree(&scip);
 }
 
 TEST_P(AlgorithmsFixture, testAddHeuristicVarsToSolver) {

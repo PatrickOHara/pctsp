@@ -49,9 +49,7 @@ SCIP_RETCODE PCTSPseparateSubtour(
     SCIP_SOL* sol,              /**< primal solution that should be separated */
     SCIP_RESULT* result,         /**< pointer to store the result of the separation call */
     bool sec_disjoint_tour,
-    int sec_disjoint_tour_freq,
-    bool sec_maxflow_mincut,
-    int sec_maxflow_mincut_freq
+    bool sec_maxflow_mincut
 );
 
 template <typename TEdgeWeightMap>
@@ -189,15 +187,37 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
     int freq
 );
 
+void pushIntoRollingLpGapList(std::list<double>& rolling_gaps, double& gap, int& sec_max_tailing_off_iterations);
+
+bool isNodeTailingOff(
+    std::list<double>& rolling_gaps,
+    double& sec_lp_gap_improvement_threshold,
+    int& sec_max_tailing_off_iterations
+);
+
+const std::string SEC_CONSHDLR_NAME = "pctsp_sec_handler";
+const std::string SEC_CONSHDLR_DESC = "Subtour elimination constraint handler for Prize-collecting TSP.";
+const int SEC_CONSHDLR_SEPAPRIORITY = 1000000;  // used to be 1000000
+const int SEC_CONSHDLR_ENFOPRIORITY = 1000000; // used to be -2000000
+const int SEC_CONSHDLR_CHECKPRIORITY = -2000000; // used to be -2000000
+const int SEC_CONSHDLR_SEPAFREQ = 1;    // 1 : > 1 reduces number of SECs added
+const int SEC_CONSHDLR_PROPFREQ = -1;   // -1
+const int SEC_CONSHDLR_EAGERFREQ = 1;   // used to be 1
+const int SEC_CONSHDLR_MAXPREROUNDS = 0;
+const bool SEC_CONSHDLR_DELAYSEPA = false; // false
+const bool SEC_CONSHDLR_DELAYPROP = false;
+const bool SEC_CONSHDLR_NEEDSCONS = false;
+
 class PCTSPconshdlrSubtour : public scip::ObjConshdlr
 {
 
 private:
 
+    std::vector<std::list<double>> node_rolling_lp_gap;
     bool sec_disjoint_tour;
-    int sec_disjoint_tour_freq;
+    double sec_lp_gap_improvement_threshold;
     bool sec_maxflow_mincut;
-    int sec_maxflow_mincut_freq;
+    int sec_max_tailing_off_iterations;
 
 public:
 
@@ -205,19 +225,28 @@ public:
     PCTSPconshdlrSubtour(
         SCIP* scip,
         bool _sec_disjoint_tour,
-        int _sec_disjoint_tour_freq,
+        double _sec_lp_gap_improvement_threshold,
         bool _sec_maxflow_mincut,
-        int _sec_maxflow_mincut_freq
+        int _sec_max_tailing_off_iterations,
+        int _sec_sepafreq
     )
-        : ObjConshdlr(scip, "subtour", "PCTSP subtour elimination constraints",
-            1000000, -2000000, -2000000, 1, -1, 1, 0,
-            FALSE, FALSE, TRUE, SCIP_PROPTIMING_BEFORELP, SCIP_PRESOLTIMING_FAST)
+        : ObjConshdlr(scip, SEC_CONSHDLR_NAME.c_str(), SEC_CONSHDLR_DESC.c_str(),
+            SEC_CONSHDLR_SEPAPRIORITY, SEC_CONSHDLR_ENFOPRIORITY, SEC_CONSHDLR_CHECKPRIORITY,
+            _sec_sepafreq, SEC_CONSHDLR_PROPFREQ, SEC_CONSHDLR_EAGERFREQ, SEC_CONSHDLR_MAXPREROUNDS,
+            SEC_CONSHDLR_DELAYSEPA, SEC_CONSHDLR_DELAYPROP, SEC_CONSHDLR_NEEDSCONS,
+            SCIP_PROPTIMING_BEFORELP, SCIP_PRESOLTIMING_FAST)
     {
         sec_disjoint_tour = _sec_disjoint_tour;
-        sec_disjoint_tour_freq = _sec_disjoint_tour_freq;
+        sec_lp_gap_improvement_threshold = _sec_lp_gap_improvement_threshold;
         sec_maxflow_mincut = _sec_maxflow_mincut;
-        sec_maxflow_mincut_freq = _sec_maxflow_mincut_freq;
+        sec_max_tailing_off_iterations = _sec_max_tailing_off_iterations;
+        node_rolling_lp_gap = {};
     }
+
+    PCTSPconshdlrSubtour(SCIP* scip, bool _sec_disjoint_tour, bool _sec_maxflow_mincut)
+        : PCTSPconshdlrSubtour(scip, _sec_disjoint_tour, 0.0, _sec_maxflow_mincut, -1, 1) {}
+
+    
 
     SCIP_DECL_CONSCHECK(scip_check);
     SCIP_DECL_CONSENFOPS(scip_enfops);

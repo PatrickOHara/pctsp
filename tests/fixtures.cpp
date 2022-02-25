@@ -1,4 +1,5 @@
 
+#include <time.h>
 #include "fixtures.hh"
 
 std::vector<std::pair<int, int>> getCompleteEdgeVector(int n_vertices) {
@@ -23,12 +24,10 @@ std::vector<std::pair<int, int>> GraphFixture::getEdgeVector() {
     std::vector<std::pair<int, int>> edge_vector;
     auto test_case = GetParam();
     switch (test_case) {
-    case GraphType::COMPLETE4: {
-        edge_vector = getCompleteEdgeVector(4);
-        break;
-    }
-    case GraphType::COMPLETE5: {
-        edge_vector = getCompleteEdgeVector(5);
+    case GraphType::COMPLETE4:
+    case GraphType::COMPLETE5:
+    case GraphType::COMPLETE25: {
+        edge_vector = getCompleteEdgeVector(getNumVertices());
         break;
     }
     case GraphType::GRID8: {
@@ -69,6 +68,7 @@ int GraphFixture::getNumVertices() {
     case GraphType::COMPLETE5: return 5;
     case GraphType::GRID8: return 8;
     case GraphType::SUURBALLE: return 8;
+    case GraphType::COMPLETE25: return 25;
     }
 }
 
@@ -82,6 +82,21 @@ EdgeCostMap GraphFixture::getCostMap(PCTSPgraph& graph) {
             for (int j = i + 1; j < boost::num_vertices(graph); j++) {
                 cost_map[boost::edge(i, j, graph).first] = e;
                 e++;
+            }
+        }
+        break;
+    }
+    case GraphType::COMPLETE25: {
+        // assign a random integer to the cost for each edge
+        // std::random_device rd;  //Will be used to obtain a seed for the random number engine
+        // std::mt19937 gen; //Standard mersenne_twister_engine seeded with rd()
+        // gen.seed(2596);
+        // std::linear_congruential_engine gen((unsigned int) 0);
+        // std::uniform_int_distribution<> distrib(1, 100);
+        for (int i = 0; i < boost::num_vertices(graph); i++) {
+            for (int j = i + 1; j < boost::num_vertices(graph); j++) {
+                // cost_map[boost::edge(i, j, graph).first] = distrib(gen);
+                cost_map[boost::edge(i, j, graph).first] = (i * 7 + j * 13) % 29;
             }
         }
         break;
@@ -122,6 +137,7 @@ VertexPrizeMap GraphFixture::getPrizeMap(PCTSPgraph& graph) {
     switch (GetParam()) {
     case GraphType::COMPLETE4:
     case GraphType::COMPLETE5:
+    case GraphType::COMPLETE25:
         // the prize is the same as the ID of the vertex
         for (auto vertex: boost::make_iterator_range(boost::vertices(graph))) {
             prize_map[vertex] = vertex;
@@ -144,6 +160,7 @@ VertexPrizeMap GraphFixture::getGenOnePrizeMap(PCTSPgraph& graph) {
     switch (GetParam()) {
     case GraphType::COMPLETE4:
     case GraphType::COMPLETE5:
+    case GraphType::COMPLETE25:
     case GraphType::GRID8:
     case GraphType::SUURBALLE: {
         // assign uniform prize to every vertex
@@ -168,6 +185,10 @@ int GraphFixture::getQuota() {
     case GraphType::COMPLETE4:
     case GraphType::COMPLETE5:
         return 4;
+    case GraphType::COMPLETE25: {
+        auto n = getNumVertices();
+        return ((n-10) * (n-9)) / 2;   // total prize of the graph
+    }
     case GraphType::GRID8:
     case GraphType::SUURBALLE:
         return 6;
@@ -183,6 +204,7 @@ std::string GraphFixture::getParamName() {
     switch (GetParam()) {
         case GraphType::COMPLETE4: return "COMPLETE4"; break;
         case GraphType::COMPLETE5: return "COMPLETE5"; break;
+        case GraphType::COMPLETE25: return "COMPLETE25"; break;
         case GraphType::GRID8: return "GRID8"; break;
         case GraphType::SUURBALLE: return "SUURBALLE"; break;
         default: return "UNKNOWN"; break;
@@ -196,6 +218,8 @@ std::list<PCTSPvertex> GraphFixture::getSmallTour() {
         case GraphType::COMPLETE5: small_tour = {0, 1, 2, 0}; break;
         case GraphType::GRID8: small_tour = {0, 1, 3, 2, 0}; break;
         case GraphType::SUURBALLE: small_tour = {0, 1, 5, 2, 0}; break;
+        case GraphType::COMPLETE25:
+            for (PCTSPvertex i = 0; i < 10; i++) small_tour.push_back(i); break;
         default: small_tour = {}; break;
     }
     return small_tour;

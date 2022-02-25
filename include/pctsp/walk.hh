@@ -116,7 +116,7 @@ int totalCost(TGraph& graph, std::vector<typename TGraph::vertex_descriptor>& pa
 }
 
 template<typename TPrizeMap, typename TVertexIt>
-int totalPrize(TPrizeMap& prize_map, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it) {
+PrizeNumberType totalPrize(TPrizeMap& prize_map, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it) {
     int prize = 0;
     for (; first_vertex_it != last_vertex_it; first_vertex_it ++) {
         prize += prize_map[*first_vertex_it];
@@ -125,35 +125,44 @@ int totalPrize(TPrizeMap& prize_map, TVertexIt& first_vertex_it, TVertexIt& last
 }
 
 template<typename TPrizeMap, typename TVertex>
-int totalPrize(TPrizeMap& prize_map, std::list<TVertex>& path) {
+PrizeNumberType totalPrize(TPrizeMap& prize_map, std::list<TVertex>& path) {
     auto first = path.begin();
     auto last = path.end();
     return totalPrize(prize_map, first, last);
 }
 
 template<typename TPrizeMap, typename TVertex>
-int totalPrize(TPrizeMap& prize_map, std::vector<TVertex>& path) {
+PrizeNumberType totalPrize(TPrizeMap& prize_map, std::vector<TVertex>& path) {
     auto first = path.begin();
     auto last = path.end();
     return totalPrize(prize_map, first, last);
 }
 
+template<typename TGraph, typename TPrizeMap>
+PrizeNumberType totalPrizeOfGraph(TGraph& graph, TPrizeMap& prize_map) {
+    PrizeNumberType prize = 0;
+    for (auto vd : boost::make_iterator_range(boost::vertices(graph))) {
+        prize += prize_map[vd];
+    }
+    return prize;
+}
+
 template <typename TGraph, typename TPrizeMap, typename Vertex>
-int total_prize(TGraph& graph, std::list<Vertex>& tour, TPrizeMap& prize_map) {
+PrizeNumberType total_prize(TGraph& graph, std::list<Vertex>& tour, TPrizeMap& prize_map) {
     // calculate the total prize of a tour
     typedef typename std::list<Vertex>::iterator tour_iterator_t;
-    int prize = 0;
+    PrizeNumberType prize = 0;
     for (tour_iterator_t tour_iterator = tour.begin();
         tour_iterator != tour.end(); ++tour_iterator) {
         auto vertex = boost::vertex(*tour_iterator, graph);
-        int prize_of_vertex = prize_map[vertex];
+        PrizeNumberType prize_of_vertex = prize_map[vertex];
         prize += prize_of_vertex;
     }
     return prize;
 }
 
 template <typename TGraph, typename TPrizeMap>
-int totalPrizeOfTour(
+PrizeNumberType totalPrizeOfTour(
     TGraph& graph,
     std::list<typename TGraph::vertex_descriptor>& tour,
     TPrizeMap& prize_map
