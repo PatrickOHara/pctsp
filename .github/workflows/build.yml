@@ -17,12 +17,11 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Docker build
-      run: |
-        docker build -f scip.dockerfile -t patrickohara/scip:latest .
-        docker build -f Dockerfile -t patrickohara/pctsp:latest .
-
+    - name: Docker build SCIP
+      run: docker build -f scip.dockerfile -t patrickohara/scip:latest .
+    - name: Docker push SCIP
+      run: docker push patrickohara/scip:latest
+    - name: Docker build PCTSP
+      run: DOCKER_BUILDKIT=1 docker build -f Dockerfile -t patrickohara/pctsp:latest .
     - name: Docker push
-      run: |
-        docker push patrickohara/scip:latest
-        docker push patrickohara/pctsp:latest
+      run: docker push patrickohara/pctsp:latest
