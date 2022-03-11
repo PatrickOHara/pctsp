@@ -31,6 +31,7 @@ from .libpypctsp import unitary_gain, unitary_loss
 # pylint: enable=import-error
 
 from .preprocessing import (
+    degree_without_self_loops,
     remove_components_disconnected_from_vertex,
     remove_leaves,
     remove_one_connected_components,
@@ -56,6 +57,7 @@ __all__ = [
     "adjust_edge_cost",
     "adjust_edge_cost_for_graph",
     "collapse",
+    "degree_without_self_loops",
     "extension",
     "extension_until_prize_feasible",
     "edge_disjoint_path_cost",
