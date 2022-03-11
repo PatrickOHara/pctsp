@@ -3,6 +3,7 @@
 import networkx as nx
 import pytest
 
+from tspwplib import sparsify_uid
 from pctsp import (
     remove_leaves,
     remove_components_disconnected_from_vertex,
@@ -40,7 +41,7 @@ def test_remove_components(disconnected_graph):
 @pytest.mark.parametrize(
     "edges,source_vertex,size_of_processed_graph",
     [
-        ([(0, 1), (1, 2), (2, 3)], 0, 0),
+        ([(0, 1), (1, 2), (2, 3)], 0, 1),
         ([(0, 1), (1, 2), (2, 0), (0, 3), (3, 4), (0, 4), (4, 5)], 0, 5),
         ([(0, 1), (0, 2), (1, 2)], 0, 3),
         ([(0, 1), (0, 2), (1, 2), (0, 3), (3, 4), (4, 5), (3, 5), (5, 7)], 0, 3),
@@ -50,4 +51,14 @@ def test_remove_one_connected_components(edges, source_vertex, size_of_processed
     """Test vertices not in the same bi-connected component as the root as removed"""
     G = nx.Graph(edges)
     G = remove_one_connected_components(G, source_vertex)
+    assert source_vertex in G
     assert G.number_of_nodes() == size_of_processed_graph
+
+
+@pytest.mark.parametrize("k", [1, 2, 5, 10])
+def test_root_still_in_graph(tspwplib_graph, root, k):
+    """Test that after applying preprocessing the root vertex remains in the graph"""
+    sparse = sparsify_uid(tspwplib_graph, k)
+    assert root in sparse
+    processed = remove_one_connected_components(sparse, root)
+    assert root in processed
