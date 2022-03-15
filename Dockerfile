@@ -1,5 +1,7 @@
 FROM patrickohara/scip:latest
 
+ARG SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PCTSP=0.2.7
+
 WORKDIR /app
 
 # Download data for oplib
