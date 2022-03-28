@@ -180,16 +180,16 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
 
     // get the summary statistics and write then to file
     auto summary = getSummaryStatsFromSCIP(scip);
-    writeNodeStatsToCSV(node_stats, scip_node_stats_csv);
+    // writeNodeStatsToCSV(node_stats, scip_node_stats_csv);    // note this file gets very large
     writeSummaryStatsToYaml(summary, pctsp_summary_stats_yaml);
 
     // write the logs to txt
     FILE* log_file = fopen(scip_logs_txt.c_str(), "w");
     SCIPprintStatistics(scip, log_file);
 
-    // write the bounds CSV
-    std::vector<Bounds> bounds_vector = bounds_handler->getBoundsVector();
-    writeBoundsToCSV(bounds_vector, scip_bounds_csv);
+    // write the bounds CSV: NOTE this file can get very large
+    // std::vector<Bounds> bounds_vector = bounds_handler->getBoundsVector();
+    // writeBoundsToCSV(bounds_vector, scip_bounds_csv);
 
     // release any variable we no longer need
     SCIPmessagehdlrRelease(&handler);
