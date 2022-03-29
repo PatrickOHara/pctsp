@@ -175,12 +175,11 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
 
     // get the node stats of the solver
-    auto node_stats = node_eventhdlr->getNodeStatsVector();
-    writeNodeStatsToCSV(node_stats, scip_node_stats_csv);
+    // auto node_stats = node_eventhdlr->getNodeStatsVector();
+    // writeNodeStatsToCSV(node_stats, scip_node_stats_csv);    // note this file gets very large
 
     // get the summary statistics and write then to file
     auto summary = getSummaryStatsFromSCIP(scip);
-    // writeNodeStatsToCSV(node_stats, scip_node_stats_csv);    // note this file gets very large
     writeSummaryStatsToYaml(summary, pctsp_summary_stats_yaml);
 
     // write the logs to txt

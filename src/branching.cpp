@@ -16,7 +16,7 @@ const unsigned int BranchingStrategy::PSCOST = 3;
 
 void includeBranchRules(SCIP* scip) {
     SCIPincludeBranchruleFullstrong(scip);
-    // SCIPincludeBranchrulePscost(scip);
+    SCIPincludeBranchrulePscost(scip);
     SCIPincludeBranchruleMostinf(scip);
 }
 
@@ -83,7 +83,6 @@ void setStrongBranchingStrategy(SCIP* scip) {
         }
         else if (name == BRANCHING_RULE_NAMES::RELPSCOST) {
             // set relative psuedo cost to be second priority
-            // TODO change back to positive 3000
             SCIPsetBranchrulePriority(scip, rule, 3000);
         }
         else if (name == BRANCHING_RULE_NAMES::MOST_INFEASIBLE) {
@@ -122,9 +121,6 @@ void setBranchingStrategy(SCIP* scip, unsigned int strategy, int max_depth) {
         case BranchingStrategy::STRONG_AT_TREE_TOP: {
             setStrongAtTreeTopBranchingStrategy(scip, max_depth);
             break;
-        }
-        case BranchingStrategy::PSCOST: {
-            break;      // TODO
         }
         default: break; // use existing strategy
     }
