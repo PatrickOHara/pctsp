@@ -20,10 +20,7 @@ option(PCTSP_BUILD_TESTS "Turn on/off building the tests." ON)
 # required dependencies
 find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development REQUIRED)
 find_package(Boost 1.71.0 REQUIRED COMPONENTS graph log log_setup thread filesystem system REQUIRED)
-find_package(SCIP 7.0.0 REQUIRED)
-find_package(Readline REQUIRED)
-find_package(GMP REQUIRED)
-find_package(ZLIB REQUIRED)
+find_package(SCIP 8.0.0 REQUIRED)
 find_package(YAML_CPP REQUIRED FOUND_VAR YAML_CPP_FOUND)
 
 # find the python sitelibs

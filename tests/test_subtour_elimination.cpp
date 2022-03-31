@@ -340,22 +340,18 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
             break;
         }
         case GraphType::COMPLETE4: {
-            expected_num_sec_disjoint_tour = 0;
-            expected_num_sec_maxflow_mincut = 0;
             expected_cost = 6;
             break;
         }
         case GraphType::COMPLETE5: {
-            expected_num_sec_disjoint_tour = 0;
-            expected_num_sec_maxflow_mincut = 0;
             expected_cost = 7;
             break;
         }
         case GraphType::COMPLETE25: {
-            expected_num_sec_disjoint_tour = 1412;
-            expected_num_sec_maxflow_mincut = 39;
+            expected_num_sec_disjoint_tour = 943;
+            expected_num_sec_maxflow_mincut = 1101;
             expected_cost = 12;
-            expected_nnodes = 1450;
+            expected_nnodes = 984;
             EXPECT_EQ(7, cost_map[boost::edge(0, 5, graph).first]);
             break;
         }
@@ -371,7 +367,7 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
     auto sol_edges = edgesFromVertexPairs(graph, solution_edges);
     int actual_cost = totalCost(sol_edges, cost_map);
     EXPECT_EQ(expected_cost, actual_cost);
-    // EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
+    EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
     EXPECT_EQ(stats.num_sec_disjoint_tour, expected_num_sec_disjoint_tour);
     EXPECT_EQ(SCIPgetNNodes(scip), expected_nnodes);
     SCIPfree(&scip);

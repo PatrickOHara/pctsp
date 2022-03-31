@@ -141,6 +141,15 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     }
     if (cost_cover_shortest_path) {
         includeShortestPathCostCover(scip, graph, cost_map, root_vertex);
+        CostCoverEventHandler* hdlr = getShortestPathCostCoverEventHandler(scip);
+
+        auto cost_upper_bound = totalCost(heuristic_edges, cost_map);
+
+        if (cost_upper_bound > 0) {
+            auto path_distances = hdlr->getPathDistances();
+            unsigned int nconss = separateThenAddCostCoverInequalities(scip, path_distances, cost_upper_bound);
+            hdlr->setNumConssAddedInitSol(nconss);
+        }
     }
     // add cycle cover constraint
     auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
