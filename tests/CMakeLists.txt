@@ -45,7 +45,7 @@ find_package(GMP REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(TBB REQUIRED)
 find_library(GFORTRAN_LIBRARIES NAMES gfortran)
-find_library(OPENBLAS_LIBRARIES NAMES libopenblas openblas libopenblas.so.0 HINTS ${OPENBLAS_DIR} NO_DEFAULT_PATH PATH_SUFFIXES lib)
+find_library(OPENBLAS_LIBRARIES NAMES libopenblas openblas libopenblas.so.0 libopenblas.0.dylib HINTS ${OPENBLAS_DIR} PATH_SUFFIXES lib)
 
 # link libraries and include files
 target_link_libraries(${TARGET} PRIVATE

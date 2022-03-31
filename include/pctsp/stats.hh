@@ -27,15 +27,6 @@ SummaryStats readSummaryStatsFromYaml(std::filesystem::path& filename);
 
 void writeSummaryStatsToYaml(SummaryStats& summary, std::filesystem::path& filename);
 
-SummaryStats getSummaryStatsFromSCIP(
-    SCIP* scip,
-    unsigned int num_cost_cover_disjoint_paths,
-    unsigned int num_cost_cover_shortest_paths,
-    unsigned int num_cycle_cover,
-    unsigned int num_sec_disjoint_tour,
-    unsigned int num_sec_maxflow_mincut
-);
-
 template <typename Enumeration>
 auto enum_as_integer(Enumeration const value)
     -> typename std::underlying_type<Enumeration>::type

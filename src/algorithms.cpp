@@ -75,26 +75,36 @@ SummaryStats getSummaryStatsFromSCIP(SCIP* scip) {
     // get cost cover event handlers
     auto spcc = SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str());
     unsigned int num_cost_cover_shortest_paths = 0;
+    unsigned int nconss_presolve_shortest_paths = 0;
     if (spcc != 0) {
         CostCoverEventHandler* shortest_path_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(spcc);
         num_cost_cover_shortest_paths = shortest_path_cc_hdlr->getNumConssAdded();
+        nconss_presolve_shortest_paths = shortest_path_cc_hdlr->getNumConssAddedInitSol();
     }
     unsigned int num_cost_cover_disjoint_paths = 0;
+    unsigned int nconss_presolve_disjoint_paths = 0;
     auto dpcc = SCIPfindObjEventhdlr(scip, DISJOINT_PATHS_COST_COVER_NAME.c_str());
     if (dpcc != 0) {
         CostCoverEventHandler* disjoint_paths_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(dpcc);
         num_cost_cover_disjoint_paths = disjoint_paths_cc_hdlr->getNumConssAdded();
+        nconss_presolve_disjoint_paths = disjoint_paths_cc_hdlr->getNumConssAddedInitSol();
     }
     unsigned int num_cycle_cover = getNumCycleCoverCutsAdded(scip);
 
-    return getSummaryStatsFromSCIP(
-        scip,
+    SummaryStats summary = {
+        SCIPgetStatus(scip),
+        SCIPgetLowerbound(scip),
+        SCIPgetUpperbound(scip),
         num_cost_cover_disjoint_paths,
         num_cost_cover_shortest_paths,
+        nconss_presolve_disjoint_paths,
+        nconss_presolve_shortest_paths,
         num_cycle_cover,
+        SCIPgetNNodes(scip),
         n_disjoint_sec,
         n_flow_sec
-    );
+    };
+    return summary;
 }
 
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(

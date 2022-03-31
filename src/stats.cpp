@@ -10,6 +10,8 @@ void writeSummaryStatsToYaml(SummaryStats& summary, std::filesystem::path& filen
         node["upper_bound"] = summary.upper_bound;
         node["num_cost_cover_disjoint_paths"] = summary.num_cost_cover_disjoint_paths;
         node["num_cost_cover_shortest_paths"] = summary.num_cost_cover_shortest_paths;
+        node["nconss_presolve_disjoint_paths"] = summary.nconss_presolve_disjoint_paths;
+        node["nconss_presolve_shortest_paths"] = summary.nconss_presolve_shortest_paths;
         node["num_cycle_cover"] = summary.num_cycle_cover;
         node["num_nodes"] = summary.num_nodes;
         node["num_sec_disjoint_tour"] = summary.num_sec_disjoint_tour;
@@ -29,34 +31,13 @@ SummaryStats readSummaryStatsFromYaml(std::filesystem::path& filename) {
         stats_yaml["lower_bound"].as<double>(),
         stats_yaml["upper_bound"].as<double>(),
         stats_yaml["num_cost_cover_disjoint_paths"].as<unsigned int>(),
+        stats_yaml["nconss_presolve_disjoint_paths"].as<unsigned int>(),
         stats_yaml["num_cost_cover_shortest_paths"].as<unsigned int>(),
+        stats_yaml["nconss_presolve_shortest_paths"].as<unsigned int>(),
         stats_yaml["num_cycle_cover"].as<unsigned int>(),
         stats_yaml["num_nodes"].as<long long>(),
         stats_yaml["num_sec_disjoint_tour"].as<unsigned int>(),
         stats_yaml["num_sec_maxflow_mincut"].as<unsigned int>()
-    };
-    return summary;
-}
-
-SummaryStats getSummaryStatsFromSCIP(
-    SCIP* scip,
-    unsigned int num_cost_cover_disjoint_paths,
-    unsigned int num_cost_cover_shortest_paths,
-    unsigned int num_cycle_cover,
-    unsigned int num_sec_disjoint_tour,
-    unsigned int num_sec_maxflow_mincut
-) {
-
-    SummaryStats summary = {
-        SCIPgetStatus(scip),
-        SCIPgetLowerbound(scip),
-        SCIPgetUpperbound(scip),
-        num_cost_cover_disjoint_paths,
-        num_cost_cover_shortest_paths,
-        num_cycle_cover,
-        SCIPgetNNodes(scip),
-        num_sec_disjoint_tour,
-        num_sec_maxflow_mincut
     };
     return summary;
 }
