@@ -77,19 +77,9 @@ SCIP_DECL_EVENTDELETE(CostCoverEventHandler::scip_delete) {
 }
 
 SCIP_DECL_EVENTEXEC(CostCoverEventHandler::scip_exec) {
-    double cost_upper_bound = SCIPgetUpperbound(scip);
-    ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
-    PCTSPgraph& graph = * probdata->getInputGraph();
-    PCTSPvertex& root_vertex = *probdata->getRootVertex();
-    PCTSPedgeVariableMap& edge_variable_map = *probdata->getEdgeVariableMap();
-
-    auto violated_vertices = separateCostCoverPaths(graph, _path_distances, cost_upper_bound);
-    bool violation_found = violated_vertices.size() > 0;
-    for (auto& vertex: violated_vertices) {
-        _num_conss_added ++;
-        std::vector<PCTSPvertex> cover_vertices = {root_vertex, vertex};
-        addCoverInequalityFromVertices(scip, graph, cover_vertices, edge_variable_map);
-    }
+    CostNumberType cost_upper_bound = (CostNumberType) SCIPgetUpperbound(scip);
+    unsigned int nconss = separateThenAddCostCoverInequalities(scip, _path_distances, cost_upper_bound);
+    increaseNumConssAdded(nconss);
     return SCIP_OKAY;
 }
 

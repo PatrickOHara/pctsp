@@ -136,16 +136,21 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name, sec_disjoint_tour, sec_lp_gap_improvement_threshold, sec_maxflow_mincut, sec_max_tailing_off_iterations, sec_sepafreq);
 
     // add the cost cover inequalities when a new solution is found
+    // NOTE we assume the heuristic solution is feasible (trust the user)
+    auto cost_upper_bound = totalCost(heuristic_edges, cost_map);
     if (cost_cover_disjoint_paths) {
         includeDisjointPathsCostCover(scip, disjoint_paths_distances);
+        if (cost_upper_bound > 0) {
+            CostCoverEventHandler* hdlr = getDisjointPathsCostCoverEventHandler(scip);
+            auto path_distances = hdlr->getPathDistances();
+            unsigned int nconss = separateThenAddCostCoverInequalities(scip, path_distances, cost_upper_bound);
+            hdlr->setNumConssAddedInitSol(nconss);
+        }
     }
     if (cost_cover_shortest_path) {
         includeShortestPathCostCover(scip, graph, cost_map, root_vertex);
-        CostCoverEventHandler* hdlr = getShortestPathCostCoverEventHandler(scip);
-
-        auto cost_upper_bound = totalCost(heuristic_edges, cost_map);
-
         if (cost_upper_bound > 0) {
+            CostCoverEventHandler* hdlr = getShortestPathCostCoverEventHandler(scip);
             auto path_distances = hdlr->getPathDistances();
             unsigned int nconss = separateThenAddCostCoverInequalities(scip, path_distances, cost_upper_bound);
             hdlr->setNumConssAddedInitSol(nconss);
