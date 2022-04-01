@@ -11,6 +11,7 @@ from tspwplib import (
     total_cost,
     total_cost_networkx,
     total_prize,
+    total_prize_of_tour,
     VertexFunctionName,
 )
 from pctsp import (
@@ -33,7 +34,7 @@ def test_collapse(suurballes_undirected_graph, root):
     new_tour = collapse(suurballes_undirected_graph, tour, quota, root)
     assert total_cost_networkx(suurballes_undirected_graph, new_tour) == 16
     assert (
-        total_prize(
+        total_prize_of_tour(
             nx.get_node_attributes(suurballes_undirected_graph, "prize"), new_tour
         )
         >= quota
@@ -56,7 +57,7 @@ def test_extension_tsplib(tspwplib_graph, root):
     tour = [0, 1, 2, n - 1, n - 2, 0]
     extended_tour = extension(tspwplib_graph, tour, root)
     prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
-    assert total_prize(prize_map, extended_tour) > total_prize(prize_map, tour)
+    assert total_prize_of_tour(prize_map, extended_tour) > total_prize_of_tour(prize_map, tour)
     assert root in extended_tour
     assert is_simple_cycle(tspwplib_graph, extended_tour)
     for u in tspwplib_graph:
@@ -78,7 +79,7 @@ def test_extension_until_feasible(tspwplib_graph, root, step_size, path_depth_li
         path_depth_limit=path_depth_limit,
     )
     prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
-    assert total_prize(prize_map, extended_tour) >= quota
+    assert total_prize_of_tour(prize_map, extended_tour) >= quota
     assert root in extended_tour
     assert is_simple_cycle(tspwplib_graph, extended_tour)
     for u in tspwplib_graph:
@@ -91,7 +92,7 @@ def test_random_tour_complete_graph(tspwplib_graph, root):
     prize = total_prize(prize_dict, tspwplib_graph.nodes())
     quota = int(float(prize) * 0.5)
     tour = random_tour_complete_graph(tspwplib_graph, root, quota)
-    assert total_prize(prize_dict, tour) >= quota
+    assert total_prize_of_tour(prize_dict, tour) >= quota
 
 
 def test_suurballes_heuristic(suurballes_undirected_graph, root):
@@ -127,7 +128,7 @@ def test_suurballes_heuristic(suurballes_undirected_graph, root):
         )
         == 16
     )
-    assert total_prize(prize_map, tour) >= quota
+    assert total_prize_of_tour(prize_map, tour) >= quota
 
 
 def test_find_cycle_from_bfs(suurballes_undirected_graph, root):

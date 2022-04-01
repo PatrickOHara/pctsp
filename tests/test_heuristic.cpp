@@ -155,7 +155,7 @@ TEST_P(SuurballeGraphFixture, testExtendUntilPrizeFeasible) {
     extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
 
     // we expect the total prize of the tour to be equal to the quota
-    EXPECT_EQ(totalPrizeOfTour(graph, tour, prize_map), quota);
+    EXPECT_EQ(totalPrizeOfTour(prize_map, tour), quota);
 
     // expect vertex g (7) to be in the tour at index 3
     int g = 7;
@@ -210,8 +210,8 @@ TEST_P(HeuristicFixture, testCollapse) {
 
     auto expected_cost = totalCost(graph, expected_collapse, cost_map);
     auto actual_cost = totalCost(graph, new_tour, cost_map);
-    auto expected_prize = totalPrizeOfTour(graph, expected_collapse, prize_map);
-    auto actual_prize = totalPrizeOfTour(graph, new_tour, prize_map);
+    auto expected_prize = totalPrizeOfTour(prize_map, expected_collapse);
+    auto actual_prize = totalPrizeOfTour(prize_map, new_tour);
     EXPECT_EQ(actual_cost, expected_cost);
     EXPECT_GE(actual_prize, quota);
     EXPECT_EQ(actual_prize, expected_prize);
@@ -278,8 +278,8 @@ TEST_P(HeuristicFixture, testCollapseShortestPath) {
 
     auto expected_cost = totalCost(graph, expected_collapse, cost_map);
     auto actual_cost = totalCost(graph, new_tour, cost_map);
-    auto expected_prize = totalPrizeOfTour(graph, expected_collapse, prize_map);
-    auto actual_prize = totalPrizeOfTour(graph, new_tour, prize_map);
+    auto expected_prize = totalPrizeOfTour(prize_map, expected_collapse);
+    auto actual_prize = totalPrizeOfTour(prize_map, new_tour);
     EXPECT_EQ(actual_cost, expected_cost);
     EXPECT_GE(actual_prize, quota);
     EXPECT_EQ(actual_prize, expected_prize);
@@ -397,8 +397,8 @@ TEST_P(HeuristicFixture, testExtensionUntilPrizeFeasible) {
     extensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, quota, step_size, path_depth_limit);
 
     switch (GetParam()) {
-        case GraphType::GRID8: EXPECT_LT(totalPrizeOfTour(graph, small_tour, prize_map), quota); break;
-        default: EXPECT_GE(totalPrizeOfTour(graph, small_tour, prize_map), quota); break;
+        case GraphType::GRID8: EXPECT_LT(totalPrizeOfTour(prize_map, small_tour), quota); break;
+        default: EXPECT_GE(totalPrizeOfTour(prize_map, small_tour), quota); break;
     }
 }
 
@@ -438,7 +438,7 @@ TEST_P(HeuristicFixture, testExtensionPathDepth) {
 
     extensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, quota, step_size, path_depth_limit);
 
-    auto prize = totalPrizeOfTour(graph, small_tour, prize_map);
+    auto prize = totalPrizeOfTour(prize_map, small_tour);
     switch (GetParam()) {
         // case GraphType::SUURBALLE: EXPECT_LE(prize, quota); break;
         default: EXPECT_GE(prize, quota); break;

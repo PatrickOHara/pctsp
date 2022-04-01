@@ -147,30 +147,15 @@ PrizeNumberType totalPrizeOfGraph(TGraph& graph, TPrizeMap& prize_map) {
     return prize;
 }
 
-template <typename TGraph, typename TPrizeMap, typename Vertex>
-PrizeNumberType total_prize(TGraph& graph, std::list<Vertex>& tour, TPrizeMap& prize_map) {
-    // calculate the total prize of a tour
-    typedef typename std::list<Vertex>::iterator tour_iterator_t;
-    PrizeNumberType prize = 0;
-    for (tour_iterator_t tour_iterator = tour.begin();
-        tour_iterator != tour.end(); ++tour_iterator) {
-        auto vertex = boost::vertex(*tour_iterator, graph);
-        PrizeNumberType prize_of_vertex = prize_map[vertex];
-        prize += prize_of_vertex;
-    }
-    return prize;
-}
-
-template <typename TGraph, typename TPrizeMap>
+template <typename TVertex, typename TPrizeMap>
 PrizeNumberType totalPrizeOfTour(
-    TGraph& graph,
-    std::list<typename TGraph::vertex_descriptor>& tour,
-    TPrizeMap& prize_map
+    TPrizeMap& prize_map,
+    std::list<TVertex>& tour
 ) {
     // total prize of all vertices apart from the last vertex (which is
     // repeated)
-    std::list<typename TGraph::vertex_descriptor> tour_copy(tour.begin(), --tour.end());
-    return total_prize(graph, tour_copy, prize_map);
+    std::list<TVertex> tour_without_last_vertex(tour.begin(), --tour.end());
+    return totalPrize(prize_map, tour_without_last_vertex);
 }
 
 template <typename VertexIt>
