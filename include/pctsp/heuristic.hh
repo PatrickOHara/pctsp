@@ -74,7 +74,7 @@ ExtensionVertex chooseExtensionPathFromCandidates(
     for (auto& external_path : external_path_candidates) {
         // if the external path has prize greater than the internal path
         int internal_path_prize = totalPrize(prize_map, internal_path);
-        int external_path_prize = total_prize(graph, external_path, prize_map);
+        int external_path_prize = totalPrize(prize_map, external_path);
         float prize_diff = external_path_prize - internal_path_prize;
 
         if (prize_diff > 0) {
@@ -323,7 +323,7 @@ void extensionUntilPrizeFeasible(
     int& path_depth_limit
 ) {
     typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
-    int prize = totalPrizeOfTour(graph, tour, prize_map);
+    int prize = totalPrizeOfTour(prize_map, tour);
     int num_feasible_extensions = 1;
 
     while (prize < quota && num_feasible_extensions > 0 && step_size < tour.size() - 1) {
@@ -550,7 +550,7 @@ void extendUntilPrizeFeasible(
         std::end(tour));
 
     // keep track of the total prize of the tour
-    int prize = totalPrizeOfTour(g, tour, prize_map);
+    int prize = totalPrizeOfTour(prize_map, tour);
     int attempts = 0;
     bool insert_a_vertex = true;
     while (prize < quota && insert_a_vertex) {
@@ -683,7 +683,7 @@ std::list<std::list<typename TGraph::vertex_descriptor>> findCollapsePaths (
         auto edge = boost::edge(collapse_vertex, target, graph);
         bool edge_exists = edge.second;
         auto prize_of_new_tour = prize_of_internal_path + prize_map[collapse_vertex];
-        if (edge_exists && ! in_internal_path[collapse_vertex] && prize_of_new_tour >= quota) {
+        if (edge_exists && ! in_internal_path[collapse_vertex] && prize_of_new_tour >= quota && source != target) {
             std::list<VD> collapse = {source, collapse_vertex, target};
             collapse_paths.push_back(collapse);
         }

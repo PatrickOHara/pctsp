@@ -5,9 +5,7 @@
 
 SCIP_RETCODE addCoverInequality(
     SCIP* scip,
-    std::vector<SCIP_VAR*>& variables,
-    SCIP_RESULT* result,
-    SCIP_SOL* sol
+    std::vector<SCIP_VAR*>& variables
 ) {
     // at least one variable must be zero
     // x(S) <= |x(S)| - 1 
@@ -32,10 +30,20 @@ SCIP_RETCODE addCoverInequality(
     return SCIP_OKAY;
 }
 
-// Cost cover event handler for new solutions
+void CostCoverEventHandler::setNumConssAddedInitSol(unsigned int nconss) {
+    _num_conss_added_init_sol = nconss;
+}
+
+unsigned int CostCoverEventHandler::getNumConssAddedInitSol() {
+    return _num_conss_added_init_sol;
+}
 
 unsigned int CostCoverEventHandler::getNumConssAdded() {
-    return _num_conss_added;
+    return _num_conss_added + _num_conss_added_init_sol;
+}
+
+void CostCoverEventHandler::increaseNumConssAdded(unsigned int num_conss) {
+    _num_conss_added += num_conss;
 }
 
 std::vector<int> CostCoverEventHandler::getPathDistances() {
@@ -69,22 +77,26 @@ SCIP_DECL_EVENTDELETE(CostCoverEventHandler::scip_delete) {
 }
 
 SCIP_DECL_EVENTEXEC(CostCoverEventHandler::scip_exec) {
-    double cost_upper_bound = SCIPgetUpperbound(scip);
-    SCIP_SOL* sol = SCIPgetBestSol(scip);
+    CostNumberType cost_upper_bound = (CostNumberType) SCIPgetUpperbound(scip);
+    unsigned int nconss = separateThenAddCostCoverInequalities(scip, _path_distances, cost_upper_bound);
+    increaseNumConssAdded(nconss);
+    return SCIP_OKAY;
+}
+
+unsigned int separateThenAddCostCoverInequalities(SCIP* scip, std::vector<CostNumberType>& path_distances, CostNumberType& cost_upper_bound) {
     ProbDataPCTSP* probdata = dynamic_cast<ProbDataPCTSP*>(SCIPgetObjProbData(scip));
-    SCIP_RESULT* result;
     PCTSPgraph& graph = * probdata->getInputGraph();
     PCTSPvertex& root_vertex = *probdata->getRootVertex();
     PCTSPedgeVariableMap& edge_variable_map = *probdata->getEdgeVariableMap();
 
-    auto violated_vertices = separateCostCoverPaths(graph, _path_distances, cost_upper_bound);
-    bool violation_found = violated_vertices.size() > 0;
+    auto violated_vertices = separateCostCoverPaths(graph, path_distances, cost_upper_bound);
+    unsigned int num_conss_added = 0;
     for (auto& vertex: violated_vertices) {
-        _num_conss_added ++;
+        num_conss_added ++;
         std::vector<PCTSPvertex> cover_vertices = {root_vertex, vertex};
-        addCoverInequalityFromVertices(scip, graph, cover_vertices, edge_variable_map, result, sol);
+        addCoverInequalityFromVertices(scip, graph, cover_vertices, edge_variable_map);
     }
-    return SCIP_OKAY;
+    return num_conss_added;
 }
 
 SCIP_RETCODE includeCostCoverEventHandler(
@@ -117,26 +129,26 @@ SCIP_RETCODE includeDisjointPathsCostCover(SCIP* scip, std::vector<int>& path_di
     );
 }
 
-CostCoverEventHandler getDisjointPathsCostCoverEventHandler(SCIP* scip) {
+CostCoverEventHandler* getDisjointPathsCostCoverEventHandler(SCIP* scip) {
     CostCoverEventHandler* cc_hdlr = dynamic_cast<CostCoverEventHandler*>(
         SCIPfindObjEventhdlr(scip, DISJOINT_PATHS_COST_COVER_NAME.c_str())
     );
-    return *cc_hdlr;
+    return cc_hdlr;
 }
 
-CostCoverEventHandler getShortestPathCostCoverEventHandler(SCIP* scip) {
+CostCoverEventHandler* getShortestPathCostCoverEventHandler(SCIP* scip) {
     CostCoverEventHandler* cc_hdlr = dynamic_cast<CostCoverEventHandler*>(
         SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str())
     );
-    return *cc_hdlr;
+    return cc_hdlr;
 }
 
 unsigned int getNShortestPathCostCoverCutsAdded(SCIP* scip) {
-    CostCoverEventHandler cc_hdlr = getShortestPathCostCoverEventHandler(scip);
-    return cc_hdlr.getNumConssAdded();
+    CostCoverEventHandler* cc_hdlr = getShortestPathCostCoverEventHandler(scip);
+    return cc_hdlr->getNumConssAdded();
 }
 
 unsigned int getNDisjointPathsCostCoverCutsAdded(SCIP* scip) {
-    CostCoverEventHandler cc_hdlr = getDisjointPathsCostCoverEventHandler(scip);
-    return cc_hdlr.getNumConssAdded();
+    CostCoverEventHandler* cc_hdlr = getDisjointPathsCostCoverEventHandler(scip);
+    return cc_hdlr->getNumConssAdded();
 }

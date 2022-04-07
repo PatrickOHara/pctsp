@@ -12,15 +12,15 @@ typedef GraphFixture WalkFixture;
 TEST_P(SuurballeGraphFixture, testTotalPrize) {
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
-    std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };
-    EXPECT_EQ(total_prize(graph, tour, prize_map), 7);
+    std::list<int> tour = { 0, 1, 3, 6, 7, 2, 0 };  // include prize of root twice
+    EXPECT_EQ(totalPrize(prize_map, tour), 7);
 }
 
 TEST_P(SuurballeGraphFixture, testTotalPrizeOfTour) {
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
-    std::list<PCTSPvertex> tour = { 0, 1, 3, 6, 7, 2, 0 };
-    EXPECT_EQ(totalPrizeOfTour(graph, tour, prize_map), 6);
+    std::list<PCTSPvertex> tour = { 1, 3, 6, 7, 2, 0, 1 };
+    EXPECT_EQ(totalPrizeOfTour(prize_map, tour), 6);
 }
 
 TEST_P(WalkFixture, testTotalPrize) {
@@ -29,17 +29,17 @@ TEST_P(WalkFixture, testTotalPrize) {
     auto prize_map = getPrizeMap(graph);
 
     // prize of vertex is equal to its ID
-    std::list<int> tour = { 1, 2, 3, 1 };
-    int expected_prize = 1 + 2 + 3 + 1;
-    EXPECT_EQ(total_prize(graph, tour, prize_map), expected_prize);
+    std::list<int> walk = { 1, 2, 3};
+    int expected_prize = 1 + 2 + 3;
+    EXPECT_EQ(totalPrize(prize_map, walk), expected_prize);
 
     // total prize of empty tour is zero
     std::list<int> empty_tour = {};
-    EXPECT_EQ(total_prize(graph, empty_tour, prize_map), 0);
+    EXPECT_EQ(totalPrize(prize_map, empty_tour), 0);
 
     // total prize of one vertex is itself
     std::list<int> one_tour = { 1 };
-    EXPECT_EQ(total_prize(graph, one_tour, prize_map), 1);
+    EXPECT_EQ(totalPrize(prize_map, one_tour), 1);
 }
 
 TEST_P(SuurballeGraphFixture, testTotalCost) {

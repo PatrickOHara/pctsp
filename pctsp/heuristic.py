@@ -12,7 +12,7 @@ from tspwplib import (
     VertexFunction,
     VertexFunctionName,
     VertexList,
-    total_prize,
+    total_prize_of_tour,
 )
 
 # pylint: disable=import-error
@@ -200,7 +200,7 @@ def suurballes_heuristic(
     best_tour: VertexList = []
     for vertex, disjoint_paths in vertex_disjoint_paths_map.items():
         tour = tour_from_vertex_disjoint_paths(disjoint_paths)
-        prize_of_tour = total_prize(prize_map, tour)
+        prize_of_tour = total_prize_of_tour(prize_map, tour)
         cost_of_tour = vertex_disjoint_cost_map[vertex]
         if (
             cost_of_tour < least_cost

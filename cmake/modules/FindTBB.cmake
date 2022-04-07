@@ -55,7 +55,6 @@
 #    TBB_VERSION_MINOR                - Minor library version number.
 #    TBB_VERSION_STRING               - Version string for output messages.
 #    TBB_INTERFACE_VERSION            - API version number.
-#    TBB_COMPATIBLE_INTERFACE_VERSION - The oldest major version still supported.
 #
 # Additionally, for each requested component, this module defines the following variables:
 #
@@ -220,7 +219,7 @@ if (NOT TBB_ROOT)
   file(TO_CMAKE_PATH "$ENV{TBB_ROOT}" TBB_ROOT)
 endif ()
 
-set(_TBB_INC_PATH_SUFFIXES include)
+set(_TBB_INC_PATH_SUFFIXES include/oneapi include)
 
 set(_TBB_LIB_PATH_SUFFIXES)
 if (_TBB_ARCH_PLATFORM)
@@ -257,8 +256,11 @@ endif ()
 # in order to extract the version information. The tbb.h header should be in the
 # same directory and is searched for separately as part of the "tbb" and "malloc"
 # component search. The TBB_INCLUDE_DIR is then used as HINTS.
+
+set(VERSION_FILENAMES oneapi/tbb/version.h tbb/version.h tbb/tbb_stddef.h)
+
 find_path(TBB_INCLUDE_DIR
-  NAMES tbb/tbb_stddef.h
+  NAMES ${VERSION_FILENAMES}
   HINTS ${TBB_ROOT}
   PATH_SUFFIXES ${_TBB_INC_PATH_SUFFIXES}
 )
@@ -453,29 +455,27 @@ endif ()
 # ------------------------------------------------------------------------------
 # Extract library version from start of tbb_stddef.h
 if (TBB_INCLUDE_DIR)
-  if (NOT DEFINED TBB_VERSION_MAJOR OR
+  foreach (_TBB_VERSION_FILENAME IN ITEMS ${VERSION_FILENAMES})
+    if (NOT DEFINED TBB_VERSION_MAJOR OR
       NOT DEFINED TBB_VERSION_MINOR OR
-      NOT DEFINED TBB_INTERFACE_VERSION OR
-      NOT DEFINED TBB_COMPATIBLE_INTERFACE_VERSION)
-    file(READ "${TBB_INCLUDE_DIR}/tbb/tbb_stddef.h" _TBB_VERSION_CONTENTS LIMIT 2048)
-    string(REGEX REPLACE
-      ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1"
-      TBB_VERSION_MAJOR "${_TBB_VERSION_CONTENTS}"
-    )
-    string(REGEX REPLACE
-      ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1"
-      TBB_VERSION_MINOR "${_TBB_VERSION_CONTENTS}"
-    )
-    string(REGEX REPLACE
-      ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1"
-      TBB_INTERFACE_VERSION "${_TBB_VERSION_CONTENTS}"
-    )
-    string(REGEX REPLACE
-      ".*#define TBB_COMPATIBLE_INTERFACE_VERSION ([0-9]+).*" "\\1"
-      TBB_COMPATIBLE_INTERFACE_VERSION "${_TBB_VERSION_CONTENTS}"
-    )
-    unset(_TBB_VERSION_CONTENTS)
-  endif ()
+      NOT DEFINED TBB_INTERFACE_VERSION)
+        file(READ "${TBB_INCLUDE_DIR}/${_TBB_VERSION_FILENAME}" _TBB_VERSION_CONTENTS LIMIT 2048)
+        string(REGEX REPLACE
+          ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1"
+          TBB_VERSION_MAJOR "${_TBB_VERSION_CONTENTS}"
+        )
+        string(REGEX REPLACE
+          ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1"
+          TBB_VERSION_MINOR "${_TBB_VERSION_CONTENTS}"
+        )
+        string(REGEX REPLACE
+          ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1"
+          TBB_INTERFACE_VERSION "${_TBB_VERSION_CONTENTS}"
+        )
+
+        unset(_TBB_VERSION_CONTENTS)
+    endif ()
+  endforeach ()
   set(TBB_VERSION "${TBB_VERSION_MAJOR}.${TBB_VERSION_MINOR}")
   set(TBB_VERSION_STRING "${TBB_VERSION}")
 else ()
@@ -484,7 +484,6 @@ else ()
   unset(TBB_VERSION_MINOR)
   unset(TBB_VERSION_STRING)
   unset(TBB_INTERFACE_VERSION)
-  unset(TBB_COMPATIBLE_INTERFACE_VERSION)
 endif ()
 
 if (TBB_DEBUG)
@@ -493,7 +492,6 @@ if (TBB_DEBUG)
   message("** FindTBB: - TBB_VERSION_MAJOR                = ${TBB_VERSION_MAJOR}")
   message("** FindTBB: - TBB_VERSION_MINOR                = ${TBB_VERSION_MINOR}")
   message("** FindTBB: - TBB_INTERFACE_VERSION            = ${TBB_INTERFACE_VERSION}")
-  message("** FindTBB: - TBB_COMPATIBLE_INTERFACE_VERSION = ${TBB_COMPATIBLE_INTERFACE_VERSION}")
 endif ()
 
 # ------------------------------------------------------------------------------

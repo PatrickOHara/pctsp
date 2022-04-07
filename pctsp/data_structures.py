@@ -13,6 +13,8 @@ class SummaryStats(BaseModel):  # pylint: disable=too-few-public-methods
     upper_bound: float
     num_cost_cover_disjoint_paths: int
     num_cost_cover_shortest_paths: int
+    nconss_presolve_disjoint_paths: int
+    nconss_presolve_shortest_paths: int
     num_cycle_cover: int
     num_nodes: int
     num_sec_disjoint_tour: int

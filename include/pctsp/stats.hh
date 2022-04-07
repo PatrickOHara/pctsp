@@ -15,6 +15,8 @@ struct SummaryStats {
     double upper_bound;
     unsigned int num_cost_cover_disjoint_paths;
     unsigned int num_cost_cover_shortest_paths;
+    unsigned int nconss_presolve_disjoint_paths;
+    unsigned int nconss_presolve_shortest_paths;
     unsigned int num_cycle_cover;
     long long num_nodes;
     unsigned int num_sec_disjoint_tour;         // number of SECs added with disjoint tour separation
@@ -24,15 +26,6 @@ struct SummaryStats {
 SummaryStats readSummaryStatsFromYaml(std::filesystem::path& filename);
 
 void writeSummaryStatsToYaml(SummaryStats& summary, std::filesystem::path& filename);
-
-SummaryStats getSummaryStatsFromSCIP(
-    SCIP* scip,
-    unsigned int num_cost_cover_disjoint_paths,
-    unsigned int num_cost_cover_shortest_paths,
-    unsigned int num_cycle_cover,
-    unsigned int num_sec_disjoint_tour,
-    unsigned int num_sec_maxflow_mincut
-);
 
 template <typename Enumeration>
 auto enum_as_integer(Enumeration const value)

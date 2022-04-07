@@ -36,9 +36,7 @@ std::vector<typename boost::graph_traits<TGraph>::vertex_descriptor> separateCos
 
 SCIP_RETCODE addCoverInequality(
     SCIP* scip,
-    std::vector<SCIP_VAR*>& variables,
-    SCIP_RESULT* result,
-    SCIP_SOL* sol
+    std::vector<SCIP_VAR*>& variables
 );
 
 template <typename TGraph>
@@ -46,9 +44,7 @@ SCIP_RETCODE addCoverInequalityFromVertices(
     SCIP* scip,
     TGraph& graph,
     std::vector<typename boost::graph_traits<TGraph>::vertex_descriptor>& cover_vertices,
-    std::map<typename boost::graph_traits<TGraph>::edge_descriptor, SCIP_VAR*>& edge_variable_map,
-    SCIP_RESULT* result,
-    SCIP_SOL* sol
+    std::map<typename boost::graph_traits<TGraph>::edge_descriptor, SCIP_VAR*>& edge_variable_map
 ) {
     // get edges of the self loops
     auto vertices_start = cover_vertices.begin();
@@ -61,9 +57,11 @@ SCIP_RETCODE addCoverInequalityFromVertices(
     auto vars = getEdgeVariables(scip, graph, edge_variable_map, edges_start, edges_last);
 
     // add a cover inequality over the variables
-    SCIP_CALL(addCoverInequality(scip, vars, result, sol));
+    SCIP_CALL(addCoverInequality(scip, vars));
     return SCIP_OKAY;
 }
+
+unsigned int separateThenAddCostCoverInequalities(SCIP* scip, std::vector<CostNumberType>& path_distances, CostNumberType& cost_upper_bound);
 
 
 class CostCoverEventHandler : public scip::ObjEventhdlr
@@ -71,7 +69,8 @@ class CostCoverEventHandler : public scip::ObjEventhdlr
 
 private:
     std::vector<int> _path_distances;
-    int _num_conss_added;
+    unsigned int _num_conss_added;
+    unsigned int _num_conss_added_init_sol;
 
 public:
     CostCoverEventHandler(SCIP* scip, const std::string& name, const std::string& description)
@@ -90,9 +89,24 @@ public:
     {
         _path_distances = path_distances;
         _num_conss_added = 0;
+        _num_conss_added_init_sol = 0;
     }
+
+    /** Set the number of constraints added at the initial solution */
+    void setNumConssAddedInitSol(unsigned int nconss);
+
+    /** Get the number of constraints added due to the initial solution being added */
+    unsigned int getNumConssAddedInitSol();
+
+    /** Get the total number of constraints added throughout the branch and cut process */
     unsigned int getNumConssAdded();
+
+    /** Increase the number of constraints added */
+    void increaseNumConssAdded(unsigned int num_conss);
+
+    /** Get the vector containing the lower bound of connected a vertex to the root */
     std::vector<int> getPathDistances();
+
     virtual SCIP_DECL_EVENTFREE(scip_free);
     virtual SCIP_DECL_EVENTINIT(scip_init);
     virtual SCIP_DECL_EVENTEXIT(scip_exit);
@@ -144,9 +158,9 @@ SCIP_RETCODE includeShortestPathCostCover(
     return includeShortestPathCostCover(scip, distances);
 }
 
-CostCoverEventHandler getDisjointPathsCostCoverEventHandler(SCIP* scip);
+CostCoverEventHandler* getDisjointPathsCostCoverEventHandler(SCIP* scip);
 
-CostCoverEventHandler getShortestPathCostCoverEventHandler(SCIP* scip);
+CostCoverEventHandler* getShortestPathCostCoverEventHandler(SCIP* scip);
 
 unsigned int getNShortestPathCostCoverCutsAdded(SCIP* scip);
 

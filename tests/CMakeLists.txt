@@ -1,6 +1,6 @@
 # Download and unpack googletest at configure time
 configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" -D "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}" .
   RESULT_VARIABLE result
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
 if(result)
@@ -39,6 +39,16 @@ add_executable(${TARGET} ${TEST_SOURCES})
 
 set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 17)
 
+# find SCIP dependencies that need to be statically linked for testing:
+find_package(Readline REQUIRED)
+find_package(GMP REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(TBB REQUIRED)
+
+# may be needed by SCIP on some Linux systems
+# find_library(GFORTRAN_LIBRARIES NAMES gfortran)
+# find_library(OPENBLAS_LIBRARIES NAMES libopenblas openblas libopenblas.so.0 libopenblas.0.dylib HINTS ${OPENBLAS_DIR} PATH_SUFFIXES lib)
+
 # link libraries and include files
 target_link_libraries(${TARGET} PRIVATE
     ${Python3_LIBRARIES}        # link at compile time for building tests
@@ -51,6 +61,9 @@ target_link_libraries(${TARGET} PRIVATE
     ${GMP_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${YAML_CPP_LIBRARIES}
+    ${TBB_LIBRARIES}
+    # ${GFORTRAN_LIBRARIES}
+    # ${OPENBLAS_LIBRARIES}
     pctsp
 )
 target_include_directories(${TARGET} PUBLIC
@@ -62,5 +75,6 @@ target_include_directories(${TARGET} PUBLIC
     ${GMP_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIRS}
+    ${TBB_INCLUDE_DIRS}
 )
 message("done testing")

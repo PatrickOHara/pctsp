@@ -116,6 +116,87 @@ TEST_P(CostCoverFixture, testPathCostCover) {
     SCIPfree(&scip);
 }
 
+TEST_P(CostCoverFixture, testShortestPathCostCover) {
+    auto graph = getGraph();
+    auto prize_map = getGenOnePrizeMap(graph);  // prize is 1 on each vertex
+    auto cost_map = getCostMap(graph);
+    auto root_vertex = getRootVertex();
+    auto test_case = GetParam();
+    int quota = getQuota();
+    std::list<PCTSPvertex> tour;
+    std::string name = "testPathCostCover";
+
+    // quota and tour depend on the graph
+    switch (test_case) {
+        case GraphType::GRID8: {
+            tour = {0, 1, 4, 5, 3, 2, 0};
+            break;
+        }
+        case GraphType::SUURBALLE: {
+            tour = {0, 1, 5, 2, 0};
+            break;
+        }
+        default: {
+            tour = getSmallTour();
+            break;
+        }
+    }
+    // get the edges in the initial tour
+    auto first = tour.begin();
+    auto last = tour.end();
+    std::vector<PCTSPedge> heuristic_edges = getEdgesInWalk(graph, first, last);
+
+    // create model
+    SCIP* scip = NULL;
+    SCIPcreate(&scip);
+    auto edge_var_map = solvePrizeCollectingTSP(
+        scip,
+        graph,
+        heuristic_edges,
+        cost_map,
+        prize_map,
+        quota,
+        root_vertex,
+        1,
+        BranchingStrategy::STRONG_AT_TREE_TOP,
+        false,
+        true,   // only turn on shortest path cost cover inequalities
+        false,
+        {},
+        name,
+        false,
+        0.01,
+        false,
+        5,
+        1,
+        std::filesystem::path(".logs"),
+        60
+    );
+
+    // count the number of shortest path cost cover inequalities added
+    CostCoverEventHandler* cc_handler = dynamic_cast<CostCoverEventHandler*>(SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str()));
+    int num_expected_cc_conss;
+    int num_actual_cc_conss = cc_handler->getNumConssAdded();
+    auto opt_value = SCIPsolGetOrigObj(SCIPgetBestSol(scip));
+    switch (test_case) {
+        case GraphType::COMPLETE5:
+        case GraphType::GRID8: {
+            // GRID8: vertex 7 (shortest path is 1+5+1+1=8) is above the cost limit (1+5+1+5+1+1=14)
+            num_expected_cc_conss = 1;
+            break;
+        }
+        default: {
+            // on the complete graphs, no vertices are expected to be above the cost limit
+            num_expected_cc_conss = 0;
+            break;
+        }
+    }
+    EXPECT_EQ(num_expected_cc_conss, num_actual_cc_conss);
+
+    // remember to free memory
+    SCIPfree(&scip);
+}
+
 INSTANTIATE_TEST_SUITE_P(
     TestCostCover,
     CostCoverFixture,

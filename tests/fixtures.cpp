@@ -1,5 +1,4 @@
 
-#include <time.h>
 #include "fixtures.hh"
 
 std::vector<std::pair<int, int>> getCompleteEdgeVector(int n_vertices) {
@@ -69,6 +68,7 @@ int GraphFixture::getNumVertices() {
     case GraphType::GRID8: return 8;
     case GraphType::SUURBALLE: return 8;
     case GraphType::COMPLETE25: return 25;
+    default: return 0;
     }
 }
 
@@ -87,15 +87,8 @@ EdgeCostMap GraphFixture::getCostMap(PCTSPgraph& graph) {
         break;
     }
     case GraphType::COMPLETE25: {
-        // assign a random integer to the cost for each edge
-        // std::random_device rd;  //Will be used to obtain a seed for the random number engine
-        // std::mt19937 gen; //Standard mersenne_twister_engine seeded with rd()
-        // gen.seed(2596);
-        // std::linear_congruential_engine gen((unsigned int) 0);
-        // std::uniform_int_distribution<> distrib(1, 100);
         for (int i = 0; i < boost::num_vertices(graph); i++) {
             for (int j = i + 1; j < boost::num_vertices(graph); j++) {
-                // cost_map[boost::edge(i, j, graph).first] = distrib(gen);
                 cost_map[boost::edge(i, j, graph).first] = (i * 7 + j * 13) % 29;
             }
         }
@@ -192,6 +185,7 @@ int GraphFixture::getQuota() {
     case GraphType::GRID8:
     case GraphType::SUURBALLE:
         return 6;
+    default: return 0;
     }
 }
 

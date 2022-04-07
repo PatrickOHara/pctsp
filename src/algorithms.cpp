@@ -75,26 +75,36 @@ SummaryStats getSummaryStatsFromSCIP(SCIP* scip) {
     // get cost cover event handlers
     auto spcc = SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str());
     unsigned int num_cost_cover_shortest_paths = 0;
+    unsigned int nconss_presolve_shortest_paths = 0;
     if (spcc != 0) {
         CostCoverEventHandler* shortest_path_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(spcc);
         num_cost_cover_shortest_paths = shortest_path_cc_hdlr->getNumConssAdded();
+        nconss_presolve_shortest_paths = shortest_path_cc_hdlr->getNumConssAddedInitSol();
     }
     unsigned int num_cost_cover_disjoint_paths = 0;
+    unsigned int nconss_presolve_disjoint_paths = 0;
     auto dpcc = SCIPfindObjEventhdlr(scip, DISJOINT_PATHS_COST_COVER_NAME.c_str());
     if (dpcc != 0) {
         CostCoverEventHandler* disjoint_paths_cc_hdlr = dynamic_cast<CostCoverEventHandler*>(dpcc);
         num_cost_cover_disjoint_paths = disjoint_paths_cc_hdlr->getNumConssAdded();
+        nconss_presolve_disjoint_paths = disjoint_paths_cc_hdlr->getNumConssAddedInitSol();
     }
     unsigned int num_cycle_cover = getNumCycleCoverCutsAdded(scip);
 
-    return getSummaryStatsFromSCIP(
-        scip,
+    SummaryStats summary = {
+        SCIPgetStatus(scip),
+        SCIPgetLowerbound(scip),
+        SCIPgetUpperbound(scip),
         num_cost_cover_disjoint_paths,
         num_cost_cover_shortest_paths,
+        nconss_presolve_disjoint_paths,
+        nconss_presolve_shortest_paths,
         num_cycle_cover,
+        SCIPgetNNodes(scip),
         n_disjoint_sec,
         n_flow_sec
-    );
+    };
+    return summary;
 }
 
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
@@ -136,11 +146,25 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name, sec_disjoint_tour, sec_lp_gap_improvement_threshold, sec_maxflow_mincut, sec_max_tailing_off_iterations, sec_sepafreq);
 
     // add the cost cover inequalities when a new solution is found
+    // NOTE we assume the heuristic solution is feasible (trust the user)
+    auto cost_upper_bound = totalCost(heuristic_edges, cost_map);
     if (cost_cover_disjoint_paths) {
         includeDisjointPathsCostCover(scip, disjoint_paths_distances);
+        if (cost_upper_bound > 0) {
+            CostCoverEventHandler* hdlr = getDisjointPathsCostCoverEventHandler(scip);
+            auto path_distances = hdlr->getPathDistances();
+            unsigned int nconss = separateThenAddCostCoverInequalities(scip, path_distances, cost_upper_bound);
+            hdlr->setNumConssAddedInitSol(nconss);
+        }
     }
     if (cost_cover_shortest_path) {
         includeShortestPathCostCover(scip, graph, cost_map, root_vertex);
+        if (cost_upper_bound > 0) {
+            CostCoverEventHandler* hdlr = getShortestPathCostCoverEventHandler(scip);
+            auto path_distances = hdlr->getPathDistances();
+            unsigned int nconss = separateThenAddCostCoverInequalities(scip, path_distances, cost_upper_bound);
+            hdlr->setNumConssAddedInitSol(nconss);
+        }
     }
     // add cycle cover constraint
     auto cycle_cover_conshdlr = new CycleCoverConshdlr(scip);
@@ -175,21 +199,20 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
 
     // get the node stats of the solver
-    auto node_stats = node_eventhdlr->getNodeStatsVector();
-    writeNodeStatsToCSV(node_stats, scip_node_stats_csv);
+    // auto node_stats = node_eventhdlr->getNodeStatsVector();
+    // writeNodeStatsToCSV(node_stats, scip_node_stats_csv);    // note this file gets very large
 
     // get the summary statistics and write then to file
     auto summary = getSummaryStatsFromSCIP(scip);
-    writeNodeStatsToCSV(node_stats, scip_node_stats_csv);
     writeSummaryStatsToYaml(summary, pctsp_summary_stats_yaml);
 
     // write the logs to txt
     FILE* log_file = fopen(scip_logs_txt.c_str(), "w");
     SCIPprintStatistics(scip, log_file);
 
-    // write the bounds CSV
-    std::vector<Bounds> bounds_vector = bounds_handler->getBoundsVector();
-    writeBoundsToCSV(bounds_vector, scip_bounds_csv);
+    // write the bounds CSV: NOTE this file can get very large
+    // std::vector<Bounds> bounds_vector = bounds_handler->getBoundsVector();
+    // writeBoundsToCSV(bounds_vector, scip_bounds_csv);
 
     // release any variable we no longer need
     SCIPmessagehdlrRelease(&handler);
