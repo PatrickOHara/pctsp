@@ -57,7 +57,9 @@ def test_extension_tsplib(tspwplib_graph, root):
     tour = [0, 1, 2, n - 1, n - 2, 0]
     extended_tour = extension(tspwplib_graph, tour, root)
     prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
-    assert total_prize_of_tour(prize_map, extended_tour) > total_prize_of_tour(prize_map, tour)
+    assert total_prize_of_tour(prize_map, extended_tour) > total_prize_of_tour(
+        prize_map, tour
+    )
     assert root in extended_tour
     assert is_simple_cycle(tspwplib_graph, extended_tour)
     for u in tspwplib_graph:

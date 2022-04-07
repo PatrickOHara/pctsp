@@ -12,12 +12,12 @@ setup(
     install_requires=[
         "pydantic>=1.8.0",
         "pyscipopt>=3.3.0",
-        "tspwplib>=0.6.7",
+        "tspwplib>=0.6.11",
     ],
     name="pctsp",
     packages=["pctsp"],
     python_requires=">=3.7",
-    use_scm_version={"fallback_version": "0.2.5"},
+    use_scm_version={"fallback_version": "0.2.8"},
     license="MIT License",
     classifiers=[
         "Programming Language :: Python",

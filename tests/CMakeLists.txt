@@ -44,8 +44,10 @@ find_package(Readline REQUIRED)
 find_package(GMP REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(TBB REQUIRED)
-find_library(GFORTRAN_LIBRARIES NAMES gfortran)
-find_library(OPENBLAS_LIBRARIES NAMES libopenblas openblas libopenblas.so.0 libopenblas.0.dylib HINTS ${OPENBLAS_DIR} PATH_SUFFIXES lib)
+
+# may be needed by SCIP on some Linux systems
+# find_library(GFORTRAN_LIBRARIES NAMES gfortran)
+# find_library(OPENBLAS_LIBRARIES NAMES libopenblas openblas libopenblas.so.0 libopenblas.0.dylib HINTS ${OPENBLAS_DIR} PATH_SUFFIXES lib)
 
 # link libraries and include files
 target_link_libraries(${TARGET} PRIVATE
@@ -60,8 +62,8 @@ target_link_libraries(${TARGET} PRIVATE
     ${ZLIB_LIBRARIES}
     ${YAML_CPP_LIBRARIES}
     ${TBB_LIBRARIES}
-    ${GFORTRAN_LIBRARIES}
-    ${OPENBLAS_LIBRARIES}
+    # ${GFORTRAN_LIBRARIES}
+    # ${OPENBLAS_LIBRARIES}
     pctsp
 )
 target_include_directories(${TARGET} PUBLIC
