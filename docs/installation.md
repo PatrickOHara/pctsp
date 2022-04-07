@@ -13,7 +13,7 @@ docker pull patrickohara/pctsp:latest
 
 ## Dependencies
 
-Installation requires [CMake](https://cmake.org/), [Ninja](https://ninja-build.org/), a compiler with [support for C++ 17 or later](https://en.cppreference.com/w/cpp/compiler_support) and python 3.6 or later.
+Installation requires [CMake](https://cmake.org/), [Ninja](https://ninja-build.org/), a compiler with [support for C++ 17 or later](https://en.cppreference.com/w/cpp/compiler_support) and python 3.7 or later.
 
 There are three C++ library dependencies:
 - [Boost](https://www.boost.org/) for graph algorithms, logging and bimaps.
@@ -31,7 +31,7 @@ If you only need the c++ code (and tests), you can use cmake:
 ```bash
 mkdir build
 cd build
-cmake -GNinja ..    # strongly recommended to use ninja
+cmake -GNinja ..    # tests can be turned off with -DPCTSP_BUILD_TESTS:BOOL=OFF
 cmake --build .     # build everything
 cmake --install .   # optional install
 ```
