@@ -4,15 +4,20 @@ on:
   push:
     branches:
       - master
+    tags:
+      - 'v*.*.*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      PCTSP_VERSION: ${{ github.event.release.tag_name }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2      
+      uses: actions/checkout@v2  
+    - name: Create tag artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{github.ref_name}}
+        path: Release
     - name: Login to Docker Hub
       uses: docker/login-action@v1
       with:
@@ -23,6 +28,6 @@ jobs:
     # - name: Docker push SCIP
     #   run: docker push patrickohara/scip:latest
     - name: Docker build PCTSP
-      run: docker build --build-arg PCTSP_VERSION=${PCTSP_VERSION} -f Dockerfile -t patrickohara/pctsp:latest .
+      run: docker build --build-arg PCTSP_VERSION=${{ github.event.release.tag_name }} -f Dockerfile -t patrickohara/pctsp:latest .
     - name: Docker push
       run: docker push patrickohara/pctsp:latest

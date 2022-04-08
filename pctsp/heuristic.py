@@ -12,6 +12,8 @@ from tspwplib import (
     VertexFunction,
     VertexFunctionName,
     VertexList,
+    edge_list_from_walk,
+    total_cost,
     total_prize_of_tour,
 )
 
@@ -140,6 +142,41 @@ def extension_until_prize_feasible(
     )
     return extended_tour
 
+def path_extension_collapse(
+    graph: nx.Graph,
+    tour: VertexList,
+    root_vertex: int,
+    quota: int,
+    collapse_shortest_paths: bool = False,
+    step_size: int = 1,
+    path_depth_limit: int = 2,
+    logging_level: int = logging.INFO,
+)
+    cost_dict = nx.get_edge_attributes(graph, EdgeFunctionName.cost.value)
+    prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
+    for step in range(1, step_size + 1):
+        prize_feasible_tour = extension_until_prize_feasible(
+            graph,
+            prize_feasible_tour,
+            root_vertex,
+            quota,
+            step_size=step,
+            path_depth_limit=path_depth_limit,
+        )
+        if total_prize_of_tour(prize_dict, prize_feasible_tour) >= quota:
+            break
+    prize_feasible_edges = edge_list_from_walk(prize_feasible_tour)
+    prize_feasible_cost = total_cost(cost_dict, prize_feasible_edges)
+
+    extended_tour = extension(graph, prize_feasible_tour, root_vertex)
+    collapsed_tour = collapse(
+        graph,
+        extended_tour,
+        quota,
+        root_vertex,
+        collapse_shortest_paths=collapse_shortest_paths,
+        logging_level=logging_level,
+    )
 
 def tour_from_vertex_disjoint_paths(vertex_disjoint_paths: DisjointPaths) -> VertexList:
     """Get a tour from a pair of vertex disjoint paths in an undirected graph
