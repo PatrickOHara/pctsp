@@ -2,6 +2,9 @@ FROM patrickohara/scip:latest
 
 WORKDIR /app
 
+ARG PCTSP_VERSION
+ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PCTSP=${PCTSP_VERSION}
+
 # Download data for oplib
 ADD https://api.github.com/repos/bcamath-ds/OPLib/compare/master...HEAD /dev/null
 ENV OPLIB_ROOT /app/OPLib
@@ -17,5 +20,4 @@ COPY . /app/pctsp
 
 # Install package
 RUN pip3 install pybind11
-RUN --mount=source=.git,target=.git,type=bind \
-    pip3 install --no-cache-dir /app/pctsp 
+RUN pip3 install /app/pctsp
