@@ -1,18 +1,9 @@
-
-# latex
-paper/main.pdf
-*.aux
-*.out
-*.sav
-*.bbl
-*.blg
-*.log
-
 # misc
 .vscode
 .env
 .logs
 site
+.DS_Store
 
 # python
 *.egg-info
