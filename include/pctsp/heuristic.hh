@@ -244,6 +244,53 @@ void findExtensionPaths(
 }
 
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
+std::list<std::list<typename TGraph::vertex_descriptor>> pathExtensionCollapse(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& init_tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    PrizeNumberType& quota,
+    typename TGraph::vertex_descriptor& root_vertex,
+    bool collapse_shortest_paths = false,
+    int& step_size = 1
+) {
+    typedef TGraph::vertex_descriptor TVertex;
+    typedef std::list<TVertex> TTour;
+
+    TTour tour (init_tour);
+    TTour best_tour = {};
+
+    // we do not use the optional depth limit by setting it to be the number of vertices
+    auto depth_limit = boost::num_vertices(graph);
+
+    // is the input tour a feasible tour?
+    auto prize_of_tour = totalPrizeOfTour(prize_map, tour);
+    bool best_tour_is_feasible = prize >= quota;
+    if (best_tour_is_feasible) {
+        auto first = tour.begin();
+        auto last = tour.end();
+        std::copy(first, last, best_tour.first());
+    }
+    else {
+        // search for a feasible tour using extension until prize feasible
+        for (auto step = 1; step <= step_size; step++) {
+            extensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, root_vertex, quota, step, depth_limit);
+            prize_of_tour = totalPrizeOfTour(prize_map, tour);
+            if (prize_of_tour >= quota) {
+                auto first = tour.begin();
+                auto last = tour.end();
+                std::copy(first, last, best_tour.first());                
+                break;
+            }
+        }
+    }
+
+    // now play ping pong between extension and collapse to find a better tour
+
+    return best_tour;
+}
+
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
 void extension(
     TGraph& graph,
     std::list<typename TGraph::vertex_descriptor>& tour,
