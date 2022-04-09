@@ -456,6 +456,11 @@ TEST_P(HeuristicFixture, testPathExtensionCollapse) {
     bool collapse_shortest_paths = false;
     int step_size = 1;
     auto tour = pathExtensionCollapse(graph, small_tour, cost_map, prize_map, quota, root, collapse_shortest_paths, step_size);
+    EXPECT_GE(totalPrizeOfTour(prize_map, tour), quota);
+
+    if (totalPrizeOfTour(prize_map, small_tour) >= quota) {
+        EXPECT_LE(totalCost(graph, tour, cost_map), totalCost(graph, small_tour, cost_map));
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,

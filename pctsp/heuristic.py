@@ -23,6 +23,7 @@ from .libpypctsp import (
     collapse_bind,
     extension_bind,
     extension_until_prize_feasible_bind,
+    path_extension_collapse_bind,
 )
 
 # pylint: enable=import-error
@@ -150,8 +151,6 @@ def path_extension_collapse(
     quota: int,
     collapse_shortest_paths: bool = False,
     step_size: int = 1,
-    path_depth_limit: int = 2,
-    logging_level: int = logging.INFO,
 ) -> VertexList:
     """Run the path extension & collapse heuristic
 
@@ -160,48 +159,16 @@ def path_extension_collapse(
         tour: Tour that has the first and last vertex the same
         root_vertex: Tour starts and ends at this vertex
         quota: Lower bound on total prize of tour
+        collapse_shortest_paths: If true, collapse the tour by finding shortest paths
         step_size: Gap between two vertices in the tour when trying to extend the tour
-        path_depth_limit: Length of the path to explore in order to extend the tour
-        logging_level: Verbosity of logging.
 
     Returns:
         Tour that (hopefully) has prize above the quota
     """
-    best_tour = []
-    best_tour_is_yes = is_pctsp_yes_instance(graph, quota, root_vertex, edge_list_from_walk(tour))
-    if best_tour_is_yes:
-        best_tour = tour
     cost_dict = nx.get_edge_attributes(graph, EdgeFunctionName.cost.value)
     prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
-
-    # extension until we find a prize feasible tour
-    if not best_tour_is_yes:
-        for step in range(1, step_size + 1):
-            tour = extension_until_prize_feasible(
-                graph,
-                tour,
-                root_vertex,
-                quota,
-                step_size=step,
-                path_depth_limit=path_depth_limit,
-            )
-            if is_pctsp_yes_instance(graph, quota, root_vertex, edge_list_from_walk(tour)):
-                best_tour_is_yes = True
-                best_tour = tour
-                break
-
-    prize_feasible_edges = edge_list_from_walk(prize_feasible_tour)
-    prize_feasible_cost = total_cost(cost_dict, prize_feasible_edges)
-
-    extended_tour = extension(graph, prize_feasible_tour, root_vertex)
-    collapsed_tour = collapse(
-        graph,
-        extended_tour,
-        quota,
-        root_vertex,
-        collapse_shortest_paths=collapse_shortest_paths,
-        logging_level=logging_level,
-    )
+    edge_list = list(graph.edges())
+    return path_extension_collapse_bind(edge_list, tour, cost_dict, prize_dict, root_vertex, quota, collapse_shortest_paths, step_size)
 
 def tour_from_vertex_disjoint_paths(vertex_disjoint_paths: DisjointPaths) -> VertexList:
     """Get a tour from a pair of vertex disjoint paths in an undirected graph

@@ -221,6 +221,36 @@ std::vector<PCTSPvertex> extensionUntilPrizeFeasibleBind(
     return getOldVertices(vertex_bimap, tour);
 }
 
+std::vector<PCTSPvertex> pathExtensionCollapseBind(
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
+    std::list<PCTSPvertex>& py_tour,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    PCTSPvertex& py_root,
+    PrizeNumberType& quota,
+    bool collapse_shortest_paths = false,
+    int step_size = 1
+) {
+    // get renamed graph
+    PCTSPgraph graph;
+    VertexBimap vertex_bimap;
+    auto new_edges = renameEdges(vertex_bimap, edge_list);
+    addEdgesToGraph(graph, new_edges);
+    auto root_vertex = getNewVertex(vertex_bimap, py_root);
+    auto new_vertices = getNewVertices(vertex_bimap, py_tour);
+    std::list<PCTSPvertex> tour (new_vertices.begin(), new_vertices.end());
+
+    // fill the cost map and prize map using renamed vertices
+    EdgeCostMap cost_map = boost::get(edge_weight, graph);
+    VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
+    fillCostMapFromRenamedMap(graph, cost_map, cost_dict, vertex_bimap);
+    fillRenamedVertexMap(prize_map, prize_dict, vertex_bimap);
+
+    // run the extension algorithm
+    auto new_tour = pathExtensionCollapse(graph, tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths, step_size);
+    return getOldVertices(vertex_bimap, new_tour);
+}
+
 PYBIND11_MODULE(libpypctsp, m) {
     // functions for branch and cut
     m.def("basic_solve_pctsp_bind", &pyBasicSolvePrizeCollectingTSP, "Solve PCTSP with basic branch and cut");
@@ -230,6 +260,7 @@ PYBIND11_MODULE(libpypctsp, m) {
     m.def("collapse_bind", &collapseBind, "Collapse heuristic bind.");
     m.def("extension_bind", &extensionBind, "Extension heuristic bind.");
     m.def("extension_until_prize_feasible_bind", &extensionUntilPrizeFeasibleBind, "Extension until prize feasible find.");
+    m.def("path_extension_collapse_bind", &pathExtensionCollapseBind, "Path extension & collapse.");
     m.def("unitary_gain", &unitaryGain, "Calculate the unitary loss of a vertex.");
     m.def("unitary_loss", &unitaryLoss, "Calculate the unitary gain of a vertex.");
 }
