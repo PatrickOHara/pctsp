@@ -70,8 +70,8 @@ std::vector<typename boost::graph_traits<TGraph>::edge_descriptor> getEdgesInWal
 }
 
 template <typename TEdgeIt, typename TCostMap>
-int totalCost(TEdgeIt& first, TEdgeIt& last, TCostMap& cost_map) {
-    int cost = 0;
+CostNumberType totalCost(TEdgeIt& first, TEdgeIt& last, TCostMap& cost_map) {
+    CostNumberType cost = 0;
     for (; first != last; first++) {
         auto edge = *first;
         cost += cost_map[edge];
@@ -80,21 +80,21 @@ int totalCost(TEdgeIt& first, TEdgeIt& last, TCostMap& cost_map) {
 }
 
 template <typename TEdge, typename TCostMap>
-int totalCost(std::vector<TEdge>& edges, TCostMap& cost_map) {
+CostNumberType totalCost(std::vector<TEdge>& edges, TCostMap& cost_map) {
     auto first = edges.begin();
     auto last = edges.end();
     return totalCost(first, last, cost_map);
 }
 
 template <typename TEdge, typename TCostMap>
-int totalCost(std::list<TEdge>& edges, TCostMap& cost_map) {
+CostNumberType totalCost(std::list<TEdge>& edges, TCostMap& cost_map) {
     auto first = edges.begin();
     auto last = edges.end();
     return totalCost(first, last, cost_map);
 }
 
 template <typename TGraph, typename TVertexIt, typename TCostMap>
-int totalCost(TGraph& graph, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it, TCostMap& cost_map) {
+CostNumberType totalCost(TGraph& graph, TVertexIt& first_vertex_it, TVertexIt& last_vertex_it, TCostMap& cost_map) {
     auto edges = getEdgesInWalk(graph, first_vertex_it, last_vertex_it);
     auto first_edge_it = edges.begin();
     auto last_edge_it = edges.end();
@@ -102,14 +102,14 @@ int totalCost(TGraph& graph, TVertexIt& first_vertex_it, TVertexIt& last_vertex_
 }
 
 template <typename TGraph, typename TCostMap>
-int totalCost(TGraph& graph, std::list<typename TGraph::vertex_descriptor>& tour, TCostMap& cost_map) {
+CostNumberType totalCost(TGraph& graph, std::list<typename TGraph::vertex_descriptor>& tour, TCostMap& cost_map) {
     auto first = tour.begin();
     auto last = tour.end();
     return totalCost(graph, first, last, cost_map);
 }
 
 template <typename TGraph, typename TCostMap>
-int totalCost(TGraph& graph, std::vector<typename TGraph::vertex_descriptor>& path, TCostMap& cost_map) {
+CostNumberType totalCost(TGraph& graph, std::vector<typename TGraph::vertex_descriptor>& path, TCostMap& cost_map) {
     auto first = path.begin();
     auto last = path.end();
     return totalCost(graph, first, last, cost_map);

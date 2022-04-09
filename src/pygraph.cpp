@@ -46,7 +46,7 @@ void fillCostMapFromPyDict(PCTSPgraph& graph, EdgeCostMap& cost_map, py::dict& c
         py::tuple py_edge = py::extract<py::tuple>(cost_tuple[0]);
         int py_source = py::extract<int>(py_edge[0]);
         int py_target = py::extract<int>(py_edge[1]);
-        int cost = py::extract<int>(cost_tuple[1]);
+        CostNumberType cost = py::extract<CostNumberType>(cost_tuple[1]);
 
         auto boost_source = getNewVertex(vertex_id_map, py_source);
         auto boost_target = getNewVertex(vertex_id_map, py_target);

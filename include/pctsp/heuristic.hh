@@ -23,7 +23,7 @@ void includeHeuristics(SCIP* scip);
 
 // Extension and collapse heuristic
 
-float unitaryGain(int prize_v, int cost_uw, int cost_uv, int cost_vw);
+float unitaryGain(int prize_v, CostNumberType cost_uw, CostNumberType cost_uv, CostNumberType cost_vw);
 
 struct ExtensionVertex {
     int index;
@@ -244,53 +244,6 @@ void findExtensionPaths(
 }
 
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
-std::list<std::list<typename TGraph::vertex_descriptor>> pathExtensionCollapse(
-    TGraph& graph,
-    std::list<typename TGraph::vertex_descriptor>& init_tour,
-    TCostMap& cost_map,
-    TPrizeMap& prize_map,
-    PrizeNumberType& quota,
-    typename TGraph::vertex_descriptor& root_vertex,
-    bool collapse_shortest_paths = false,
-    int& step_size = 1
-) {
-    typedef TGraph::vertex_descriptor TVertex;
-    typedef std::list<TVertex> TTour;
-
-    TTour tour (init_tour);
-    TTour best_tour = {};
-
-    // we do not use the optional depth limit by setting it to be the number of vertices
-    auto depth_limit = boost::num_vertices(graph);
-
-    // is the input tour a feasible tour?
-    auto prize_of_tour = totalPrizeOfTour(prize_map, tour);
-    bool best_tour_is_feasible = prize >= quota;
-    if (best_tour_is_feasible) {
-        auto first = tour.begin();
-        auto last = tour.end();
-        std::copy(first, last, best_tour.first());
-    }
-    else {
-        // search for a feasible tour using extension until prize feasible
-        for (auto step = 1; step <= step_size; step++) {
-            extensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, root_vertex, quota, step, depth_limit);
-            prize_of_tour = totalPrizeOfTour(prize_map, tour);
-            if (prize_of_tour >= quota) {
-                auto first = tour.begin();
-                auto last = tour.end();
-                std::copy(first, last, best_tour.first());                
-                break;
-            }
-        }
-    }
-
-    // now play ping pong between extension and collapse to find a better tour
-
-    return best_tour;
-}
-
-template <typename TGraph, typename TCostMap, typename TPrizeMap>
 void extension(
     TGraph& graph,
     std::list<typename TGraph::vertex_descriptor>& tour,
@@ -437,9 +390,9 @@ ExtensionVertex unitaryGainOfVertex(
 
         // check edges exist from (u, vertex) and (vertex, v)
         if ((vw_exists) && (uv_exists)) {
-            int cost_uv = cost_map[edge_uv];
-            int cost_vw = cost_map[edge_vw];
-            int cost_uw = cost_map[edge_uw];
+            CostNumberType cost_uv = cost_map[edge_uv];
+            CostNumberType cost_vw = cost_map[edge_vw];
+            CostNumberType cost_uw = cost_map[edge_uw];
             float gain = unitaryGain(prize_of_v, cost_uw, cost_uv, cost_vw);
             if (gain > max_gain) {
                 max_gain = gain;
@@ -773,7 +726,7 @@ std::list<typename TGraph::vertex_descriptor> collapse(
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
     TPrizeMap& prize_map,
-    int quota,
+    PrizeNumberType quota,
     typename TGraph::vertex_descriptor root_vertex,
     bool collapse_shortest_paths = false
 ) {
@@ -781,7 +734,7 @@ std::list<typename TGraph::vertex_descriptor> collapse(
     typedef typename std::list<VertexDescriptor>::reverse_iterator reverse_tour_iterator_t;
 
     // store the least-cost prize-feasible tour
-    int cost_of_best_tour = totalCost(graph, tour, cost_map);
+    auto cost_of_best_tour = totalCost(graph, tour, cost_map);
     std::list<VertexDescriptor> best_tour(tour);
 
     // loop over the tour in reverse
@@ -826,6 +779,67 @@ std::list<typename TGraph::vertex_descriptor> collapse(
         }
     }
     return ReorderTourFromRoot(best_tour, root_vertex);
+}
+
+
+template <typename TGraph, typename TCostMap, typename TPrizeMap>
+std::list<typename TGraph::vertex_descriptor> pathExtensionCollapse(
+    TGraph& graph,
+    std::list<typename TGraph::vertex_descriptor>& init_tour,
+    TCostMap& cost_map,
+    TPrizeMap& prize_map,
+    PrizeNumberType& quota,
+    typename TGraph::vertex_descriptor& root_vertex,
+    bool collapse_shortest_paths = false,
+    int step_size = 1
+) {
+    typedef typename TGraph::vertex_descriptor TVertex;
+    typedef typename std::list<TVertex> TTour;
+
+    TTour tour = init_tour;
+    TTour best_tour = {};
+
+    // we do not use the optional depth limit by setting it to be the number of vertices
+    int depth_limit = boost::num_vertices(graph);
+
+    // is the input tour a feasible tour?
+    auto prize_of_tour = totalPrizeOfTour(prize_map, tour);
+    bool best_tour_is_feasible = prize_of_tour >= quota;
+    if (best_tour_is_feasible) {
+        best_tour = tour;
+    }
+    else {
+        // search for a feasible tour using extension until prize feasible
+        for (int step = 1; step <= step_size; step++) {
+            extensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, root_vertex, quota, step, depth_limit);
+            prize_of_tour = totalPrizeOfTour(prize_map, tour);
+            if (prize_of_tour >= quota) {
+                best_tour = tour;
+                best_tour_is_feasible = true;            
+                break;
+            }
+        }
+    }
+    // exit if we didn't find a prize feasible tour
+    if (! best_tour_is_feasible) {
+        return best_tour;
+    }
+    // first try to collapse the current best tour - cost will not increase
+    best_tour = collapse(graph, best_tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths);
+    auto best_cost = totalCost(graph, best_tour, cost_map);
+    tour = best_tour;
+
+    // now play ping pong between extension and collapse to find a better tour
+    for (int step = 1; step <= step_size; step++) {
+        extension(graph, tour, cost_map, prize_map, root_vertex, step, depth_limit);
+        tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths);
+        auto tour_cost = totalCost(graph, tour, cost_map);
+        if (tour_cost < best_cost) {
+            best_cost = tour_cost;
+            best_tour = tour;
+        }
+    }
+    return best_tour;
 }
 
 #endif
