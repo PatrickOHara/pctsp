@@ -229,6 +229,7 @@ std::vector<PCTSPvertex> pathExtensionCollapseBind(
     PCTSPvertex& py_root,
     PrizeNumberType& quota,
     bool collapse_shortest_paths = false,
+    int path_depth_limit = 2,
     int step_size = 1
 ) {
     // get renamed graph
@@ -247,7 +248,7 @@ std::vector<PCTSPvertex> pathExtensionCollapseBind(
     fillRenamedVertexMap(prize_map, prize_dict, vertex_bimap);
 
     // run the extension algorithm
-    auto new_tour = pathExtensionCollapse(graph, tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths, step_size);
+    auto new_tour = pathExtensionCollapse(graph, tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths, path_depth_limit, step_size);
     return getOldVertices(vertex_bimap, new_tour);
 }
 

@@ -454,8 +454,9 @@ TEST_P(HeuristicFixture, testPathExtensionCollapse) {
     auto quota = getQuota();
 
     bool collapse_shortest_paths = false;
+    int path_depth_limit = boost::num_vertices(graph);
     int step_size = 1;
-    auto tour = pathExtensionCollapse(graph, small_tour, cost_map, prize_map, quota, root, collapse_shortest_paths, step_size);
+    auto tour = pathExtensionCollapse(graph, small_tour, cost_map, prize_map, quota, root, collapse_shortest_paths, path_depth_limit, step_size);
     EXPECT_GE(totalPrizeOfTour(prize_map, tour), quota);
 
     if (totalPrizeOfTour(prize_map, small_tour) >= quota) {

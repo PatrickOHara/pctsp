@@ -66,6 +66,7 @@ def test_extension_tsplib(tspwplib_graph, root):
     for u in tspwplib_graph:
         assert extended_tour.count(u) < 2 or u == root
 
+
 @pytest.mark.parametrize("step_size,path_depth_limit", [(1, 2), (1, 4)])
 def test_extension_until_feasible(tspwplib_graph, root, step_size, path_depth_limit):
     """Test obtaining a feasible tour via extension"""
@@ -87,12 +88,27 @@ def test_extension_until_feasible(tspwplib_graph, root, step_size, path_depth_li
     for u in tspwplib_graph:
         assert extended_tour.count(u) < 2 or u == root
 
+
 def test_path_extension_collapse(suurballes_undirected_graph, root):
     """Test if a tour is extended and collapsed using paths"""
     tour = [0, 1, 3, 6, 7, 2, 0]
     quota = 7
-    new_tour = path_extension_collapse(suurballes_undirected_graph, tour, root, quota, collapse_shortest_paths=True, step_size=10)
-    assert total_prize_of_tour(nx.get_node_attributes(suurballes_undirected_graph, "prize"), new_tour) >= quota
+    new_tour = path_extension_collapse(
+        suurballes_undirected_graph,
+        tour,
+        root,
+        quota,
+        collapse_shortest_paths=True,
+        path_depth_limit=suurballes_undirected_graph.number_of_nodes(),
+        step_size=10,
+    )
+    assert (
+        total_prize_of_tour(
+            nx.get_node_attributes(suurballes_undirected_graph, "prize"), new_tour
+        )
+        >= quota
+    )
+
 
 @pytest.mark.parametrize("step_size", [1, 2, 3])
 def test_pec_tspwplib(tspwplib_graph, root, step_size):
@@ -106,6 +122,7 @@ def test_pec_tspwplib(tspwplib_graph, root, step_size):
         root,
         quota,
         collapse_shortest_paths=True,
+        path_depth_limit=tspwplib_graph.number_of_nodes(),
         step_size=step_size,
     )
     prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
@@ -114,6 +131,7 @@ def test_pec_tspwplib(tspwplib_graph, root, step_size):
     assert is_simple_cycle(tspwplib_graph, extended_tour)
     for u in tspwplib_graph:
         assert extended_tour.count(u) < 2 or u == root
+
 
 def test_random_tour_complete_graph(tspwplib_graph, root):
     """Test random tours on complete graphs"""

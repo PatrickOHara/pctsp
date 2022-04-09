@@ -258,8 +258,9 @@ void extension(
     bool exists_path_with_below_avg_loss = true;
     bool calculate_avg_loss = true;
     float avg_loss = 0.0;
+    int i = 0;
 
-    while (exists_path_with_below_avg_loss) {
+    while (exists_path_with_below_avg_loss && i ++ < boost::num_vertices(graph)) {
         int k = tour.size() - 1;
 
         // define vectors to store unitary loss and paths
@@ -325,8 +326,9 @@ void extensionUntilPrizeFeasible(
     typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
     int prize = totalPrizeOfTour(prize_map, tour);
     int num_feasible_extensions = 1;
+    int i = 0;
 
-    while (prize < quota && num_feasible_extensions > 0 && step_size < tour.size() - 1) {
+    while (prize < quota && num_feasible_extensions > 0 && step_size < tour.size() - 1 && i++ < boost::num_vertices(graph)) {
         int k = tour.size() - 1;
 
         // define vectors to store unitary loss and paths
@@ -791,6 +793,7 @@ std::list<typename TGraph::vertex_descriptor> pathExtensionCollapse(
     PrizeNumberType& quota,
     typename TGraph::vertex_descriptor& root_vertex,
     bool collapse_shortest_paths = false,
+    int path_depth_limit = 2,
     int step_size = 1
 ) {
     typedef typename TGraph::vertex_descriptor TVertex;
@@ -798,9 +801,6 @@ std::list<typename TGraph::vertex_descriptor> pathExtensionCollapse(
 
     TTour tour = init_tour;
     TTour best_tour = {};
-
-    // we do not use the optional depth limit by setting it to be the number of vertices
-    int depth_limit = boost::num_vertices(graph);
 
     // is the input tour a feasible tour?
     auto prize_of_tour = totalPrizeOfTour(prize_map, tour);
@@ -811,7 +811,7 @@ std::list<typename TGraph::vertex_descriptor> pathExtensionCollapse(
     else {
         // search for a feasible tour using extension until prize feasible
         for (int step = 1; step <= step_size; step++) {
-            extensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, root_vertex, quota, step, depth_limit);
+            extensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, root_vertex, quota, step, path_depth_limit);
             prize_of_tour = totalPrizeOfTour(prize_map, tour);
             if (prize_of_tour >= quota) {
                 best_tour = tour;
@@ -831,7 +831,7 @@ std::list<typename TGraph::vertex_descriptor> pathExtensionCollapse(
 
     // now play ping pong between extension and collapse to find a better tour
     for (int step = 1; step <= step_size; step++) {
-        extension(graph, tour, cost_map, prize_map, root_vertex, step, depth_limit);
+        extension(graph, tour, cost_map, prize_map, root_vertex, step, path_depth_limit);
         tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths);
         auto tour_cost = totalCost(graph, tour, cost_map);
         if (tour_cost < best_cost) {
