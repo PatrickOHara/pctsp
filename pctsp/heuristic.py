@@ -12,9 +12,6 @@ from tspwplib import (
     VertexFunction,
     VertexFunctionName,
     VertexList,
-    edge_list_from_walk,
-    is_pctsp_yes_instance,
-    total_cost,
     total_prize_of_tour,
 )
 
