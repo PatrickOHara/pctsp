@@ -106,7 +106,7 @@ TEST_P(CompleteGraphParameterizedFixture, test_extend) {
     // get the edge property map from bundled internal property
     int prize0 = get(prize_map, 0);
     ASSERT_EQ(prize0, 0);
-    int cost0 = get(cost_map, e0);
+    CostNumberType cost0 = get(cost_map, e0);
     EXPECT_EQ(cost_map[e0], cost0);
 
     // other parameters
@@ -442,6 +442,25 @@ TEST_P(HeuristicFixture, testExtensionPathDepth) {
     switch (GetParam()) {
         // case GraphType::SUURBALLE: EXPECT_LE(prize, quota); break;
         default: EXPECT_GE(prize, quota); break;
+    }
+}
+
+TEST_P(HeuristicFixture, testPathExtensionCollapse) {
+    auto graph = getGraph();
+    auto cost_map = getCostMap(graph);
+    auto prize_map = getPrizeMap(graph);
+    auto root = getRootVertex();
+    auto small_tour = getSmallTour();
+    auto quota = getQuota();
+
+    bool collapse_shortest_paths = false;
+    int path_depth_limit = boost::num_vertices(graph);
+    int step_size = 1;
+    auto tour = pathExtensionCollapse(graph, small_tour, cost_map, prize_map, quota, root, collapse_shortest_paths, path_depth_limit, step_size);
+    EXPECT_GE(totalPrizeOfTour(prize_map, tour), quota);
+
+    if (totalPrizeOfTour(prize_map, small_tour) >= quota) {
+        EXPECT_LE(totalCost(graph, tour, cost_map), totalCost(graph, small_tour, cost_map));
     }
 }
 

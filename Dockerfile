@@ -3,7 +3,7 @@ FROM patrickohara/scip:latest
 WORKDIR /app
 
 ARG PCTSP_VERSION
-ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PCTSP=${PCTSP_VERSION}
+ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PCTSP ${PCTSP_VERSION}
 
 # Download data for oplib
 ADD https://api.github.com/repos/bcamath-ds/OPLib/compare/master...HEAD /dev/null

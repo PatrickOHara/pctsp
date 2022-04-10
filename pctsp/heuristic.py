@@ -20,6 +20,7 @@ from .libpypctsp import (
     collapse_bind,
     extension_bind,
     extension_until_prize_feasible_bind,
+    path_extension_collapse_bind,
 )
 
 # pylint: enable=import-error
@@ -139,6 +140,48 @@ def extension_until_prize_feasible(
         logging_level,
     )
     return extended_tour
+
+
+def path_extension_collapse(
+    graph: nx.Graph,
+    tour: VertexList,
+    root_vertex: Vertex,
+    quota: int,
+    collapse_shortest_paths: bool = False,
+    path_depth_limit: int = 2,
+    step_size: int = 1,
+    logging_level: int = logging.INFO,
+) -> VertexList:
+    """Run the path extension & collapse heuristic
+
+    Args:
+        graph: Undirected input graph
+        tour: Tour that has the first and last vertex the same
+        root_vertex: Tour starts and ends at this vertex
+        quota: Lower bound on total prize of tour
+        collapse_shortest_paths: If true, collapse the tour by finding shortest paths
+        path_depth_limit: Length of the path to explore in order to extend the tour
+        step_size: Gap between two vertices in the tour when trying to extend the tour
+        logging_level: Verbosity of logging
+
+    Returns:
+        Tour that (hopefully) has prize above the quota
+    """
+    cost_dict = nx.get_edge_attributes(graph, EdgeFunctionName.cost.value)
+    prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
+    edge_list = list(graph.edges())
+    return path_extension_collapse_bind(
+        edge_list,
+        tour,
+        cost_dict,
+        prize_dict,
+        root_vertex,
+        quota,
+        collapse_shortest_paths,
+        path_depth_limit,
+        step_size,
+        logging_level,
+    )
 
 
 def tour_from_vertex_disjoint_paths(vertex_disjoint_paths: DisjointPaths) -> VertexList:

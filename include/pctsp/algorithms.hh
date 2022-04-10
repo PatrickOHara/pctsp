@@ -35,7 +35,7 @@ SCIP_RETCODE PCTSPaddEdgeVariables(SCIP* scip, TGraph& graph, TCostMap& cost_map
     VariableMap& variable_map) {
     for (auto edge : make_iterator_range(edges(graph))) {
         SCIP_VAR* edge_variable;
-        int cost_of_edge = cost_map[edge];
+        CostNumberType cost_of_edge = cost_map[edge];
         SCIP_CALL(SCIPcreateVar(scip, &edge_variable, NULL, 0.0, 1.0,
             cost_of_edge, SCIP_VARTYPE_BINARY, TRUE, FALSE,
             NULL, NULL, NULL, NULL, NULL));

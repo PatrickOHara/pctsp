@@ -22,7 +22,7 @@ template <typename TGraph>
 std::vector<typename boost::graph_traits<TGraph>::vertex_descriptor> separateCostCoverPaths(
     TGraph& graph,
     std::vector<int>& path_distances,
-    int cost_upper_bound
+    CostNumberType cost_upper_bound
 ) {
     typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
     std::vector<Vertex> separated_vertices;
