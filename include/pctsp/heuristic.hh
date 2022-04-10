@@ -250,8 +250,8 @@ void extension(
     TCostMap& cost_map,
     TPrizeMap& prize_map,
     typename TGraph::vertex_descriptor& root_vertex,
-    int& step_size,
-    int& path_depth_limit
+    int step_size,
+    int path_depth_limit
 ) {
     typedef typename boost::graph_traits<TGraph>::vertex_descriptor VertexDescriptor;
 
@@ -260,7 +260,7 @@ void extension(
     float avg_loss = 0.0;
     int i = 0;
 
-    while (exists_path_with_below_avg_loss && i ++ < boost::num_vertices(graph)) {
+    while (exists_path_with_below_avg_loss && i ++ < boost::num_vertices(graph) && step_size < tour.size() - 1) {
         int k = tour.size() - 1;
 
         // define vectors to store unitary loss and paths
@@ -617,14 +617,12 @@ getSubPathOverTour(std::list<TVertex>& tour, int index_of_first_vertex,
     path_iterator = std::next(path_iterator);
     sub_path.root_vertex_seen = sub_path.first_vertex == root_vertex;
 
-    BOOST_LOG_TRIVIAL(debug) << "Start vertex is " << sub_path.first_vertex;
 
     // build a path from the first vertex in the path
     // when the prize of the path is feasible, break the loop
     int length_of_path = 1;
     for (; (length_of_path < length_of_tour - 1) & (sub_path.prize_of_path < quota);
         length_of_path++) {
-        BOOST_LOG_TRIVIAL(debug) << ". Started building path";
         if (path_iterator == tour.end()) {
             path_iterator = tour.begin(); // loop back to start of tour
             ++path_iterator; // first vertex is the same as last vertex
@@ -827,19 +825,25 @@ std::list<typename TGraph::vertex_descriptor> pathExtensionCollapse(
     // first try to collapse the current best tour - cost will not increase
     best_tour = collapse(graph, best_tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths);
     auto best_cost = totalCost(graph, best_tour, cost_map);
+    best_tour = ReorderTourFromRoot(best_tour, root_vertex);
     tour = best_tour;
 
     // now play ping pong between extension and collapse to find a better tour
     for (int step = 1; step <= step_size; step++) {
+        BOOST_LOG_TRIVIAL(debug) << "Path extension collapse on step size " << step;
         extension(graph, tour, cost_map, prize_map, root_vertex, step, path_depth_limit);
+        BOOST_LOG_TRIVIAL(debug) << "Done extension. Prize is " << totalPrizeOfTour(prize_map, tour);
         tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths);
         auto tour_cost = totalCost(graph, tour, cost_map);
+        BOOST_LOG_TRIVIAL(debug) << "Done collapse. Cost is " << tour_cost;
         if (tour_cost < best_cost) {
             best_cost = tour_cost;
-            best_tour = tour;
+            best_tour = ReorderTourFromRoot(tour, root_vertex);
         }
+        tour = best_tour;
     }
-    return best_tour;
+    BOOST_LOG_TRIVIAL(debug) << "Best tour has cost " << best_cost << " and prize " << totalPrizeOfTour(prize_map, best_tour);
+    return ReorderTourFromRoot(best_tour, root_vertex);
 }
 
 #endif

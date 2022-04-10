@@ -45,7 +45,7 @@ find_package(GMP REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(TBB REQUIRED)
 
-# may be needed by SCIP on some Linux systems
+# may be needed by SCIP on some Linux systems when statically linking for tests
 # find_library(GFORTRAN_LIBRARIES NAMES gfortran)
 # find_library(OPENBLAS_LIBRARIES NAMES libopenblas openblas libopenblas.so.0 libopenblas.0.dylib HINTS ${OPENBLAS_DIR} PATH_SUFFIXES lib)
 

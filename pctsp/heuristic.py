@@ -150,6 +150,7 @@ def path_extension_collapse(
     collapse_shortest_paths: bool = False,
     path_depth_limit: int = 2,
     step_size: int = 1,
+    logging_level: int = logging.INFO,
 ) -> VertexList:
     """Run the path extension & collapse heuristic
 
@@ -161,6 +162,7 @@ def path_extension_collapse(
         collapse_shortest_paths: If true, collapse the tour by finding shortest paths
         path_depth_limit: Length of the path to explore in order to extend the tour
         step_size: Gap between two vertices in the tour when trying to extend the tour
+        logging_level: Verbosity of logging
 
     Returns:
         Tour that (hopefully) has prize above the quota
@@ -178,6 +180,7 @@ def path_extension_collapse(
         collapse_shortest_paths,
         path_depth_limit,
         step_size,
+        logging_level,
     )
 
 

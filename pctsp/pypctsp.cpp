@@ -230,8 +230,11 @@ std::vector<PCTSPvertex> pathExtensionCollapseBind(
     PrizeNumberType& quota,
     bool collapse_shortest_paths = false,
     int path_depth_limit = 2,
-    int step_size = 1
+    int step_size = 1,
+    int log_level_py = PyLoggingLevels::WARNING
 ) {
+    PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
+
     // get renamed graph
     PCTSPgraph graph;
     VertexBimap vertex_bimap;
