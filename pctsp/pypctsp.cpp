@@ -177,6 +177,11 @@ std::vector<PCTSPvertex> extensionBind(
     auto new_vertices = getNewVertices(vertex_bimap, py_tour);
     std::list<PCTSPvertex> tour (new_vertices.begin(), new_vertices.end());
 
+    // TODO remove print statements
+    for (auto v: boost::make_iterator_range(boost::vertices(graph))) {
+        std::cout << v << ": " << getOldVertex(vertex_bimap, v) << std::endl;
+    }
+
     // fill the cost map and prize map using renamed vertices
     EdgeCostMap cost_map = boost::get(edge_weight, graph);
     VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
@@ -255,6 +260,34 @@ std::vector<PCTSPvertex> pathExtensionCollapseBind(
     return getOldVertices(vertex_bimap, new_tour);
 }
 
+std::vector<PCTSPvertex> extensionUnitaryGainBind(
+    std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edge_list,
+    std::list<PCTSPvertex>& py_tour,
+    std::map<std::pair<PCTSPvertex, PCTSPvertex>, CostNumberType>& cost_dict,
+    std::map<PCTSPvertex, PrizeNumberType>& prize_dict,
+    int log_level_py = PyLoggingLevels::WARNING
+) {
+    PCTSPinitLogging(getBoostLevelFromPyLevel(log_level_py));
+
+    // get renamed graph
+    PCTSPgraph graph;
+    VertexBimap vertex_bimap;
+    auto new_edges = renameEdges(vertex_bimap, edge_list);
+    addEdgesToGraph(graph, new_edges);
+    auto new_vertices = getNewVertices(vertex_bimap, py_tour);
+    std::list<PCTSPvertex> tour (new_vertices.begin(), new_vertices.end());
+
+    // fill the cost map and prize map using renamed vertices
+    EdgeCostMap cost_map = boost::get(edge_weight, graph);
+    VertexPrizeMap prize_map = boost::get(vertex_distance, graph);
+    fillCostMapFromRenamedMap(graph, cost_map, cost_dict, vertex_bimap);
+    fillRenamedVertexMap(prize_map, prize_dict, vertex_bimap);
+
+    // run the extension algorithm
+    extend(graph, tour, cost_map, prize_map);
+    return getOldVertices(vertex_bimap, tour);
+}
+
 PYBIND11_MODULE(libpypctsp, m) {
     // functions for branch and cut
     m.def("basic_solve_pctsp_bind", &pyBasicSolvePrizeCollectingTSP, "Solve PCTSP with basic branch and cut");
@@ -267,4 +300,5 @@ PYBIND11_MODULE(libpypctsp, m) {
     m.def("path_extension_collapse_bind", &pathExtensionCollapseBind, "Path extension & collapse.");
     m.def("unitary_gain", &unitaryGain, "Calculate the unitary loss of a vertex.");
     m.def("unitary_loss", &unitaryLoss, "Calculate the unitary gain of a vertex.");
+    m.def("extension_original_bind", &extensionUnitaryGainBind, "Extension heuristic with unitary gain");
 }
