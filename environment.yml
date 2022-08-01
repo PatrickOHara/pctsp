@@ -1,4 +1,4 @@
-name: tspwp
+name: pctsp
 channels:
   - conda-forge
   - http://conda.anaconda.org/gurobi

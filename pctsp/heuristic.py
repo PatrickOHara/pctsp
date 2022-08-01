@@ -128,6 +128,7 @@ def extension_unitary_gain(
     )
     return extended_tour
 
+
 def extension_until_prize_feasible(
     graph: nx.Graph,
     tour: VertexList,

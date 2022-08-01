@@ -8,7 +8,7 @@ from tspwplib import (
     is_pctsp_yes_instance,
     walk_from_edge_list,
 )
-from pctsp import solve_pctsp
+from pctsp.algorithms import solve_pctsp
 
 
 def test_strong_branching_at_tree_top(

@@ -3,7 +3,8 @@
 import sys
 import networkx as nx
 from tspwplib.converter import asymmetric_from_undirected
-from pctsp import (
+from pctsp.constants import NULL_VERTEX
+from pctsp.suurballe import (
     adjust_edge_cost,
     adjust_edge_cost_for_graph,
     edge_disjoint_path_cost,
@@ -15,7 +16,6 @@ from pctsp import (
     suurballe_shortest_vertex_disjoint_paths,
     SuurballeTree,
 )
-from pctsp import NULL_VERTEX
 
 
 def test_adjust_edge_cost():

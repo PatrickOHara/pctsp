@@ -14,18 +14,20 @@ from tspwplib import (
     total_prize_of_tour,
     VertexFunctionName,
 )
-from pctsp import (
-    suurballe_shortest_vertex_disjoint_paths,
+from pctsp.heuristic import (
     collapse,
     extension,
     extension_until_prize_feasible,
     find_cycle_from_bfs,
     path_extension_collapse,
     random_tour_complete_graph,
-    undirected_vertex_disjoint_paths_map,
-    vertex_disjoint_cost_map,
     suurballes_heuristic,
 )
+from pctsp.preprocessing import (
+    undirected_vertex_disjoint_paths_map,
+    vertex_disjoint_cost_map,
+)
+from pctsp.suurballe import suurballe_shortest_vertex_disjoint_paths
 
 
 def test_collapse(suurballes_undirected_graph, root):

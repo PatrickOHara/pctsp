@@ -178,9 +178,9 @@ std::vector<PCTSPvertex> extensionBind(
     std::list<PCTSPvertex> tour (new_vertices.begin(), new_vertices.end());
 
     // TODO remove print statements
-    for (auto v: boost::make_iterator_range(boost::vertices(graph))) {
-        std::cout << v << ": " << getOldVertex(vertex_bimap, v) << std::endl;
-    }
+    // for (auto v: boost::make_iterator_range(boost::vertices(graph))) {
+    //     std::cout << v << ": " << getOldVertex(vertex_bimap, v) << std::endl;
+    // }
 
     // fill the cost map and prize map using renamed vertices
     EdgeCostMap cost_map = boost::get(edge_weight, graph);
