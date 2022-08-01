@@ -4,6 +4,7 @@
 .logs
 site
 .DS_Store
+notebooks/*
 
 # python
 *.egg-info

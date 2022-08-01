@@ -20,6 +20,7 @@ from .libpypctsp import (
     collapse_bind,
     extension_bind,
     extension_until_prize_feasible_bind,
+    extension_original_bind,
     path_extension_collapse_bind,
 )
 
@@ -99,6 +100,33 @@ def extension(
     )
     return extended_tour
 
+
+def extension_unitary_gain(
+    graph: nx.Graph,
+    tour: VertexList,
+    logging_level: int = logging.INFO,
+) -> VertexList:
+    """Implementation of the Extension algorithm with Unitary Gain
+
+    Args:
+        graph: Undirected input graph
+        tour: Tour that has the first and last vertex the same
+        logging_level: Verbosity of logging.
+
+    Returns:
+        Tour that has prize greater than or equal to the input tour
+    """
+    cost_dict = nx.get_edge_attributes(graph, EdgeFunctionName.cost.value)
+    prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
+    edge_list = list(graph.edges())
+    extended_tour: VertexList = extension_original_bind(
+        edge_list,
+        tour,
+        cost_dict,
+        prize_dict,
+        logging_level,
+    )
+    return extended_tour
 
 def extension_until_prize_feasible(
     graph: nx.Graph,
