@@ -49,8 +49,8 @@ jobs:
     - name: Test pctsp
       run: pytest tests
     - name: Lint
-      run: |
-        pylint pctsp/*
-        pylint tests/*
-        mypy pctsp
-        black --check */
+      run: pylint pctsp/* tests/* setup.py
+    - name: Types
+      run: mypy pctsp
+    - name: Format
+      run: black --check */

@@ -14,7 +14,7 @@ from tspwplib import (
     total_prize_of_tour,
     VertexFunctionName,
 )
-from pctsp.heuristic import (
+from pctsp.algorithms import (
     collapse,
     extension,
     extension_until_prize_feasible,

@@ -16,7 +16,7 @@ from tspwplib import (
 )
 
 # pylint: disable=import-error
-from .libpypctsp import (
+from ..libpypctsp import (
     collapse_bind,
     extension_bind,
     extension_until_prize_feasible_bind,

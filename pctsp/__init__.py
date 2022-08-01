@@ -1,1 +1,1 @@
-"""Package for pctsp"""
+"""Algorithms for the Prize-collecting Travelling Salesperson Problem"""

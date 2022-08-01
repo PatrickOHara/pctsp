@@ -57,7 +57,12 @@ PRETTY_COLUMN_NAMES = {
     "quota": "Quota",
 }
 
-relabel_lambda = lambda x: PRETTY_COLUMN_NAMES[x] if x in PRETTY_COLUMN_NAMES else x
+
+def make_column_name_pretty(name: str) -> str:
+    """Return a pretty name for the column"""
+    if name in PRETTY_COLUMN_NAMES:
+        return PRETTY_COLUMN_NAMES[name]
+    return name
 
 
 @tables_app.command(name="dataset")
@@ -80,7 +85,7 @@ def summarize_dataset(
             "metricness": "{:.2f}",
             "graph_name": lambda x: x[:-1] if x in list(LondonaqGraphName) else x,
         }
-    ).format_index(relabel_lambda, axis="columns").hide(axis="index").to_latex(
+    ).format_index(make_column_name_pretty, axis="columns").hide(axis="index").to_latex(
         buf=tables_path,
         hrules=True,
     )
@@ -140,7 +145,9 @@ def pretty_dataframe(df: pd.DataFrame, long: bool = False) -> pd.DataFrame:
             if df.columns.names[level] == "cc_name":
                 pass
             else:
-                new_cols = list(map(relabel_lambda, df.columns.get_level_values(level)))
+                new_cols = list(
+                    map(make_column_name_pretty, df.columns.get_level_values(level))
+                )
                 df.columns = df.columns.set_levels(
                     new_cols, level=level, verify_integrity=False
                 )
@@ -154,7 +161,7 @@ def pretty_dataframe(df: pd.DataFrame, long: bool = False) -> pd.DataFrame:
         )
         df.index = df.index.rename(name)
     else:
-        df.index = df.index.rename(list(map(relabel_lambda, df.index.names)))
+        df.index = df.index.rename(list(map(make_column_name_pretty, df.index.names)))
 
     return df
 
@@ -380,10 +387,9 @@ def heuristics_table(
         key.value: ShortAlgorithmName[key.name].value for key in AlgorithmName
     }
     replacements[EdgeWeightType.EUC_2D] = "EUC"
-    value_replacer = lambda x: replacements[x] if x in replacements else x
 
     table_str = summary_df.style.format_index(
-        formatter=value_replacer, axis="columns"
+        formatter=lambda x: replacements[x] if x in replacements else x, axis="columns"
     ).to_latex(hrules=True, multicol_align="c")
     print(table_str)
     table_tex_filepath.write_text(table_str, encoding="utf-8")

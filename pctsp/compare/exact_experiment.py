@@ -4,13 +4,13 @@ import itertools
 from pathlib import Path
 from typing import List
 
-from ..constants import FOUR_HOURS, LP_GAP_IMPROVEMENT_THRESHOLD
 from tspwplib import (
     Generation,
     GraphName,
     LondonaqGraphName,
 )
 
+from ..constants import FOUR_HOURS, LP_GAP_IMPROVEMENT_THRESHOLD
 from ..vial import (
     AlgorithmName,
     BranchingStrategy,

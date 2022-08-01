@@ -6,20 +6,7 @@ from pathlib import Path
 from typing import Mapping, Optional
 import networkx as nx
 from pyscipopt import Model
-from ..algorithms import solve_pctsp
-from ..heuristic import (
-    find_cycle_from_bfs,
-    path_extension_collapse,
-    suurballes_heuristic,
-)
-from ..preprocessing import (
-    remove_components_disconnected_from_vertex,
-    remove_leaves,
-    remove_one_connected_components,
-    undirected_vertex_disjoint_paths_map,
-    vertex_disjoint_cost_map,
-)
-from ..suurballe import suurballe_shortest_vertex_disjoint_paths
+
 from tspwplib import (
     DisjointPaths,
     EdgeFunctionName,
@@ -39,6 +26,21 @@ from tspwplib import (
     split_head,
     vertex_set_from_edge_list,
 )
+
+from ..algorithms import (
+    solve_pctsp,
+    find_cycle_from_bfs,
+    path_extension_collapse,
+    suurballes_heuristic,
+)
+from ..preprocessing import (
+    remove_components_disconnected_from_vertex,
+    remove_leaves,
+    remove_one_connected_components,
+    undirected_vertex_disjoint_paths_map,
+    vertex_disjoint_cost_map,
+)
+from ..suurballe import suurballe_shortest_vertex_disjoint_paths
 from ..vial import (
     AlgorithmName,
     Result,

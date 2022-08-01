@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 import typer
 
+from ..algorithms import SummaryStats
 from ..constants import PCTSP_SUMMARY_STATS_YAML
-from ..data_structures import SummaryStats
 from ..lab import Lab
 from ..vial import (
     DatasetName,

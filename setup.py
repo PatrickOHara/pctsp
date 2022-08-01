@@ -2,6 +2,7 @@
 
 from dotenv import load_dotenv
 from skbuild import setup
+from setuptools import find_packages
 
 load_dotenv()
 
@@ -17,7 +18,7 @@ setup(
         "typer>=0.4.0",
     ],
     name="pctsp",
-    packages=["pctsp"],
+    packages=find_packages(),
     python_requires=">=3.8",
     use_scm_version={"fallback_version": "1.0.0"},
     license="MIT License",

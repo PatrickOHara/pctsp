@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import List, Optional
 from uuid import uuid4
 
-from ..constants import FOUR_HOURS, LP_GAP_IMPROVEMENT_THRESHOLD
 from tspwplib import (
     Generation,
     GraphName,
@@ -16,6 +15,7 @@ from tspwplib.problem import PrizeCollectingTSP
 from tspwplib.types import LondonaqGraphName, EdgeWeightType
 from tspwplib.utils import build_path_to_londonaq_yaml
 
+from ..constants import FOUR_HOURS, LP_GAP_IMPROVEMENT_THRESHOLD
 from ..vial import (
     AlgorithmName,
     BranchingStrategy,

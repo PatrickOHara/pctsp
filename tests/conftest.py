@@ -1,13 +1,16 @@
 """Fixtures for algorithms"""
 
+from datetime import datetime
 from pathlib import Path
 import sys
 from typing import Dict, List, Set, Tuple
+from uuid import uuid4
 import networkx as nx
 import pytest
 import tspwplib.types as tp
 from tspwplib import (
     build_path_to_oplib_instance,
+    edge_list_from_walk,
     Generation,
     ProfitsProblem,
     sparsify_uid,
@@ -324,7 +327,6 @@ def stats_dir(tmp_path_factory) -> Path:
     return tmp_path_factory.mktemp(".stats")
 
 
-
 @pytest.fixture(scope="function")
 def lab_dir(tmp_path_factory) -> Path:
     """Temporary input directory."""
@@ -351,7 +353,7 @@ def tspwplib_config(generation, graph_name, alpha) -> DataConfig:
     """Mocked tspwplib data config"""
     return DataConfig(
         alpha=alpha,
-        cost_function=EdgeWeightType.EUC_2D,
+        cost_function=tp.EdgeWeightType.EUC_2D,
         dataset=DatasetName.tspwplib,
         generation=generation,
         graph_name=graph_name,
@@ -366,7 +368,7 @@ def tspwplib_config(generation, graph_name, alpha) -> DataConfig:
 def data_config(graph_name):
     """A simple data config"""
     return DataConfig(
-        cost_function=EdgeWeightType.EUC_2D,
+        cost_function=tp.EdgeWeightType.EUC_2D,
         dataset=DatasetName.tspwplib,
         graph_name=graph_name,
         quota=5,
@@ -409,15 +411,15 @@ def preprocessing() -> ModelParams:
     )
 
 
-@pytest.fixture(scope="function")
-def vial(data_config, model_params, preprocessing) -> Vial:
-    """Vial"""
-    return Vial(
-        data_config=data_config,
-        model_params=model_params,
-        preprocessing=preprocessing,
-        uuid=uuid4(),
-    )
+# @pytest.fixture(scope="function")
+# def vial(data_config, model_params, preprocessing) -> Vial:
+#     """Vial"""
+#     return Vial(
+#         data_config=data_config,
+#         model_params=model_params,
+#         preprocessing=preprocessing,
+#         uuid=uuid4(),
+#     )
 
 
 @pytest.fixture(scope="function")
@@ -444,15 +446,15 @@ def result(vial) -> Result:
     )
 
 
-@pytest.fixture(scope="function")
-def vial_list(tspwplib_vial, vial) -> List[Vial]:
-    """List of vials"""
-    return [tspwplib_vial, vial]
+# @pytest.fixture(scope="function")
+# def vial_list(tspwplib_vial, vial) -> List[Vial]:
+#     """List of vials"""
+#     return [tspwplib_vial, vial]
 
 
-@pytest.fixture(scope="function")
-def experiment(vial_list) -> Experiment:
-    """Experiment with two vials"""
-    exp = Experiment(name=ExperimentName.dryrun, timestamp=datetime.now(), vials=[])
-    exp.vials.extend(vial_list)
-    return exp
+# @pytest.fixture(scope="function")
+# def experiment(vial_list) -> Experiment:
+#     """Experiment with two vials"""
+#     exp = Experiment(name=ExperimentName.dryrun, timestamp=datetime.now(), vials=[])
+#     exp.vials.extend(vial_list)
+#     return exp

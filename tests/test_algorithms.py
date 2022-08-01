@@ -12,10 +12,8 @@ from tspwplib import (
     split_head,
     walk_from_edge_list,
 )
-from pctsp.algorithms import solve_pctsp
+from pctsp.algorithms import random_tour_complete_graph, solve_pctsp, SummaryStats
 from pctsp.constants import PCTSP_SUMMARY_STATS_YAML
-from pctsp.data_structures import SummaryStats
-from pctsp.heuristic import random_tour_complete_graph
 from pctsp.preprocessing import vertex_disjoint_cost_map
 from pctsp.suurballe import suurballe_shortest_vertex_disjoint_paths
 
