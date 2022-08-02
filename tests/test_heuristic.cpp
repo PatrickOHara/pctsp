@@ -20,14 +20,14 @@ typedef GraphFixture CompleteGraphParameterizedFixture;
 typedef GraphFixture SuurballeGraphFixture;
 typedef GraphFixture HeuristicFixture;
 
-TEST(TestExpandCollapse, testUnitaryGain) {
+TEST(TestExtensionCollapse, testUnitaryGain) {
     EXPECT_EQ(unitaryGain(10, 2, 2, 2), 5);
     EXPECT_EQ(unitaryGain(2, 0, 1, 3), 0.5);
     // triangle inequality does not hold
     EXPECT_EQ(unitaryGain(10, 15, 5, 5), -2);
 }
 
-TEST(TestExpandCollapse, testCalculateAverageGain) {
+TEST(TestExtensionCollapse, testCalculateAverageGain) {
     typedef std::map<int, ExtensionVertex> UnitaryGainMap;
     UnitaryGainMap gain_map;
 
@@ -86,39 +86,29 @@ TEST_P(CompleteGraphParameterizedFixture, testUnitaryGainOfVertex) {
     }
 }
 
-TEST_P(CompleteGraphParameterizedFixture, test_extend) {
-    typedef typename PCTSPgraph::vertex_descriptor Vertex;
-    PCTSPgraph g = getGraph();
-    auto prize_map = getPrizeMap(g);
-    auto cost_map = getCostMap(g);
-
-    EXPECT_EQ(expected_num_edges_in_complete_graph(num_vertices(g)),
-        num_edges(g));
-    EXPECT_EQ(1, prize_map[1]);
-    PCTSPgraph::edge_descriptor e0 = *out_edges(0, g).first;
-    Vertex v0 = boost::vertex(0, g);
-    Vertex v1 = boost::vertex(1, g);
-    Vertex v2 = boost::vertex(2, g);
-    PCTSPgraph::edge_descriptor e1 = edge(v0, v2, g).first;
-    EXPECT_EQ(0, cost_map[e0]);
-    EXPECT_EQ(1, cost_map[e1]);
-
-    // get the edge property map from bundled internal property
-    int prize0 = get(prize_map, 0);
-    ASSERT_EQ(prize0, 0);
-    CostNumberType cost0 = get(cost_map, e0);
-    EXPECT_EQ(cost_map[e0], cost0);
-
-    // other parameters
-    int root = 0;
-    int quota = 2;
-
-    std::list<Vertex> tour = { 0, 1, 2, 0 };
-    extend(g, tour, cost_map, prize_map);
-    EXPECT_EQ(tour.size(), num_vertices(g));
+TEST_P(HeuristicFixture, testExtensionUnitaryGain) {
+    PCTSPgraph graph = getGraph();
+    auto prize_map = getPrizeMap(graph);
+    auto cost_map = getCostMap(graph);
+    auto quota = getQuota();
+    auto root_vertex = getRootVertex();
+    std::list<PCTSPvertex> tour =getPrizeFeasibleTour();
+    auto prize_before = totalPrizeOfTour(prize_map, tour);
+    extensionUnitaryGain(graph, tour, cost_map, prize_map);
+    auto total_prize = totalPrizeOfTour(prize_map, tour);
+    EXPECT_GE(total_prize, quota);
+    switch(GetParam()) {
+        case GraphType::COMPLETE4:
+        case GraphType::GRID8:
+            EXPECT_EQ(total_prize, prize_before); break;
+        case GraphType::COMPLETE5:
+        case GraphType::SUURBALLE:
+            EXPECT_GT(total_prize, prize_before); break;
+        default: break;
+    }
 }
 
-TEST_P(SuurballeGraphFixture, test_extend) {
+TEST_P(SuurballeGraphFixture, testExtensionUnitaryGain) {
     PCTSPgraph graph = getGraph();
     std::list<PCTSPvertex> tour = { 0, 1, 3, 6, 7, 2, 0 };
     int tour_size_before_extend = tour.size();
@@ -126,7 +116,7 @@ TEST_P(SuurballeGraphFixture, test_extend) {
     // get the edge property map from bundled internal property
     auto prize_map = getPrizeMap(graph);
     auto cost_map = getCostMap(graph);
-    extend(graph, tour, cost_map, prize_map);
+    extensionUnitaryGain(graph, tour, cost_map, prize_map);
 
     // we expect that vertex e (index 5) has been added, but not vertex d
     EXPECT_EQ(tour.size(), tour_size_before_extend + 1);
@@ -144,25 +134,23 @@ TEST_P(SuurballeGraphFixture, test_extend) {
     EXPECT_EQ(e_index, 5);
 }
 
-TEST_P(SuurballeGraphFixture, testExtendUntilPrizeFeasible) {
+TEST_P(HeuristicFixture, testExtensionUntilPrizeFeasible) {
     PCTSPgraph graph = getGraph();
     auto prize_map = getPrizeMap(graph);
     auto cost_map = getCostMap(graph);
-    std::list<PCTSPvertex> tour = { 0, 1, 5, 2, 0 };
-    int quota = 5;
+    auto quota = getQuota();
+    auto root_vertex = getRootVertex();
+    std::list<PCTSPvertex> tour = getSmallTour();
 
     // run the algorithm
-    extendUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
+    extensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, quota);
 
-    // we expect the total prize of the tour to be equal to the quota
-    EXPECT_EQ(totalPrizeOfTour(prize_map, tour), quota);
-
-    // expect vertex g (7) to be in the tour at index 3
-    int g = 7;
-    auto g_iterator = std::find(tour.begin(), tour.end(), g);
-    int g_index = std::distance(tour.begin(), g_iterator);
-    EXPECT_FALSE(g_iterator == tour.end());
-    EXPECT_EQ(g_index, 3);
+    // we expect the total prize of the tour to be at least the quota
+    auto total_prize = totalPrizeOfTour(prize_map, tour);
+    switch (GetParam()) {
+        case GraphType::GRID8: EXPECT_LT(total_prize, quota); break;
+        default: EXPECT_GE(total_prize, quota);
+    }
 }
 
 TEST_P(HeuristicFixture, testCollapse) {
@@ -343,7 +331,7 @@ TEST_P(HeuristicFixture, testNeighborIntersection) {
     EXPECT_EQ(expected_size, intersection.size());
 }
 
-TEST_P(HeuristicFixture, testExtension) {
+TEST_P(HeuristicFixture, testExtensionUnitaryLoss) {
     PCTSPgraph graph = getGraph();
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
@@ -354,7 +342,7 @@ TEST_P(HeuristicFixture, testExtension) {
     }
     auto old_size = small_tour.size();
     int expected_size;
-    extension(graph, small_tour, cost_map, prize_map, root);
+    extensionUnitaryLoss(graph, small_tour, cost_map, prize_map, root);
     switch (GetParam()) {
         case GraphType::SUURBALLE:
         case GraphType::COMPLETE5:
@@ -375,7 +363,7 @@ TEST_P(HeuristicFixture, testExtensionStep) {
     int expected_size;
     int step_size = 2;
     int path_depth_limit = 2;
-    extension(graph, small_tour, cost_map, prize_map, root, step_size, path_depth_limit);
+    pathExtension(graph, small_tour, cost_map, prize_map, root, step_size, path_depth_limit);
     switch (GetParam()) {
         default:
             expected_size = old_size; break;
@@ -383,7 +371,7 @@ TEST_P(HeuristicFixture, testExtensionStep) {
     EXPECT_EQ(small_tour.size(), expected_size);
 }
 
-TEST_P(HeuristicFixture, testExtensionUntilPrizeFeasible) {
+TEST_P(HeuristicFixture, testPathExtensionUntilPrizeFeasible) {
     auto graph = getGraph();
     auto cost_map = getCostMap(graph);
     auto prize_map = getPrizeMap(graph);
@@ -394,7 +382,7 @@ TEST_P(HeuristicFixture, testExtensionUntilPrizeFeasible) {
     int step_size = 1;
     int path_depth_limit = 2;
 
-    extensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, quota, step_size, path_depth_limit);
+    pathExtensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, quota, step_size, path_depth_limit);
 
     switch (GetParam()) {
         case GraphType::GRID8: EXPECT_LT(totalPrizeOfTour(prize_map, small_tour), quota); break;
@@ -436,7 +424,7 @@ TEST_P(HeuristicFixture, testExtensionPathDepth) {
     int step_size = 1;
     int path_depth_limit = 3;
 
-    extensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, quota, step_size, path_depth_limit);
+    pathExtensionUntilPrizeFeasible(graph, small_tour, cost_map, prize_map, root, quota, step_size, path_depth_limit);
 
     auto prize = totalPrizeOfTour(prize_map, small_tour);
     switch (GetParam()) {
@@ -464,11 +452,11 @@ TEST_P(HeuristicFixture, testPathExtensionCollapse) {
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, CompleteGraphParameterizedFixture,
+INSTANTIATE_TEST_SUITE_P(TestExtensionCollapse, CompleteGraphParameterizedFixture,
     ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5)
 );
 
-INSTANTIATE_TEST_SUITE_P(TestExpandCollapse, SuurballeGraphFixture,
+INSTANTIATE_TEST_SUITE_P(TestExtensionCollapse, SuurballeGraphFixture,
     ::testing::Values(GraphType::SUURBALLE)
 );
 

@@ -1,5 +1,6 @@
 """Test heuristics for the prize collecting TSP"""
 
+from tkinter import N
 import networkx as nx
 import pytest
 from tspwplib import (
@@ -16,12 +17,16 @@ from tspwplib import (
 )
 from pctsp.algorithms import (
     collapse,
-    extension,
     extension_until_prize_feasible,
     find_cycle_from_bfs,
     path_extension_collapse,
+    path_extension_until_prize_feasible,
     random_tour_complete_graph,
     suurballes_heuristic,
+)
+from pctsp.algorithms.extension_collapse import (
+    extension_unitary_gain,
+    extension_unitary_loss,
 )
 from pctsp.preprocessing import (
     undirected_vertex_disjoint_paths_map,
@@ -45,10 +50,19 @@ def test_collapse(suurballes_undirected_graph, root):
     assert new_tour[0] == new_tour[len(new_tour) - 1] == root
 
 
-def test_extension(suurballes_undirected_graph, root):
+def test_extension_unitary_gain(suurballes_undirected_graph, root):
     """Test if a tour is extended"""
     tour = [0, 1, 3, 6, 7, 2, 0]
-    extended_tour = extension(suurballes_undirected_graph, tour, root)
+    extended_tour = extension_unitary_gain(suurballes_undirected_graph, tour)
+    assert 4 not in extended_tour
+    assert 5 in extended_tour
+    assert len(extended_tour) == len(tour) + 1
+
+
+def test_extension_unitary_loss(suurballes_undirected_graph, root):
+    """Test if a tour is extended"""
+    tour = [0, 1, 3, 6, 7, 2, 0]
+    extended_tour = extension_unitary_loss(suurballes_undirected_graph, tour, root)
     assert 4 not in extended_tour
     assert 5 in extended_tour
     assert len(extended_tour) == len(tour) + 1
@@ -58,7 +72,7 @@ def test_extension_tsplib(tspwplib_graph, root):
     """Test if a tour is extended on the tsplib dataset"""
     n = tspwplib_graph.number_of_nodes()
     tour = [0, 1, 2, n - 1, n - 2, 0]
-    extended_tour = extension(tspwplib_graph, tour, root)
+    extended_tour = extension_unitary_loss(tspwplib_graph, tour, root)
     prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
     assert total_prize_of_tour(prize_map, extended_tour) > total_prize_of_tour(
         prize_map, tour
@@ -69,13 +83,33 @@ def test_extension_tsplib(tspwplib_graph, root):
         assert extended_tour.count(u) < 2 or u == root
 
 
+def test_extension_until_prize_feasible(tspwplib_graph, root):
+    """Run extension with unitary gain until the tour is prize feasible"""
+    n = tspwplib_graph.number_of_nodes()
+    quota = 20
+    tour = [0, 1, 2, n - 1, n - 2, 0]
+    extended_tour = extension_until_prize_feasible(
+        tspwplib_graph,
+        tour,
+        quota,
+    )
+    prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
+    assert total_prize_of_tour(prize_map, extended_tour) >= quota
+    assert root in extended_tour
+    assert is_simple_cycle(tspwplib_graph, extended_tour)
+    for u in tspwplib_graph:
+        assert extended_tour.count(u) < 2 or u == root
+
+
 @pytest.mark.parametrize("step_size,path_depth_limit", [(1, 2), (1, 4)])
-def test_extension_until_feasible(tspwplib_graph, root, step_size, path_depth_limit):
+def test_path_extension_until_feasible(
+    tspwplib_graph, root, step_size, path_depth_limit
+):
     """Test obtaining a feasible tour via extension"""
     quota = 20
     n = tspwplib_graph.number_of_nodes()
     tour = [0, 1, 2, n - 1, n - 2, 0]
-    extended_tour = extension_until_prize_feasible(
+    extended_tour = path_extension_until_prize_feasible(
         tspwplib_graph,
         tour,
         root,

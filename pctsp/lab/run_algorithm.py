@@ -28,6 +28,8 @@ from tspwplib import (
 )
 
 from ..algorithms import (
+    extension_unitary_gain_collapse,
+    extension_until_prize_feasible,
     solve_pctsp,
     find_cycle_from_bfs,
     path_extension_collapse,
@@ -78,15 +80,13 @@ def run_heuristic(
         )
         edge_list = edge_list_from_walk(tour)
     elif algorithm_name == AlgorithmName.extension_collapse:
-        # run special case of path extension collapse
-        tour = path_extension_collapse(
+        # run extension with unitary gain then collapse
+        extension_until_prize_feasible(graph, small_tour, quota)
+        tour = extension_unitary_gain_collapse(
             graph,
             small_tour,
-            root_vertex,
             quota,
-            collapse_shortest_paths=False,
-            path_depth_limit=2,
-            step_size=1,
+            root_vertex,
         )
         edge_list = edge_list_from_walk(tour)
 
@@ -129,7 +129,7 @@ def run_algorithm(
     graph: nx.Graph,
     vial: Vial,
     logger: Logger = get_pctsp_logger("run_algorithm"),
-    vial_dir: Optional[Path] = None,
+    vial_dir: Path = Path("."),
 ) -> Result:
     """Given parameters provided by the vial, run an algorithm on the preprocessed graph"""
 

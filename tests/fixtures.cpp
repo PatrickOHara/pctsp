@@ -219,6 +219,20 @@ std::list<PCTSPvertex> GraphFixture::getSmallTour() {
     return small_tour;
 }
 
+std::list<PCTSPvertex> GraphFixture::getPrizeFeasibleTour() {
+    std::list<PCTSPvertex> tour;
+    switch (GetParam()) {
+        case GraphType::COMPLETE4: 
+        case GraphType::COMPLETE5: tour = {0, 2, 3, 0}; break;
+        case GraphType::GRID8: tour = {0, 1, 4, 5, 3, 2, 0}; break;
+        case GraphType::SUURBALLE: tour = { 0, 1, 3, 6, 7, 2, 0 }; break;
+        case GraphType::COMPLETE25:
+            for (PCTSPvertex i = 0; i < 20; i++) tour.push_back(i); break;
+        default: tour = {}; break;
+    }
+    return tour;
+}
+
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> BadlyNamedFixture::getBadlyNamedEdges() {
     std::vector<std::pair<PCTSPvertex, PCTSPvertex>> edges;
     switch (GetParam()) {
