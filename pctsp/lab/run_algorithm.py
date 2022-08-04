@@ -3,7 +3,7 @@
 from datetime import datetime
 from logging import Logger
 from pathlib import Path
-from typing import Mapping, Optional
+from typing import Mapping, Optional, no_type_check
 import networkx as nx
 from pyscipopt import Model
 
@@ -56,10 +56,10 @@ def run_heuristic(
     quota: int,
     root_vertex: Vertex,
     algorithm_name: AlgorithmName,
-    disjoint_paths_cost_map: Optional[SimpleEdgeFunction] = None,
-    disjoint_paths_map: Optional[Mapping[Vertex, DisjointPaths]] = None,
+    disjoint_paths_cost_map: SimpleEdgeFunction = None,
+    disjoint_paths_map: Mapping[Vertex, DisjointPaths] = None,
     logger: Logger = get_pctsp_logger("run_heuristic"),
-    collapse_shortest_paths: Optional[bool] = False,
+    collapse_shortest_paths: Optional[bool] = None,
     path_depth_limit: Optional[int] = None,
     step_size: Optional[int] = None,
 ) -> SimpleEdgeList:
@@ -74,6 +74,12 @@ def run_heuristic(
 
     # run heuristic
     if algorithm_name == AlgorithmName.suurballes_heuristic:
+        if not disjoint_paths_cost_map or not disjoint_paths_map:
+            message = (
+                "To run Suurballe's heuristic you must pass a non-empty dictionary "
+            )
+            message += "to disjoint_paths_cost_map and disjoint_paths_cost_map."
+            raise ValueError(message)
         prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
         tour = suurballes_heuristic(
             prize_dict, quota, disjoint_paths_cost_map, disjoint_paths_map
@@ -91,20 +97,20 @@ def run_heuristic(
         edge_list = edge_list_from_walk(tour)
 
     elif algorithm_name == AlgorithmName.path_extension_collapse:
-        if not collapse_shortest_paths:
-            collapse_shortest_paths = False
-        if not step_size:
-            step_size = 10
-        if not path_depth_limit:
-            path_depth_limit = graph.number_of_nodes()  # no path depth limit
+        # pylint: disable=simplifiable-if-expression
+        collapse_paths: bool = True if collapse_shortest_paths else False
+        depth_limit: int = (
+            graph.number_of_nodes() if not path_depth_limit else path_depth_limit
+        )
+        step: int = 10 if not step_size else step_size
         tour = path_extension_collapse(
             graph,
             small_tour,
             root_vertex,
             quota,
-            collapse_shortest_paths=collapse_shortest_paths,
-            path_depth_limit=path_depth_limit,
-            step_size=step_size,
+            collapse_shortest_paths=collapse_paths,
+            path_depth_limit=depth_limit,
+            step_size=step,
         )
         edge_list = edge_list_from_walk(tour)
     else:
@@ -125,6 +131,7 @@ def run_heuristic(
     return edge_list
 
 
+@no_type_check
 def run_algorithm(
     graph: nx.Graph,
     vial: Vial,

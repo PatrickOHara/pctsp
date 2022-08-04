@@ -1,6 +1,5 @@
 """Test heuristics for the prize collecting TSP"""
 
-from tkinter import N
 import networkx as nx
 import pytest
 from tspwplib import (
@@ -50,7 +49,7 @@ def test_collapse(suurballes_undirected_graph, root):
     assert new_tour[0] == new_tour[len(new_tour) - 1] == root
 
 
-def test_extension_unitary_gain(suurballes_undirected_graph, root):
+def test_extension_unitary_gain(suurballes_undirected_graph):
     """Test if a tour is extended"""
     tour = [0, 1, 3, 6, 7, 2, 0]
     extended_tour = extension_unitary_gain(suurballes_undirected_graph, tour)

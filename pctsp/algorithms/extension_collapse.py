@@ -1,3 +1,10 @@
+"""The Extension and Collapse heuristic as described in the paper:
+
+M. Dell’Amico, F. Maffioli and A. Sciomachen. 1998.
+A Lagrangian heuristic for the Prize Collecting Travelling Salesman Problem
+Annals of Operations Research 81, pages 289-305.
+"""
+
 import logging
 import networkx as nx
 from tspwplib import (

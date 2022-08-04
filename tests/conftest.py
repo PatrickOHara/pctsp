@@ -21,8 +21,6 @@ from pctsp.vial import (
     BranchingStrategy,
     DatasetName,
     DataConfig,
-    Experiment,
-    ExperimentName,
     ModelParams,
     Preprocessing,
     Result,
@@ -41,7 +39,7 @@ from pctsp.vial import (
 @pytest.fixture(scope="function")
 def time_limit() -> float:
     """Time limit in seconds for each test"""
-    return 20.0
+    return 5.0
 
 
 @pytest.fixture(scope="function")
@@ -345,9 +343,6 @@ def algorithm_name(request) -> AlgorithmName:
     return request.param
 
 
-# pylint: disable=redefined-outer-name
-
-
 @pytest.fixture(scope="function")
 def tspwplib_config(generation, graph_name, alpha) -> DataConfig:
     """Mocked tspwplib data config"""
@@ -411,17 +406,6 @@ def preprocessing() -> ModelParams:
     )
 
 
-# @pytest.fixture(scope="function")
-# def vial(data_config, model_params, preprocessing) -> Vial:
-#     """Vial"""
-#     return Vial(
-#         data_config=data_config,
-#         model_params=model_params,
-#         preprocessing=preprocessing,
-#         uuid=uuid4(),
-#     )
-
-
 @pytest.fixture(scope="function")
 def tspwplib_vial(tspwplib_config, model_params, preprocessing) -> Vial:
     """Vial for the tspwplib dataset"""
@@ -444,17 +428,3 @@ def result(vial) -> Result:
         start_time=datetime(2021, 1, 1, 1, 1, 1, 1),
         end_time=datetime(2021, 1, 1, 1, 1, 20, 1),
     )
-
-
-# @pytest.fixture(scope="function")
-# def vial_list(tspwplib_vial, vial) -> List[Vial]:
-#     """List of vials"""
-#     return [tspwplib_vial, vial]
-
-
-# @pytest.fixture(scope="function")
-# def experiment(vial_list) -> Experiment:
-#     """Experiment with two vials"""
-#     exp = Experiment(name=ExperimentName.dryrun, timestamp=datetime.now(), vials=[])
-#     exp.vials.extend(vial_list)
-#     return exp

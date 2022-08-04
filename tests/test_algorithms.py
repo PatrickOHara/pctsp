@@ -1,29 +1,21 @@
 """Tests for exact algorithms for PCTSP"""
 
-from pathlib import Path
 import networkx as nx
 from pyscipopt import Model, SCIP_STAGE
 from tspwplib import (
-    EdgeWeightType,
-    Generation,
-    build_path_to_oplib_instance,
-    ProfitsProblem,
-    GraphName,
     asymmetric_from_undirected,
     biggest_vertex_id_from_graph,
     edge_list_from_walk,
-    is_complete,
     is_complete_with_self_loops,
     order_edge_list,
     reorder_edge_list_from_root,
     total_cost_networkx,
     is_pctsp_yes_instance,
     split_head,
-    total_prize,
     total_prize_of_tour,
     walk_from_edge_list,
 )
-from pctsp.algorithms import random_tour_complete_graph, solve_pctsp, SummaryStats, path_extension_collapse
+from pctsp.algorithms import random_tour_complete_graph, solve_pctsp, SummaryStats
 from pctsp.constants import PCTSP_SUMMARY_STATS_YAML
 from pctsp.preprocessing import vertex_disjoint_cost_map
 from pctsp.suurballe import suurballe_shortest_vertex_disjoint_paths
@@ -98,11 +90,14 @@ def test_pctsp_with_heuristic(tspwplib_graph, root, logger_dir, time_limit):
     name = "test_pctsp_with_heuristic" + str(tspwplib_graph.graph["name"])
     model = Model(problemName=name, createscip=True, defaultPlugins=False)
     edge_list = edge_list_from_walk(tour)
-    assert total_prize_of_tour(nx.get_node_attributes(tspwplib_graph, "prize"), tour) >= quota
+    assert (
+        total_prize_of_tour(nx.get_node_attributes(tspwplib_graph, "prize"), tour)
+        >= quota
+    )
     for (u, v) in edge_list:
         assert tspwplib_graph.has_edge(u, v)
     for i in range(len(edge_list) - 1):
-        assert edge_list[i][1] == edge_list[i+1][0]
+        assert edge_list[i][1] == edge_list[i + 1][0]
     assert tspwplib_graph.graph["name"] in model.getProbName()
     assert logger_dir.exists()
     assert len(edge_list) >= 3
@@ -257,43 +252,3 @@ def test_cycle_cover_grid8(grid8, root, logger_dir):
     assert summary.num_cycle_cover == 6
     assert is_pctsp_yes_instance(grid8, quota, root, ordered_edges)
     assert model.getStatus() == "optimal"
-
-# TODO remove below
-# if __name__ == "__main__":
-#     oplib_root = Path("/Users/patrick/External/OPLib/")
-#     logger_dir = Path(".logs")
-#     generation = Generation.gen1
-#     graph_name = GraphName.eil76
-#     filepath = build_path_to_oplib_instance(oplib_root, generation, graph_name)
-#     problem = ProfitsProblem.load(filepath)
-#     assert problem.edge_weight_type == EdgeWeightType.EUC_2D
-#     tspwplib_graph = problem.get_graph(normalize=False)
-#     root = problem.get_root_vertex(normalize=False)
-#     # quota = problem.get_quota(10)
-#     quota = 7
-#     tour = random_tour_complete_graph(tspwplib_graph, root, quota)
-#     name = "test_pctsp_with_heuristic" + str(tspwplib_graph.graph["name"])
-#     model = Model(problemName=name, createscip=True, defaultPlugins=False)
-#     edge_list = edge_list_from_walk(tour)
-#     assert total_prize_of_tour(nx.get_node_attributes(tspwplib_graph, "prize"), tour) >= quota
-#     for (u, v) in edge_list:
-#         assert tspwplib_graph.has_edge(u, v)
-#     for i in range(len(edge_list) - 1):
-#         assert edge_list[i][1] == edge_list[i+1][0]
-#     assert tspwplib_graph.graph["name"] in model.getProbName()
-#     assert logger_dir.exists()
-#     assert len(edge_list) >= 3
-#     assert is_pctsp_yes_instance(tspwplib_graph, quota, root, edge_list)
-#     print(edge_list)
-#     assert is_complete_with_self_loops(tspwplib_graph)
-#     solve_pctsp(
-#         model,
-#         tspwplib_graph,
-#         edge_list,
-#         quota,
-#         root,
-#         name=name,
-#         solver_dir=logger_dir,
-#         time_limit=5.0,
-#     )
-#     print(model.getStatus())
