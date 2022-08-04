@@ -4,7 +4,7 @@ import networkx as nx
 import pytest
 
 from tspwplib import sparsify_uid
-from pctsp import (
+from pctsp.preprocessing import (
     remove_leaves,
     remove_components_disconnected_from_vertex,
     remove_one_connected_components,

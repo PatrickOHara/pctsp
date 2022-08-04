@@ -12,7 +12,7 @@ from tspwplib import (
     Vertex,
     VertexFunction,
 )
-from .suurballe import (
+from ..suurballe import (
     edge_disjoint_path_cost,
     extract_suurballe_edge_disjoint_paths,
     SuurballeTree,

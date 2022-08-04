@@ -87,6 +87,11 @@ ExtensionVertex chooseExtensionPathFromCandidates(
                 external_path_cost,
                 internal_path_cost
             );
+            // std::cout << "External path candidate: ";
+            // std::cout << "[";
+            // for (auto v : external_path)
+            //     std::cout << v << ", ";
+            // std::cout << "] . Loss = " << loss_ij << std::endl;
             if ((loss_ij < best_candidate.value) || !(extension_found)) {
                 best_candidate.value = loss_ij;
                 best_candidate.index = current_index;
@@ -244,7 +249,7 @@ void findExtensionPaths(
 }
 
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
-void extension(
+void pathExtension(
     TGraph& graph,
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
@@ -273,31 +278,42 @@ void extension(
 
         // get the number of possible extensions
         auto num_feasible_extensions = numFeasibleExtensions(is_feasible_extension);
+        if (num_feasible_extensions > 0) {
+            // calculate the average loss
+            if (calculate_avg_loss) {
+                avg_loss = averageUnitaryLoss(unitary_loss, is_feasible_extension);
+                calculate_avg_loss = false;
+            }
 
-        // calculate the average loss
-        if (calculate_avg_loss) {
-            avg_loss = averageUnitaryLoss(unitary_loss, is_feasible_extension);
-            calculate_avg_loss = false;
-        }
+            // find the smallest loss in the array
+            int index_of_smallest_loss = indexOfSmallestLoss(unitary_loss, is_feasible_extension);
+            auto smallest_loss = unitary_loss[index_of_smallest_loss];
 
-        // find the smallest loss in the array
-        int index_of_smallest_loss = indexOfSmallestLoss(unitary_loss, is_feasible_extension);
-        auto smallest_loss = unitary_loss[index_of_smallest_loss];
+            // check if there exists a path with below average unitary loss
+            // TODO remove print statements!
+            auto p = extension_paths[index_of_smallest_loss];
+            // std::cout << "[";
+            // for (auto v : p)
+            //     std::cout << v << ", ";
+            // std::cout << "] ";
+            // std::cout << "Smallest loss: " << smallest_loss;
+            // std::cout << ". Average loss: " << avg_loss << std::endl;
+            exists_path_with_below_avg_loss = (smallest_loss < avg_loss) && (num_feasible_extensions > 0);
 
-        // check if there exists a path with below average unitary loss
-        exists_path_with_below_avg_loss = (smallest_loss < avg_loss) && (num_feasible_extensions > 0);
-
-        // extend the tour with the path of smallest unitary loss
-        if (exists_path_with_below_avg_loss) {
-            auto external_path = extension_paths[index_of_smallest_loss];
-            int last_index =  index_of_smallest_loss + step_size;
-            swapPathsInTour(tour, external_path, index_of_smallest_loss, last_index);
+            // extend the tour with the path of smallest unitary loss
+            if (exists_path_with_below_avg_loss) {
+                auto external_path = extension_paths[index_of_smallest_loss];
+                int last_index =  index_of_smallest_loss + step_size;
+                swapPathsInTour(tour, external_path, index_of_smallest_loss, last_index);
+            }
+        } else {
+            exists_path_with_below_avg_loss = false;
         }
     }
 }
 
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
-void extension(
+void extensionUnitaryLoss(
     TGraph& graph,
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
@@ -306,14 +322,14 @@ void extension(
 ) {
     int step_size = 1;
     int path_depth_limit = 2;
-    return extension(graph, tour, cost_map, prize_map, root_vertex, step_size, path_depth_limit);
+    return pathExtension(graph, tour, cost_map, prize_map, root_vertex, step_size, path_depth_limit);
 }
 
 /**
  * @brief Extend the tour until it is prize-feasible.
  */
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
-void extensionUntilPrizeFeasible(
+void pathExtensionUntilPrizeFeasible(
     TGraph& graph,
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
@@ -482,7 +498,7 @@ void insertBiggestGainVertexIntoTour(
 
 // Extend a tour by adding vertices according to the unitary gain operation
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
-void extend(
+void extensionUnitaryGain(
     TGraph& g,
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
@@ -530,7 +546,7 @@ void extend(
 }
 
 template <typename TGraph, typename TCostMap, typename TPrizeMap>
-void extendUntilPrizeFeasible(
+void extensionUntilPrizeFeasible(
     TGraph& g,
     std::list<typename TGraph::vertex_descriptor>& tour,
     TCostMap& cost_map,
@@ -809,7 +825,7 @@ std::list<typename TGraph::vertex_descriptor> pathExtensionCollapse(
     else {
         // search for a feasible tour using extension until prize feasible
         for (int step = 1; step <= step_size; step++) {
-            extensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, root_vertex, quota, step, path_depth_limit);
+            pathExtensionUntilPrizeFeasible(graph, tour, cost_map, prize_map, root_vertex, quota, step, path_depth_limit);
             prize_of_tour = totalPrizeOfTour(prize_map, tour);
             if (prize_of_tour >= quota) {
                 best_tour = tour;
@@ -831,7 +847,7 @@ std::list<typename TGraph::vertex_descriptor> pathExtensionCollapse(
     // now play ping pong between extension and collapse to find a better tour
     for (int step = 1; step <= step_size; step++) {
         BOOST_LOG_TRIVIAL(debug) << "Path extension collapse on step size " << step;
-        extension(graph, tour, cost_map, prize_map, root_vertex, step, path_depth_limit);
+        pathExtension(graph, tour, cost_map, prize_map, root_vertex, step, path_depth_limit);
         BOOST_LOG_TRIVIAL(debug) << "Done extension. Prize is " << totalPrizeOfTour(prize_map, tour);
         tour = collapse(graph, tour, cost_map, prize_map, quota, root_vertex, collapse_shortest_paths);
         auto tour_cost = totalCost(graph, tour, cost_map);

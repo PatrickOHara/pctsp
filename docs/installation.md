@@ -38,7 +38,7 @@ cmake --install .   # optional install
 
 ## Python install
 
-Install with pip:
+Install with pip. We strongly recommend *pip version 22 or later* [due to this issue](https://github.com/pypa/pip/issues/7555):
 
 ```bash
 pip install .

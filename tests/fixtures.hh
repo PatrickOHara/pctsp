@@ -28,6 +28,7 @@ class GraphFixture : public::testing::TestWithParam<GraphType> {
 		PCTSPvertex getRootVertex();
 		std::string getParamName();
 		std::list<PCTSPvertex> getSmallTour();
+		std::list<PCTSPvertex> getPrizeFeasibleTour();
 };
 
 enum class BadlyNamedEdges {

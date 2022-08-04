@@ -2,22 +2,26 @@
 
 from dotenv import load_dotenv
 from skbuild import setup
+from setuptools import find_packages
 
 load_dotenv()
 
 setup(
     author="Patrick O'Hara",
     author_email="patrick.h.o-hara@warwick.ac.uk",
-    description="pctsp",
+    description="Algorithms for the Prize-collecting Travelling Salesperson Problem",
     install_requires=[
+        "colorlog>=4.6.2",
+        "plotly>=4.14.1",
         "pydantic>=1.8.0",
         "pyscipopt>=4.0.0",
-        "tspwplib>=0.6.11",
+        "tspwplib>=0.7.2",
+        "typer>=0.4.0",
     ],
     name="pctsp",
-    packages=["pctsp"],
+    packages=find_packages(),
     python_requires=">=3.8",
-    use_scm_version={"fallback_version": "0.2.8"},
+    use_scm_version={"fallback_version": "1.0.0"},
     license="MIT License",
     classifiers=[
         "Programming Language :: Python",
@@ -30,4 +34,5 @@ setup(
     ],
     cmake_args=['-DPCTSP_BUILD_TESTS:BOOL=OFF'],
     cmake_source_dir=".",
+    entry_points={"console_scripts":["pctsp=pctsp.__main__:app"]},
 )

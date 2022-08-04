@@ -1,7 +1,8 @@
 """Tests to ensure C++ is writing logs to file"""
 
 from pyscipopt import Model
-from pctsp import SCIP_LOGS_TXT, solve_pctsp
+from pctsp.algorithms import solve_pctsp
+from pctsp.constants import SCIP_LOGS_TXT
 
 
 def test_branch_and_cut_logger(suurballes_undirected_graph, root, logger_dir):

@@ -33,10 +33,22 @@ Adding and updating existing documentation is highly encouraged.
 ## Docker
 
 [Docker is great for reprodicible research](https://reproducible-analysis-workshop.readthedocs.io/en/latest/8.Intro-Docker.html).
-You can build the docker file as follows:
+You can pull the latest docker image to run our code:
 
 ```bash
-docker build .
+docker pull patrickohara/pctsp:latest
+```
+
+Alternatively you can build the docker file as follows:
+
+```bash
+docker build -t patrickohara/pctsp:latest .
+```
+
+To re-build the base SCIP image:
+
+```bash
+docker build -t patrickohara/scip:latest -f scip.dockerfile .
 ```
 
 ## Linting
@@ -57,14 +69,3 @@ black */
 We are moving towards adding [type hints](https://docs.python.org/3.8/library/typing.html) so you may optionally add types to your code.
 In which case you do not need to include types in your google style docstrings.
 
-
-## Gitmoji
-We like [gitmoji](https://gitmoji.carloscuesta.me/) for an emoji guide to our commit messages.
-You might consider (entirely optional) using the [gitmoji-cli](https://github.com/carloscuesta/gitmoji-cli) as a hook when writing commit messages.
-
-## Working on an issue
-The general workflow for contributing to the project is to first choose and issue (or create one) to work on and assign yourself to the issues.
-
-You are encouraged to open a pull request earlier rather than later (either a `draft pull request` or add `WIP` to the title) so others know what you are working on.
-
-How you label branches is optional, but we encourage using `<issue-number>_<description_of_issue>` where `<issue-number>` is the github issue number and `<description_of_issue>` is a very short description of the issue. For example `22_improve_docs`.

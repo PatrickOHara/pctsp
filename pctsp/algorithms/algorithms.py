@@ -12,13 +12,13 @@ from tspwplib import (
     EdgeList,
     is_pctsp_yes_instance,
 )
-from .constants import (
+from ..constants import (
     FOUR_HOURS,
     LP_GAP_IMPROVEMENT_THRESHOLD,
 )
 
 # pylint: disable=import-error
-from .libpypctsp import solve_pctsp_bind
+from ..libpypctsp import solve_pctsp_bind
 
 # pylint: enable=import-error
 

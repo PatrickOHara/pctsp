@@ -1,25 +1,24 @@
 """Tests for exact algorithms for PCTSP"""
 
+import networkx as nx
 from pyscipopt import Model, SCIP_STAGE
 from tspwplib import (
     asymmetric_from_undirected,
     biggest_vertex_id_from_graph,
     edge_list_from_walk,
+    is_complete_with_self_loops,
     order_edge_list,
     reorder_edge_list_from_root,
     total_cost_networkx,
     is_pctsp_yes_instance,
     split_head,
+    total_prize_of_tour,
     walk_from_edge_list,
 )
-from pctsp import (
-    random_tour_complete_graph,
-    solve_pctsp,
-    suurballe_shortest_vertex_disjoint_paths,
-    vertex_disjoint_cost_map,
-    SummaryStats,
-    PCTSP_SUMMARY_STATS_YAML,
-)
+from pctsp.algorithms import random_tour_complete_graph, solve_pctsp, SummaryStats
+from pctsp.constants import PCTSP_SUMMARY_STATS_YAML
+from pctsp.preprocessing import vertex_disjoint_cost_map
+from pctsp.suurballe import suurballe_shortest_vertex_disjoint_paths
 
 
 def test_pctsp_on_suurballes_graph(
@@ -35,7 +34,6 @@ def test_pctsp_on_suurballes_graph(
         [],
         quota,
         root,
-        # branching_max_depth=1,
         branching_strategy=2,
         name=name,
         solver_dir=logger_dir,
@@ -87,11 +85,24 @@ def test_pctsp_on_tspwplib(sparse_tspwplib_graph, root, logger_dir, time_limit):
 
 def test_pctsp_with_heuristic(tspwplib_graph, root, logger_dir, time_limit):
     """Test adding an initial solution to solver"""
-    quota = 30
+    quota = int(sum(nx.get_node_attributes(tspwplib_graph, "prize").values()) * 0.1)
     tour = random_tour_complete_graph(tspwplib_graph, root, quota)
-    name = "test_pctsp_with_heuristic"
+    name = "test_pctsp_with_heuristic" + str(tspwplib_graph.graph["name"])
     model = Model(problemName=name, createscip=True, defaultPlugins=False)
     edge_list = edge_list_from_walk(tour)
+    assert (
+        total_prize_of_tour(nx.get_node_attributes(tspwplib_graph, "prize"), tour)
+        >= quota
+    )
+    for (u, v) in edge_list:
+        assert tspwplib_graph.has_edge(u, v)
+    for i in range(len(edge_list) - 1):
+        assert edge_list[i][1] == edge_list[i + 1][0]
+    assert tspwplib_graph.graph["name"] in model.getProbName()
+    assert logger_dir.exists()
+    assert len(edge_list) >= 3
+    assert is_pctsp_yes_instance(tspwplib_graph, quota, root, edge_list)
+    assert is_complete_with_self_loops(tspwplib_graph)
     solve_pctsp(
         model,
         tspwplib_graph,

@@ -1,18 +1,34 @@
 """Fixtures for algorithms"""
 
+from datetime import datetime
 from pathlib import Path
 import sys
 from typing import Dict, List, Set, Tuple
+from uuid import uuid4
 import networkx as nx
 import pytest
 import tspwplib.types as tp
 from tspwplib import (
     build_path_to_oplib_instance,
+    edge_list_from_walk,
     Generation,
     ProfitsProblem,
     sparsify_uid,
 )
-from pctsp import NULL_VERTEX
+from pctsp.constants import NULL_VERTEX
+from pctsp.vial import (
+    AlgorithmName,
+    BranchingStrategy,
+    DatasetName,
+    DataConfig,
+    ModelParams,
+    Preprocessing,
+    Result,
+    Vial,
+    EXACT_ALGORITHMS,
+    HEURISTIC_ALGORITHMS,
+    RELAXATION_ALGORITHMS,
+)
 
 # pylint: disable=redefined-outer-name
 
@@ -23,7 +39,7 @@ from pctsp import NULL_VERTEX
 @pytest.fixture(scope="function")
 def time_limit() -> float:
     """Time limit in seconds for each test"""
-    return 20.0
+    return 5.0
 
 
 @pytest.fixture(scope="function")
@@ -307,3 +323,108 @@ def logger_dir(tmp_path_factory) -> Path:
 def stats_dir(tmp_path_factory) -> Path:
     """Temp stats directory"""
     return tmp_path_factory.mktemp(".stats")
+
+
+@pytest.fixture(scope="function")
+def lab_dir(tmp_path_factory) -> Path:
+    """Temporary input directory."""
+    return tmp_path_factory.mktemp(".lab")
+
+
+@pytest.fixture(
+    scope="function",
+    params=[
+        AlgorithmName.extension_collapse,
+        AlgorithmName.solve_pctsp,
+    ],
+)
+def algorithm_name(request) -> AlgorithmName:
+    """Parametrized algorithm name"""
+    return request.param
+
+
+@pytest.fixture(scope="function")
+def tspwplib_config(generation, graph_name, alpha) -> DataConfig:
+    """Mocked tspwplib data config"""
+    return DataConfig(
+        alpha=alpha,
+        cost_function=tp.EdgeWeightType.EUC_2D,
+        dataset=DatasetName.tspwplib,
+        generation=generation,
+        graph_name=graph_name,
+        kappa=10,
+        quota=10,
+        root=0,
+        triangle=5,
+    )
+
+
+@pytest.fixture(scope="function")
+def data_config(graph_name):
+    """A simple data config"""
+    return DataConfig(
+        cost_function=tp.EdgeWeightType.EUC_2D,
+        dataset=DatasetName.tspwplib,
+        graph_name=graph_name,
+        quota=5,
+        root=1,
+    )
+
+
+@pytest.fixture(scope="function")
+def model_params(algorithm_name) -> ModelParams:
+    """Model parameters for an algorithm"""
+    params = ModelParams(
+        algorithm=algorithm_name,
+        is_exact=algorithm_name in EXACT_ALGORITHMS,
+        is_heuristic=algorithm_name in HEURISTIC_ALGORITHMS,
+        is_relaxation=algorithm_name in RELAXATION_ALGORITHMS,
+    )
+    if algorithm_name == AlgorithmName.solve_pctsp:
+        params.branching_max_depth = -1
+        params.branching_strategy = BranchingStrategy.RELPSCOST
+        params.cost_cover_disjoint_paths = False
+        params.cost_cover_shortest_path = False
+        params.sec_disjoint_tour = True
+        params.sec_lp_gap_improvement_threshold = 0.1
+        params.sec_maxflow_mincut = True
+        params.sec_max_tailing_off_iterations = 5
+        params.sec_sepafreq = 1
+        params.time_limit = 60  # 60 second time limit for tests
+    return params
+
+
+@pytest.fixture(scope="function")
+def preprocessing() -> ModelParams:
+    """Preprocessing settings"""
+    return Preprocessing(
+        disjoint_path_cutoff=False,
+        remove_disconnected_components=True,
+        remove_leaves=True,
+        remove_one_connected_components=False,
+        shortest_path_cutoff=True,
+    )
+
+
+@pytest.fixture(scope="function")
+def tspwplib_vial(tspwplib_config, model_params, preprocessing) -> Vial:
+    """Vial for the tspwplib dataset"""
+    return Vial(
+        data_config=tspwplib_config,
+        model_params=model_params,
+        preprocessing=preprocessing,
+        uuid=uuid4(),
+    )
+
+
+@pytest.fixture(scope="function")
+def result(vial) -> Result:
+    """A result"""
+    return Result(
+        vial_uuid=vial.uuid,
+        objective=10,
+        prize=vial.data_config.quota + 1,
+        edge_list=edge_list_from_walk([0, 1, 2, 3, 4, 5, 0]),
+        start_time=datetime(2021, 1, 1, 1, 1, 1, 1),
+        end_time=datetime(2021, 1, 1, 1, 1, 20, 1),
+    )
