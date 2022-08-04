@@ -105,7 +105,7 @@ def random_tour_complete_graph(
     tour = [root_vertex]
     vertices_not_in_tour = list(graph.nodes())  # quickly check membership
     vertices_not_in_tour.remove(root_vertex)
-    while len(vertices_not_in_tour) > 0 and prize < quota:
+    while len(vertices_not_in_tour) > 0 and (prize < quota or len(tour) < 3):
         # choose a vertex that has not yet been added to the tour
         vertex = random.choice(vertices_not_in_tour)
         prize += prize_dict[vertex]

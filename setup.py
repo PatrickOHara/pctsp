@@ -33,5 +33,5 @@ setup(
     ],
     cmake_args=['-DPCTSP_BUILD_TESTS:BOOL=OFF'],
     cmake_source_dir=".",
-    scripts={"cli/pctsp"},
+    entry_points={"console_scripts":["pctsp=pctsp.__main__:app"]},
 )

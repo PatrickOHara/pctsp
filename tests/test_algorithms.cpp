@@ -158,7 +158,8 @@ TEST_P(AlgorithmsFixture, testAddHeuristicVarsToSolver) {
     // initialise and create the model without subtour elimiation constraints
     SCIP* scip_model = NULL;
     SCIPcreate(&scip_model);
-    SCIPincludeDefaultPlugins(scip_model);
+    includeBranchRules(scip_model);
+    // SCIPincludeDefaultPlugins(scip_model);
     SCIPcreateProbBasic(scip_model, "test-add-heuristic");
 
     // add variables and constraints
@@ -168,6 +169,7 @@ TEST_P(AlgorithmsFixture, testAddHeuristicVarsToSolver) {
     auto first_edges = solution_edges.begin();
     auto last_edges = solution_edges.end();
     addHeuristicEdgesToSolver(scip_model, graph, NULL, variable_map, first_edges, last_edges);
+    SCIPsolve(scip_model);
 }
 
 TEST_P(AlgorithmsFixture, testModelPrizeCollectingTSP) {
@@ -197,7 +199,7 @@ TEST_P(AlgorithmsFixture, testModelPrizeCollectingTSP) {
 INSTANTIATE_TEST_SUITE_P(
     TestAlgorithms,
     AlgorithmsFixture,
-    ::testing::Values(GraphType::COMPLETE4, GraphType::COMPLETE5, GraphType::GRID8, GraphType::SUURBALLE)
+    ::testing::Values(GraphType::SUURBALLE, GraphType::GRID8, GraphType::COMPLETE4, GraphType::COMPLETE5, GraphType::COMPLETE25)
 );
 
 INSTANTIATE_TEST_SUITE_P(TestAlgorithms, SuurballeGraphFixture,
