@@ -85,14 +85,16 @@ def test_extension_tsplib(tspwplib_graph, root):
 def test_extension_until_prize_feasible(tspwplib_graph, root):
     """Run extension with unitary gain until the tour is prize feasible"""
     n = tspwplib_graph.number_of_nodes()
-    quota = 20
+    prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
+
+    # set quota to be the total prize of the graph, i.e. extended tour is Hamiltonian
+    quota = total_prize(prize_map, tspwplib_graph.nodes())
     tour = [0, 1, 2, n - 1, n - 2, 0]
     extended_tour = extension_until_prize_feasible(
         tspwplib_graph,
         tour,
         quota,
     )
-    prize_map = nx.get_node_attributes(tspwplib_graph, VertexFunctionName.prize.value)
     assert total_prize_of_tour(prize_map, extended_tour) >= quota
     assert root in extended_tour
     assert is_simple_cycle(tspwplib_graph, extended_tour)

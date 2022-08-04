@@ -1,7 +1,7 @@
 # Usage
 
 We recommend using our software via the command line interface (CLI).
-This allows the user to run indivual algorithms on single instances, run large number of instances in one go,
+This allows the user to run individual algorithms on single instances, run large number of instances in one go,
 or to 'batch' instances with many different parameters with support for creating slurm scripts.
 
 For example, to run Suurballe's heuristic on the st70 instance from the TSPLIB dataset:

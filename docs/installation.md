@@ -73,7 +73,6 @@ cmake function instead of [FindPython3](https://cmake.org/cmake/help/latest/modu
 ## Dynamic linking (Mac OS X problems)
 
 We dynamically link python at run-time, rather than linking at compile time.
-[See this blog post](https://cmake.org/cmake/help/latest/module/FindPython3.html?highlight=findpython3) for a good explanation of our method on Mac OS X.
 
 If you have dependencies installed in non-standard locations (e.g. conda), it may be necessary to "nudge" the linker to look in the right directory for dependency libraries.
 For example, suppose the path to the `lib` directory of your dependency is stored in variable `PREFIX`.
