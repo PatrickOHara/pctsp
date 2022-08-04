@@ -367,8 +367,10 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
     auto sol_edges = edgesFromVertexPairs(graph, solution_edges);
     int actual_cost = totalCost(sol_edges, cost_map);
     EXPECT_EQ(expected_cost, actual_cost);
-    EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
-    EXPECT_EQ(stats.num_sec_disjoint_tour, expected_num_sec_disjoint_tour);
+    if (GetParam() != GraphType::COMPLETE25) {
+        EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
+        EXPECT_EQ(stats.num_sec_disjoint_tour, expected_num_sec_disjoint_tour);
+    }
     EXPECT_EQ(SCIPgetNNodes(scip), expected_nnodes);
     SCIPfree(&scip);
 }

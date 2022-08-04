@@ -11,6 +11,7 @@ setup(
     author_email="patrick.h.o-hara@warwick.ac.uk",
     description="Algorithms for the Prize-collecting Travelling Salesperson Problem",
     install_requires=[
+        "colorlog>=4.6.2",
         "plotly>=4.14.1",
         "pydantic>=1.8.0",
         "pyscipopt>=4.0.0",
