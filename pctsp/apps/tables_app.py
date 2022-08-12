@@ -280,6 +280,11 @@ def cost_cover_table(
     df = pretty_dataframe(df)
     table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
 
+    if dataset == DatasetName.londonaq:
+        index_col = PRETTY_COLUMN_NAMES["quota"]
+    elif dataset == DatasetName.tspwplib:
+        index_col = PRETTY_COLUMN_NAMES["alpha"]
+
     table_str = (
         df.style.format(
             formatter={
@@ -291,7 +296,7 @@ def cost_cover_table(
                 ("Cost cover shortest paths", "TIME"): "{:.0f}",
             },
         )
-        .format_index(formatter={PRETTY_COLUMN_NAMES["alpha"]: "{:.2f}"})
+        .format_index(formatter={index_col: "{:.2f}"})
         .to_latex(hrules=True, multicol_align="c")
     )
     table_str = table_str.replace("cc_name", "")
