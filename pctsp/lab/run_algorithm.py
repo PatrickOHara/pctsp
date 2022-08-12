@@ -163,27 +163,19 @@ def run_algorithm(
     )
     start_time = datetime.utcnow()
 
-    # run Suurballe's algorithm if needed by a heuristic or by the cost cover inequalities
-    if (
-        vial.model_params.algorithm == AlgorithmName.suurballes_heuristic
-        or vial.model_params.heuristic == AlgorithmName.suurballes_heuristic
-        or vial.model_params.cost_cover_disjoint_paths
-    ):
-        biggest_vertex = biggest_vertex_id_from_graph(graph)
-        # convert to asymmetric graph and run Suurballe's
-        asymmetric_graph = asymmetric_from_undirected(graph)
-        tree = suurballe_shortest_vertex_disjoint_paths(
-            asymmetric_graph,
-            split_head(biggest_vertex, vial.data_config.root),
-            weight="cost",
-        )
-        cost_map = vertex_disjoint_cost_map(tree, biggest_vertex)
-        vertex_disjoint_paths_map = undirected_vertex_disjoint_paths_map(
-            tree, biggest_vertex
-        )
-    else:
-        cost_map = None
-        vertex_disjoint_paths_map = None
+    # run Suurballe's algorithm needed by a heuristic or by the cost cover inequalities
+    biggest_vertex = biggest_vertex_id_from_graph(graph)
+    asymmetric_graph = asymmetric_from_undirected(graph)
+    tree = suurballe_shortest_vertex_disjoint_paths(
+        asymmetric_graph,
+        split_head(biggest_vertex, vial.data_config.root),
+        weight="cost",
+    )
+    cost_map = vertex_disjoint_cost_map(tree, biggest_vertex)
+    vertex_disjoint_paths_map = undirected_vertex_disjoint_paths_map(
+        tree, biggest_vertex
+    )
+
 
     if vial.model_params.is_heuristic:
         edge_list = run_heuristic(

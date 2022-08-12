@@ -13,9 +13,11 @@ from .tables_app import get_heuristics_df
 plot_app = typer.Typer(name="plot", help="Plotting results")
 
 ALGORITHM_COLORMAP = {
-    "EC": "#0072B2",
-    "PEC": "black",
-    "SH": "#E69F00",
+    ShortAlgorithmName.bfs_extension_collapse.value: "#0072B2",
+    ShortAlgorithmName.bfs_path_extension_collapse.value: "black",
+    ShortAlgorithmName.suurballes_extension_collapse: "red",
+    ShortAlgorithmName.suurballes_heuristic.value: "#E69F00",
+    ShortAlgorithmName.suurballes_path_extension_collapse: "green",
 }
 
 
@@ -79,6 +81,8 @@ def plot_heuristics_figure(
         for algorithm in [
             ShortAlgorithmName.bfs_extension_collapse,
             ShortAlgorithmName.bfs_path_extension_collapse,
+            ShortAlgorithmName.suurballes_extension_collapse,
+            ShortAlgorithmName.suurballes_path_extension_collapse,
         ]:
             add_traces_heuristic(
                 bottom_fig,
