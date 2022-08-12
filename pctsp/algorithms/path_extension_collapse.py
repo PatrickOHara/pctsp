@@ -12,8 +12,9 @@ from tspwplib import (
 # pylint: disable=import-error
 from ..libpypctsp import (
     collapse_bind,
-    path_extension_until_prize_feasible_bind,
+    path_extension_bind,
     path_extension_collapse_bind,
+    path_extension_until_prize_feasible_bind,
 )
 
 
@@ -39,6 +40,7 @@ def path_collapse(
     cost_dict = nx.get_edge_attributes(graph, EdgeFunctionName.cost.value)
     prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
     edge_list = list(graph.edges())
+    collapse_shortest_paths = True
     collapsed_tour: VertexList = collapse_bind(
         edge_list,
         tour,
@@ -46,10 +48,46 @@ def path_collapse(
         prize_dict,
         quota,
         root_vertex,
-        True,
+        collapse_shortest_paths,
         logging_level,
     )
     return collapsed_tour
+
+
+def path_extension(
+    graph: nx.Graph,
+    tour: VertexList,
+    root_vertex: Vertex,
+    path_depth_limit: int = 2,
+    step_size: int = 1,
+    logging_level: int = logging.INFO,
+) -> VertexList:
+    """Path extension algorithm
+
+    Args:
+        graph: Undirected input graph
+        tour: Tour that has the first and last vertex the same
+        root_vertex: Tour starts and ends at this vertex
+        path_depth_limit: Length of the path to explore in order to extend the tour
+        step_size: Gap between two vertices in the tour when trying to extend the tour
+        logging_level: Verbosity of logging
+
+    Returns:
+        Extended tour with prize at least the input tour
+    """
+    cost_dict = nx.get_edge_attributes(graph, EdgeFunctionName.cost.value)
+    prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
+    edge_list = list(graph.edges())
+    return path_extension_bind(
+        edge_list,
+        tour,
+        cost_dict,
+        prize_dict,
+        root_vertex,
+        path_depth_limit,
+        step_size,
+        logging_level,
+    )
 
 
 def path_extension_collapse(

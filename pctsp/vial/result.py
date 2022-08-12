@@ -3,7 +3,7 @@
 from datetime import datetime
 import json
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, List, Tuple
 from uuid import UUID
 from pydantic import BaseModel
 
@@ -41,7 +41,7 @@ class Result(BaseModel):
         return filepath
 
     @classmethod
-    def read_from_json_file(cls, directory: Path, vial_uuid: UUID):
+    def read_from_json_file(cls, directory: Path, vial_uuid: UUID) -> Any:
         """Read a result from a json file
 
         Args:

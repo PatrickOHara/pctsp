@@ -1,5 +1,6 @@
 """A vial is a small glass container used in experiments"""
 
+from typing import Any, Dict
 from uuid import UUID
 import pandas as pd
 from pydantic import BaseModel
@@ -19,7 +20,7 @@ class Vial(BaseModel):
     preprocessing: Preprocessing
 
 
-def flat_dict_from_vial(vial: Vial):
+def flat_dict_from_vial(vial: Vial) -> Dict[str, Any]:
     """A flat dictionary from a vial.
 
     A 'flat' dict does not contain dicts as values.

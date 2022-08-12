@@ -18,6 +18,7 @@ from .heuristic import (
 )
 from .path_extension_collapse import (
     path_collapse,
+    path_extension,
     path_extension_collapse,
     path_extension_until_prize_feasible,
 )
@@ -37,6 +38,7 @@ __all__ = [
     "path_extension_collapse",
     "path_extension_until_prize_feasible",
     "find_cycle_from_bfs",
+    "path_extension",
     "path_extension_collapse",
     "random_tour_complete_graph",
     "random_tour_from_disjoint_paths_map",
