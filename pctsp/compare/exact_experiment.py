@@ -136,6 +136,8 @@ def cost_cover(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
     depth_limit = None
     step = 10
     collapse_paths = True
+    heuristic = AlgorithmName.suurballes_path_extension_collapse
+
     if dataset_name == DatasetName.tspwplib:
         data_config_list = product_of_tspwplib_data_config(
             dataset_root,
@@ -145,15 +147,12 @@ def cost_cover(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
             params.TSPLIB_GRAPH_NAME_LIST,
             params.TSPLIB_COST_FUNCTIONS,
         )
-        heuristic = AlgorithmName.bfs_path_extension_collapse
-
     elif dataset_name == DatasetName.londonaq:
         data_config_list = product_of_londonaq_data_config(
             dataset_root,
             params.LONDONAQ_QUOTA_LIST,
             params.LONDONAQ_GRAPH_NAME_LIST,
         )
-        heuristic = AlgorithmName.suurballes_heuristic
     else:
         raise ValueError(
             f"{dataset_name} is not a supported dataset for experiment 'cost_cover'"
