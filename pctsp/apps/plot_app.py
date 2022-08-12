@@ -77,8 +77,8 @@ def plot_heuristics_figure(
             tspwplib_df.index.get_level_values("kappa") == kappa
         ]
         for algorithm in [
-            ShortAlgorithmName.extension_collapse,
-            ShortAlgorithmName.path_extension_collapse,
+            ShortAlgorithmName.bfs_extension_collapse,
+            ShortAlgorithmName.bfs_path_extension_collapse,
         ]:
             add_traces_heuristic(
                 bottom_fig,

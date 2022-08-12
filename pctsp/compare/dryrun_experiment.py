@@ -26,7 +26,7 @@ def dryrun(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
     """Run all algorithms on the smallest complete graph"""
     model_params_list = product_of_model_params(
         [
-            AlgorithmName.extension_collapse,
+            AlgorithmName.bfs_extension_collapse,
             AlgorithmName.suurballes_heuristic,
             AlgorithmName.solve_pctsp,
         ],

@@ -29,7 +29,7 @@ def disjoint_tours_vs_heuristics(
     model_params_list = product_of_model_params(
         [
             AlgorithmName.disjoint_tours_relaxation,
-            AlgorithmName.extension_collapse,
+            AlgorithmName.bfs_extension_collapse,
             AlgorithmName.suurballes_heuristic,
         ]
     )

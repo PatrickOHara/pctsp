@@ -34,6 +34,7 @@ from ..algorithms import (
     find_cycle_from_bfs,
     path_extension_collapse,
     suurballes_heuristic,
+    suurballes_tour_initialization,
 )
 from ..preprocessing import (
     remove_components_disconnected_from_vertex,
@@ -56,8 +57,8 @@ def run_heuristic(
     quota: int,
     root_vertex: Vertex,
     algorithm_name: AlgorithmName,
-    disjoint_paths_cost_map: SimpleEdgeFunction = None,
-    disjoint_paths_map: Mapping[Vertex, DisjointPaths] = None,
+    disjoint_paths_cost_map: SimpleEdgeFunction,
+    disjoint_paths_map: Mapping[Vertex, DisjointPaths],
     logger: Logger = get_pctsp_logger("run_heuristic"),
     collapse_shortest_paths: Optional[bool] = None,
     path_depth_limit: Optional[int] = None,
@@ -66,26 +67,35 @@ def run_heuristic(
     """Run a Prize-collecting TSP heuristic"""
     # initialise the below algorithms with a simple cycle generated from a DFS search
     small_tour = []
+    prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
     if algorithm_name in [
-        AlgorithmName.extension_collapse,
-        AlgorithmName.path_extension_collapse,
+        AlgorithmName.suurballes_extension_collapse,
+        AlgorithmName.suurballes_heuristic,
+        AlgorithmName.suurballes_path_extension_collapse,
+    ] and (not disjoint_paths_cost_map or not disjoint_paths_map):
+        message = "To run Suurballe's heuristic you must pass a non-empty dictionary "
+        message += "to disjoint_paths_cost_map and disjoint_paths_cost_map."
+        raise ValueError(message)
+    if algorithm_name in [
+        AlgorithmName.bfs_extension_collapse,
+        AlgorithmName.bfs_path_extension_collapse,
     ]:
         small_tour = find_cycle_from_bfs(graph, root_vertex)
+    elif algorithm_name in [
+        AlgorithmName.suurballes_extension_collapse,
+        AlgorithmName.suurballes_path_extension_collapse,
+    ]:
+        small_tour = suurballes_tour_initialization(
+            prize_dict, quota, disjoint_paths_cost_map, disjoint_paths_map
+        )
 
     # run heuristic
     if algorithm_name == AlgorithmName.suurballes_heuristic:
-        if not disjoint_paths_cost_map or not disjoint_paths_map:
-            message = (
-                "To run Suurballe's heuristic you must pass a non-empty dictionary "
-            )
-            message += "to disjoint_paths_cost_map and disjoint_paths_cost_map."
-            raise ValueError(message)
-        prize_dict = nx.get_node_attributes(graph, VertexFunctionName.prize.value)
         tour = suurballes_heuristic(
             prize_dict, quota, disjoint_paths_cost_map, disjoint_paths_map
         )
         edge_list = edge_list_from_walk(tour)
-    elif algorithm_name == AlgorithmName.extension_collapse:
+    elif algorithm_name == AlgorithmName.bfs_extension_collapse:
         # run extension with unitary gain then collapse
         extension_until_prize_feasible(graph, small_tour, quota)
         tour = extension_unitary_gain_collapse(
@@ -96,7 +106,7 @@ def run_heuristic(
         )
         edge_list = edge_list_from_walk(tour)
 
-    elif algorithm_name == AlgorithmName.path_extension_collapse:
+    elif algorithm_name == AlgorithmName.bfs_path_extension_collapse:
         # pylint: disable=simplifiable-if-expression
         collapse_paths: bool = True if collapse_shortest_paths else False
         depth_limit: int = (

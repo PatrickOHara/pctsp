@@ -14,6 +14,7 @@ from .heuristic import (
     random_tour_complete_graph,
     random_tour_from_disjoint_paths_map,
     suurballes_heuristic,
+    suurballes_tour_initialization,
     tour_from_vertex_disjoint_paths,
 )
 from .path_extension_collapse import (
@@ -44,6 +45,7 @@ __all__ = [
     "random_tour_from_disjoint_paths_map",
     "solve_pctsp",
     "suurballes_heuristic",
+    "suurballes_tour_initialization",
     "tour_from_vertex_disjoint_paths",
     "unitary_gain",
     "unitary_loss",
