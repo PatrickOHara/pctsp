@@ -83,7 +83,9 @@ def plot_heuristics_figure(
             kappa_df = tspwplib_df.iloc[
                 tspwplib_df.index.get_level_values("kappa") == kappa
             ]
-            kappa_df = kappa_df.iloc[kappa_df.index.get_level_values("cost_function") == cost_function]
+            kappa_df = kappa_df.iloc[
+                kappa_df.index.get_level_values("cost_function") == cost_function
+            ]
             for algorithm in [
                 ShortAlgorithmName.bfs_extension_collapse,
                 ShortAlgorithmName.bfs_path_extension_collapse,

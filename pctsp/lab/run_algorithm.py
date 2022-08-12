@@ -176,7 +176,6 @@ def run_algorithm(
         tree, biggest_vertex
     )
 
-
     if vial.model_params.is_heuristic:
         edge_list = run_heuristic(
             graph,
