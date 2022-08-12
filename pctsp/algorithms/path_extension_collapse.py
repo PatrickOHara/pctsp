@@ -53,6 +53,7 @@ def path_collapse(
     )
     return collapsed_tour
 
+
 def path_extension(
     graph: nx.Graph,
     tour: VertexList,
@@ -87,6 +88,7 @@ def path_extension(
         step_size,
         logging_level,
     )
+
 
 def path_extension_collapse(
     graph: nx.Graph,
