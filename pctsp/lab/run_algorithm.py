@@ -95,7 +95,10 @@ def run_heuristic(
             prize_dict, quota, disjoint_paths_cost_map, disjoint_paths_map
         )
         edge_list = edge_list_from_walk(tour)
-    elif algorithm_name == AlgorithmName.bfs_extension_collapse:
+    elif algorithm_name in [
+        AlgorithmName.bfs_extension_collapse,
+        AlgorithmName.suurballes_extension_collapse,
+    ]:
         # run extension with unitary gain then collapse
         extension_until_prize_feasible(graph, small_tour, quota)
         tour = extension_unitary_gain_collapse(
@@ -106,7 +109,10 @@ def run_heuristic(
         )
         edge_list = edge_list_from_walk(tour)
 
-    elif algorithm_name == AlgorithmName.bfs_path_extension_collapse:
+    elif algorithm_name in [
+        AlgorithmName.bfs_path_extension_collapse,
+        AlgorithmName.suurballes_path_extension_collapse,
+    ]:
         # pylint: disable=simplifiable-if-expression
         collapse_paths: bool = True if collapse_shortest_paths else False
         depth_limit: int = (

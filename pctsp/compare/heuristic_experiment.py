@@ -41,6 +41,24 @@ def compare_heuristics(dataset_name: DatasetName, dataset_root: Path) -> List[Vi
             path_depth_limit=None,  # NOTE no depth limit
             step_size=10,
         ),
+        ModelParams(  # Extension Collapse
+            algorithm=AlgorithmName.suurballes_extension_collapse,
+            collapse_paths=False,
+            is_exact=False,
+            is_heuristic=True,
+            is_relaxation=False,
+            path_depth_limit=2,
+            step_size=1,
+        ),
+        ModelParams(  # Path Extension Collapse
+            algorithm=AlgorithmName.suurballes_path_extension_collapse,
+            collapse_paths=True,
+            is_exact=False,
+            is_heuristic=True,
+            is_relaxation=False,
+            path_depth_limit=None,  # NOTE no depth limit
+            step_size=10,
+        ),
         ModelParams(  # Suurballe's heuristic
             algorithm=AlgorithmName.suurballes_heuristic,
             is_exact=False,
