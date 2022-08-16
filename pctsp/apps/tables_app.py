@@ -31,12 +31,12 @@ PRETTY_COLUMN_NAMES = {
     "cost_function": "Cost function",
     "avg_cuts": "AVG CUTS",
     "avg_cuts_presolve": "PRE-CUTS",
-    "duration": "TIME",
+    "duration": "TIME (s)",
     "graph_name": "Graph name",
     "kappa": r"$\kappa$",
     "gap": "GAP",
     "max_gap": r"$\max(\text{GAP})$",
-    "mean_duration": "TIME",
+    "mean_duration": "TIME (s)",
     "mean_gap": "GAP",
     "min_gap": r"$\min(\text{GAP})$",
     "mean_num_nodes": r"$\mu (NODES)$",
@@ -280,19 +280,19 @@ def cost_cover_table(
     df = pretty_dataframe(df)
     table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
 
-    styled_df = df.style.format(
-            formatter={
-                ("Cost cover disjoint paths", "GAP"): "{:.3f}",
-                ("Cost cover shortest paths", "GAP"): "{:.3f}",
-                ("Cost cover disjoint paths", "PRE-CUTS"): "{:.2f}",
-                ("Cost cover shortest paths", "PRE-CUTS"): "{:.2f}",
-                ("Cost cover disjoint paths", "TIME"): "{:.0f}",
-                ("Cost cover shortest paths", "TIME"): "{:.0f}",
-            },
-        )
+    # style table using the siunitx package
+    si_gap = "S[round-mode=places,round-precision=3,scientific-notation=false,table-format=1.3]"
+    si_opt = "S[scientific-notation=false]"
+    si_num = "S[table-format=1.2e3]"
+    column_format = "l" + 2 * (si_num + si_num + si_gap + si_opt)
+
     if dataset == DatasetName.tspwplib:
-        styled_df = styled_df.format_index(formatter={PRETTY_COLUMN_NAMES["alpha"]: "{:.2f}"})
-    table_str = styled_df.to_latex(hrules=True, multicol_align="c")
+        column_format = "l" + column_format
+        styled_df = df.style.format_index(formatter={PRETTY_COLUMN_NAMES["alpha"]: "{:.2f}"})
+    else:
+        styled_df = df.style.format()
+    
+    table_str = styled_df.to_latex(multicol_align="c", siunitx=True, column_format=column_format)
     table_str = table_str.replace("cc_name", "")
     print(table_str)
     table_tex_filepath.write_text(table_str, encoding="utf-8")
