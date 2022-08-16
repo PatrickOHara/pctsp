@@ -96,7 +96,7 @@ def plot_heuristics_figure(
                     bottom_fig,
                     kappa_df,
                     algorithm,
-                    showlegend=False,
+                    showlegend=cost_function==EdgeWeightType.MST,
                     alignmentgroup=kappa,
                 )
         update_layout_heuristic(bottom_fig)
