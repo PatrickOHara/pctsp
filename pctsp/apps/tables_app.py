@@ -355,38 +355,28 @@ def heuristics_table(
     heuristic_df = heuristic_df[
         heuristic_df.index.get_level_values("graph_name") != LondonaqGraphName.laqtinyA
     ]
-
-    cols = []
+    table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
     if dataset == DatasetName.tspwplib:
-        cols += ["kappa", "cost_function"]
+        cols = ["kappa", "cost_function", "algorithm"]
         heuristic_df = heuristic_df[
             heuristic_df.index.get_level_values("cost_function").isin(
                 params.TSPLIB_COST_FUNCTIONS
             )
         ]
-    cols.append("algorithm")
-    heuristic_gb = heuristic_df.groupby(cols)
-    summary_df = heuristic_gb.agg(
-        num_feasible_solutions=("feasible", sum),
-        # median_gap=("gap", np.median),
-        # mean_duration=("duration", np.mean),
-    )
-    # summary_df = summary_df.reset_index(drop=False)
-    if dataset == DatasetName.tspwplib:
-        summary_df = summary_df.unstack().unstack()
-        summary_df = summary_df.swaplevel(1, 2, axis="columns").sort_index(
-            axis="columns"
+        heuristic_gb = heuristic_df.groupby(cols)
+        summary_df = heuristic_gb.agg(
+            num_feasible_solutions=("feasible", sum),
         )
-    # summary_df = pretty_dataframe(summary_df)
-    print(summary_df)
-    table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
-    # table_str = summary_df.to_latex(index=False, float_format="%.2f", escape=False)
-
+        summary_df = summary_df.unstack().unstack()
+        summary_df = summary_df.swaplevel(1, 2, axis="columns")
+    elif dataset == DatasetName.londonaq:
+        summary_df = heuristic_df.reset_index(level=["dataset", "root"]).set_index("algorithm", append=True)[["gap"]]
+        summary_df = summary_df.unstack()
     replacements = {
         key.value: ShortAlgorithmName[key.name].value for key in AlgorithmName
     }
     replacements[EdgeWeightType.EUC_2D] = "EUC"
-
+    print(summary_df)
     table_str = summary_df.style.format_index(
         formatter=lambda x: replacements[x] if x in replacements else x, axis="columns"
     ).to_latex(hrules=True, multicol_align="c")

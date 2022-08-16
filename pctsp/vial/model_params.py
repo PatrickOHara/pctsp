@@ -42,7 +42,7 @@ class ShortAlgorithmName(StrEnumMixin, str, Enum):
     extension = "Ex"
     solve_pctsp = "BC"
     suurballes_extension_collapse = "SBL-EC"
-    suurballes_heuristic = "SH"
+    suurballes_heuristic = "SBL"
     suurballes_path_extension_collapse = "SBL-PEC"
 
 
