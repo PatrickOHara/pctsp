@@ -69,7 +69,8 @@ def plot_heuristics_figure(
     )
     top_fig.write_image(str(figures_dir / "compare_heuristics.pdf"))
 
-    for cost_function in [EdgeWeightType.MST, EdgeWeightType.EUC_2D]:
+    show_legend = True
+    for cost_function in [EdgeWeightType.EUC_2D, EdgeWeightType.MST]:
         bottom_fig = make_subplots(
             rows=2,
             cols=1,
@@ -78,7 +79,6 @@ def plot_heuristics_figure(
             row_heights=[0.9, 0.09],
             vertical_spacing=0.01,
         )
-
         for kappa in tspwplib_df.index.get_level_values("kappa").unique():
             kappa_df = tspwplib_df.iloc[
                 tspwplib_df.index.get_level_values("kappa") == kappa
@@ -96,14 +96,22 @@ def plot_heuristics_figure(
                     bottom_fig,
                     kappa_df,
                     algorithm,
-                    showlegend=cost_function==EdgeWeightType.MST,
+                    showlegend=show_legend,
                     alignmentgroup=kappa,
                 )
+            show_legend = False
         update_layout_heuristic(bottom_fig)
         bottom_fig.update_layout(
             autosize=True,
             width=750,
             height=300,
+            legend={
+                "orientation": "h",
+                "yanchor": "bottom",
+                "y": 1.02,
+                "xanchor":"right",
+                "x": 1,
+            },
         )
         bottom_fig.write_image(
             str(figures_dir / f"{DatasetName.tspwplib}_{cost_function}_heuristics.pdf")
