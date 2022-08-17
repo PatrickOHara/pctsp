@@ -109,7 +109,7 @@ def plot_heuristics_figure(
                 "orientation": "h",
                 "yanchor": "bottom",
                 "y": 1.02,
-                "xanchor":"right",
+                "xanchor": "right",
                 "x": 1,
             },
         )

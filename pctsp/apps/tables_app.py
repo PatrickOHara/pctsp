@@ -288,11 +288,15 @@ def cost_cover_table(
 
     if dataset == DatasetName.tspwplib:
         column_format = "l" + column_format
-        styled_df = df.style.format_index(formatter={PRETTY_COLUMN_NAMES["alpha"]: "{:.2f}"})
+        styled_df = df.style.format_index(
+            formatter={PRETTY_COLUMN_NAMES["alpha"]: "{:.2f}"}
+        )
     else:
         styled_df = df.style.format()
-    
-    table_str = styled_df.to_latex(multicol_align="c", siunitx=True, column_format=column_format)
+
+    table_str = styled_df.to_latex(
+        multicol_align="c", siunitx=True, column_format=column_format
+    )
     table_str = table_str.replace("cc_name", "")
     print(table_str)
     table_tex_filepath.write_text(table_str, encoding="utf-8")
@@ -370,7 +374,9 @@ def heuristics_table(
         summary_df = summary_df.unstack().unstack()
         summary_df = summary_df.swaplevel(1, 2, axis="columns")
     elif dataset == DatasetName.londonaq:
-        summary_df = heuristic_df.reset_index(level=["dataset", "root"]).set_index("algorithm", append=True)[["gap"]]
+        summary_df = heuristic_df.reset_index(level=["dataset", "root"]).set_index(
+            "algorithm", append=True
+        )[["gap"]]
         summary_df = summary_df.unstack()
     replacements = {
         key.value: ShortAlgorithmName[key.name].value for key in AlgorithmName
