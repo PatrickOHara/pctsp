@@ -41,33 +41,33 @@ def plot_heuristics_figure(
         lambda x: ShortAlgorithmName[x]
     )
     # create subplots for a summary of the heuristic results
-    top_fig = make_subplots(
-        rows=2,
-        cols=2,
-        shared_xaxes=True,
-        shared_yaxes=False,
-        row_heights=[0.9, 0.09],
-        horizontal_spacing=0.02,
-        vertical_spacing=0.01,
-    )
-    for algorithm in londonaq_df["algorithm"].unique():
-        add_traces_heuristic(
-            top_fig,
-            londonaq_df,
-            algorithm,
-            showlegend=True,
-            col=1,
-        )
-        add_traces_heuristic(top_fig, tspwplib_df, algorithm, showlegend=False, col=2)
-    update_layout_heuristic(top_fig, col=1, xaxes_title="londonaq")
-    update_layout_heuristic(top_fig, col=2, xaxes_title="TSPLIB")
-    top_fig.update_layout(
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-        autosize=False,
-        width=750,
-        height=300,
-    )
-    top_fig.write_image(str(figures_dir / "compare_heuristics.pdf"))
+    # top_fig = make_subplots(
+    #     rows=2,
+    #     cols=2,
+    #     shared_xaxes=True,
+    #     shared_yaxes=False,
+    #     row_heights=[0.9, 0.09],
+    #     horizontal_spacing=0.02,
+    #     vertical_spacing=0.01,
+    # )
+    # for algorithm in londonaq_df["algorithm"].unique():
+    #     add_traces_heuristic(
+    #         top_fig,
+    #         londonaq_df,
+    #         algorithm,
+    #         showlegend=True,
+    #         col=1,
+    #     )
+    #     add_traces_heuristic(top_fig, tspwplib_df, algorithm, showlegend=False, col=2)
+    # update_layout_heuristic(top_fig, col=1, xaxes_title="londonaq")
+    # update_layout_heuristic(top_fig, col=2, xaxes_title="TSPLIB")
+    # top_fig.update_layout(
+    #     legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+    #     autosize=False,
+    #     width=750,
+    #     height=300,
+    # )
+    # top_fig.write_image(str(figures_dir / "compare_heuristics.pdf"))
 
     show_legend = True
     for cost_function in [EdgeWeightType.EUC_2D, EdgeWeightType.MST]:
@@ -108,7 +108,7 @@ def plot_heuristics_figure(
             legend={
                 "orientation": "h",
                 "yanchor": "bottom",
-                "y": 1.02,
+                "y": 0.92,
                 "xanchor": "right",
                 "x": 1,
             },
@@ -185,7 +185,7 @@ def update_layout_heuristic(
         col=col,
         row=1,
         range=[log_min_power, log_max_power],
-        showticklabels=col == 1,
+        showticklabels=True,
         ticks="outside",
     )
     fig.update_yaxes(
@@ -193,7 +193,7 @@ def update_layout_heuristic(
         col=col,
         row=2,
         range=[-0.001, 10**log_min_power - 0.001],
-        showticklabels=col == 1,
+        showticklabels=True,
         ticks="outside",
     )
     fig.update_layout(
