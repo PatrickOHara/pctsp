@@ -31,12 +31,12 @@ PRETTY_COLUMN_NAMES = {
     "cost_function": "Cost function",
     "avg_cuts": "AVG CUTS",
     "avg_cuts_presolve": "PRE-CUTS",
-    "duration": "TIME",
+    "duration": "TIME (s)",
     "graph_name": "Graph name",
     "kappa": r"$\kappa$",
     "gap": "GAP",
     "max_gap": r"$\max(\text{GAP})$",
-    "mean_duration": "TIME",
+    "mean_duration": "TIME (s)",
     "mean_gap": "GAP",
     "min_gap": r"$\min(\text{GAP})$",
     "mean_num_nodes": r"$\mu (NODES)$",
@@ -280,19 +280,22 @@ def cost_cover_table(
     df = pretty_dataframe(df)
     table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
 
-    table_str = (
-        df.style.format(
-            formatter={
-                ("Cost cover disjoint paths", "GAP"): "{:.3f}",
-                ("Cost cover shortest paths", "GAP"): "{:.3f}",
-                ("Cost cover disjoint paths", "PRE-CUTS"): "{:.2f}",
-                ("Cost cover shortest paths", "PRE-CUTS"): "{:.2f}",
-                ("Cost cover disjoint paths", "TIME"): "{:.0f}",
-                ("Cost cover shortest paths", "TIME"): "{:.0f}",
-            },
+    # style table using the siunitx package
+    si_gap = "S[round-mode=places,round-precision=3,scientific-notation=false,table-format=1.3]"
+    si_opt = "S[scientific-notation=false]"
+    si_num = "S[table-format=1.2e3]"
+    column_format = "l" + 2 * (si_num + si_num + si_gap + si_opt)
+
+    if dataset == DatasetName.tspwplib:
+        column_format = "l" + column_format
+        styled_df = df.style.format_index(
+            formatter={PRETTY_COLUMN_NAMES["alpha"]: "{:.2f}"}
         )
-        .format_index(formatter={PRETTY_COLUMN_NAMES["alpha"]: "{:.2f}"})
-        .to_latex(hrules=True, multicol_align="c")
+    else:
+        styled_df = df.style.format()
+
+    table_str = styled_df.to_latex(
+        multicol_align="c", siunitx=True, column_format=column_format
     )
     table_str = table_str.replace("cc_name", "")
     print(table_str)
@@ -356,38 +359,30 @@ def heuristics_table(
     heuristic_df = heuristic_df[
         heuristic_df.index.get_level_values("graph_name") != LondonaqGraphName.laqtinyA
     ]
-
-    cols = []
+    table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
     if dataset == DatasetName.tspwplib:
-        cols += ["kappa", "cost_function"]
+        cols = ["kappa", "cost_function", "algorithm"]
         heuristic_df = heuristic_df[
             heuristic_df.index.get_level_values("cost_function").isin(
                 params.TSPLIB_COST_FUNCTIONS
             )
         ]
-    cols.append("algorithm")
-    heuristic_gb = heuristic_df.groupby(cols)
-    summary_df = heuristic_gb.agg(
-        num_feasible_solutions=("feasible", sum),
-        # median_gap=("gap", np.median),
-        # mean_duration=("duration", np.mean),
-    )
-    # summary_df = summary_df.reset_index(drop=False)
-    if dataset == DatasetName.tspwplib:
-        summary_df = summary_df.unstack().unstack()
-        summary_df = summary_df.swaplevel(1, 2, axis="columns").sort_index(
-            axis="columns"
+        heuristic_gb = heuristic_df.groupby(cols)
+        summary_df = heuristic_gb.agg(
+            num_feasible_solutions=("feasible", sum),
         )
-    # summary_df = pretty_dataframe(summary_df)
-    print(summary_df)
-    table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
-    # table_str = summary_df.to_latex(index=False, float_format="%.2f", escape=False)
-
+        summary_df = summary_df.unstack().unstack()
+        summary_df = summary_df.swaplevel(1, 2, axis="columns")
+    elif dataset == DatasetName.londonaq:
+        summary_df = heuristic_df.reset_index(level=["dataset", "root"]).set_index(
+            "algorithm", append=True
+        )[["gap"]]
+        summary_df = summary_df.unstack()
     replacements = {
         key.value: ShortAlgorithmName[key.name].value for key in AlgorithmName
     }
     replacements[EdgeWeightType.EUC_2D] = "EUC"
-
+    print(summary_df)
     table_str = summary_df.style.format_index(
         formatter=lambda x: replacements[x] if x in replacements else x, axis="columns"
     ).to_latex(hrules=True, multicol_align="c")

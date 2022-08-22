@@ -11,10 +11,12 @@ class AlgorithmName(StrEnumMixin, str, Enum):
 
     disjoint_tours_relaxation = "disjoint_tours_relaxation"
     extension = "extension"
-    extension_collapse = "extension_collapse"
-    path_extension_collapse = "path_extension_collapse"
+    bfs_extension_collapse = "bfs_extension_collapse"
+    bfs_path_extension_collapse = "bfs_path_extension_collapse"
     solve_pctsp = "solve_pctsp"
+    suurballes_extension_collapse = "suurballes_extension_collapse"
     suurballes_heuristic = "suurballes_heuristic"
+    suurballes_path_extension_collapse = "suurballes_path_extension_collapse"
 
 
 class LongAlgorithmName(StrEnumMixin, str, Enum):
@@ -23,29 +25,35 @@ class LongAlgorithmName(StrEnumMixin, str, Enum):
     disjoint_tours_relaxation = "Disjoint Tours Relaxation"
     extend = "Extension"
     extension = "Extension"
-    extension_collapse = "Extension and Collapse"
-    path_extension_collapse = "Path Extension and Collapse"
+    bfs_extension_collapse = "BFS Extension and Collapse"
+    bfs_path_extension_collapse = "BFS Path Extension and Collapse"
     solve_pctsp = "PCTSP Branch and Cut"
+    suurballes_extension_collapse = "Suurballe's Extension and Collapse"
     suurballes_heuristic = "Suurballe's heuristic"
+    suurballes_path_extension_collapse = "Suurballe's Path Extension and Collapse"
 
 
 class ShortAlgorithmName(StrEnumMixin, str, Enum):
     """Short names for algorithms"""
 
     disjoint_tours_relaxation = "DTR"
+    bfs_extension_collapse = "BFS-EC"
+    bfs_path_extension_collapse = "BFS-PEC"
     extension = "Ex"
-    extension_collapse = "EC"
-    path_extension_collapse = "PEC"
     solve_pctsp = "BC"
-    suurballes_heuristic = "SH"
+    suurballes_extension_collapse = "SBL-EC"
+    suurballes_heuristic = "SBL"
+    suurballes_path_extension_collapse = "SBL-PEC"
 
 
 EXACT_ALGORITHMS: List[AlgorithmName] = [AlgorithmName.solve_pctsp]
 HEURISTIC_ALGORITHMS: List[AlgorithmName] = [
     AlgorithmName.extension,
-    AlgorithmName.extension_collapse,
-    AlgorithmName.path_extension_collapse,
+    AlgorithmName.bfs_extension_collapse,
+    AlgorithmName.bfs_path_extension_collapse,
+    AlgorithmName.suurballes_extension_collapse,
     AlgorithmName.suurballes_heuristic,
+    AlgorithmName.suurballes_path_extension_collapse,
 ]
 RELAXATION_ALGORITHMS: List[AlgorithmName] = [AlgorithmName.disjoint_tours_relaxation]
 

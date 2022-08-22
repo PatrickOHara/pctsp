@@ -334,7 +334,7 @@ def lab_dir(tmp_path_factory) -> Path:
 @pytest.fixture(
     scope="function",
     params=[
-        AlgorithmName.extension_collapse,
+        AlgorithmName.bfs_extension_collapse,
         AlgorithmName.solve_pctsp,
     ],
 )

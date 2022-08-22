@@ -35,7 +35,7 @@ def simple_branch_cut(dataset_name: DatasetName, dataset_root: Path) -> List[Via
     """A simple branch and cut algorithm with only subtour elimination constraints added"""
     model_params_list = product_of_model_params(
         [
-            AlgorithmName.extension_collapse,
+            AlgorithmName.bfs_extension_collapse,
             AlgorithmName.suurballes_heuristic,
             AlgorithmName.solve_pctsp,
         ],
@@ -73,7 +73,7 @@ def tailing_off(dataset_name, dataset_root: Path) -> List[Vial]:
             params.TSPLIB_COST_FUNCTIONS,
         )
         collapse_paths = True
-        heuristic = AlgorithmName.extension_collapse
+        heuristic = AlgorithmName.bfs_extension_collapse
 
     elif dataset_name == DatasetName.londonaq:
         data_config_list = product_of_londonaq_data_config(
@@ -136,6 +136,8 @@ def cost_cover(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
     depth_limit = None
     step = 10
     collapse_paths = True
+    heuristic = AlgorithmName.suurballes_path_extension_collapse
+
     if dataset_name == DatasetName.tspwplib:
         data_config_list = product_of_tspwplib_data_config(
             dataset_root,
@@ -145,15 +147,12 @@ def cost_cover(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
             params.TSPLIB_GRAPH_NAME_LIST,
             params.TSPLIB_COST_FUNCTIONS,
         )
-        heuristic = AlgorithmName.path_extension_collapse
-
     elif dataset_name == DatasetName.londonaq:
         data_config_list = product_of_londonaq_data_config(
             dataset_root,
             params.LONDONAQ_QUOTA_LIST,
             params.LONDONAQ_GRAPH_NAME_LIST,
         )
-        heuristic = AlgorithmName.suurballes_heuristic
     else:
         raise ValueError(
             f"{dataset_name} is not a supported dataset for experiment 'cost_cover'"

@@ -24,7 +24,7 @@ def compare_heuristics(dataset_name: DatasetName, dataset_root: Path) -> List[Vi
     """Compare the Extension & Collapse heuristic against Suurballe's heuristic"""
     model_params_list = [
         ModelParams(  # Extension Collapse
-            algorithm=AlgorithmName.extension_collapse,
+            algorithm=AlgorithmName.bfs_extension_collapse,
             collapse_paths=False,
             is_exact=False,
             is_heuristic=True,
@@ -33,7 +33,25 @@ def compare_heuristics(dataset_name: DatasetName, dataset_root: Path) -> List[Vi
             step_size=1,
         ),
         ModelParams(  # Path Extension Collapse
-            algorithm=AlgorithmName.path_extension_collapse,
+            algorithm=AlgorithmName.bfs_path_extension_collapse,
+            collapse_paths=True,
+            is_exact=False,
+            is_heuristic=True,
+            is_relaxation=False,
+            path_depth_limit=None,  # NOTE no depth limit
+            step_size=10,
+        ),
+        ModelParams(  # Extension Collapse
+            algorithm=AlgorithmName.suurballes_extension_collapse,
+            collapse_paths=False,
+            is_exact=False,
+            is_heuristic=True,
+            is_relaxation=False,
+            path_depth_limit=2,
+            step_size=1,
+        ),
+        ModelParams(  # Path Extension Collapse
+            algorithm=AlgorithmName.suurballes_path_extension_collapse,
             collapse_paths=True,
             is_exact=False,
             is_heuristic=True,

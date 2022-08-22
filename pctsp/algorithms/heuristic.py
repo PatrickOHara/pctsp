@@ -51,6 +51,49 @@ def tour_from_vertex_disjoint_paths(vertex_disjoint_paths: DisjointPaths) -> Ver
     return first_path
 
 
+def suurballes_tour_initialization(
+    prize_map: VertexFunction,
+    quota: int,
+    vertex_disjoint_cost_map: VertexFunction,
+    vertex_disjoint_paths_map: Mapping[Vertex, DisjointPaths],
+) -> VertexList:
+    """Find a tour to initialize the (Path) Extension and Collapse heuristic
+
+    Args:
+        prize_map: Mapping from vertex to the prize of the vertex
+        quota: The minimum amount of prize the tour must collect
+        vertex_disjoint_cost_map: Mapping from vertex to cost of the least-cost pair
+            of vertex-disjoint paths from the root vertex
+        vertex_disjoint_paths_map: Mapping from vertex to disjoint paths
+
+    Returns:
+        The least-cost prize feasible tour obtained from a pair of vertex disjoint paths
+
+    Notes:
+        Behaves the same as Suurballe's heuristic if there exists a prize-feasible pair
+        of least-cost vertex disjoint paths in the graph.
+        Otherwise, return the tour that maximizes the total prize of pairs of least-cost
+        vertex disjoint paths from the root vertex.
+    """
+    # first run Suurballe's heuristic: takes O(n^2) time
+    tour = suurballes_heuristic(
+        prize_map, quota, vertex_disjoint_cost_map, vertex_disjoint_paths_map
+    )
+    if tour:
+        return tour
+
+    # if no prize feasible tour is returned, then return the tour that maximizes the prize
+    biggest_prize = 0
+    biggest_tour = []
+    for disjoint_paths in vertex_disjoint_paths_map.values():
+        tour = tour_from_vertex_disjoint_paths(disjoint_paths)
+        prize_of_tour = total_prize_of_tour(prize_map, tour)
+        if prize_of_tour > biggest_prize:
+            biggest_tour = tour
+            biggest_prize = prize_of_tour
+    return biggest_tour
+
+
 def suurballes_heuristic(
     prize_map: VertexFunction,
     quota: int,

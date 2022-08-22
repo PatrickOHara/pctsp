@@ -511,7 +511,7 @@ def tsplib(
         model_params.sec_max_tailing_off_iterations = sec_max_tailing_off_iterations
         model_params.sec_sepafreq = 1
         model_params.time_limit = time_limit
-    if AlgorithmName.extension_collapse in (
+    if AlgorithmName.bfs_extension_collapse in (
         model_params.algorithm,
         model_params.heuristic,
     ):
