@@ -20,7 +20,7 @@ def test_pretty_dataframe() -> None:
         LongAlgorithmName.solve_pctsp.value
         in pretty_df.index.get_level_values("Algorithm").values
     )
-    assert "TIME" in pretty_df
+    assert "TIME (s)" in pretty_df
 
 
 def test_lab_command(lab_dir, oplib_root):
