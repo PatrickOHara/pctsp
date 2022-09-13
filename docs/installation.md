@@ -1,6 +1,9 @@
 # Installation
 
 We recommend using the provided docker images for quick and easy use of our code.
+The docker images also come with the TSPLIB dataset installed and ready to use.
+If you require access to the London air quality dataset, please get in touch.
+
 However, if you require a local installation, you have been warned it is not always straight forward.
 
 ## Docker
