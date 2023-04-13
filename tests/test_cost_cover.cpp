@@ -169,6 +169,7 @@ TEST_P(CostCoverFixture, testShortestPathCostCover) {
         false,
         5,
         1,
+        true,
         std::filesystem::path(".logs"),
         60
     );

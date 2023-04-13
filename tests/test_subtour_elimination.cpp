@@ -188,6 +188,7 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
         sec_maxflow_mincut,
         sec_max_tailing_off_iterations,
         sec_sepafreq,
+        true,
         logger_dir,
         60
     );
@@ -322,6 +323,7 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
         sec_maxflow_mincut,
         sec_max_tailing_off_iterations,
         sec_sepafreq,
+        true,
         logger_dir,
         time_limit
     );

@@ -27,7 +27,7 @@ TEST_P(CycleCoverFixture, testCycleCover) {
     SCIPcreate(&scip);
     std::vector<PCTSPedge> heuristic_edges = {};
 
-    solvePrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, -1, BranchingStrategy::RELPSCOST, false, false, true, {}, name, false, 0.01, false, -1, 1, logs_dir, 60);
+    solvePrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, -1, BranchingStrategy::RELPSCOST, false, false, true, {}, name, false, 0.01, false, -1, 1, true, logs_dir, 60);
 
     int num_expected_cc_conss;
     int expected_nnodes = 1;

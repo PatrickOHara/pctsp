@@ -52,6 +52,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
     bool sec_maxflow_mincut,
     int sec_max_tailing_off_iterations,
     int sec_sepafreq,
+    bool simple_rules_only,
     std::filesystem::path solver_dir,
     float time_limit
 ) {
@@ -101,6 +102,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> pySolvePrizeCollectingTSP(
         sec_maxflow_mincut,
         sec_max_tailing_off_iterations,
         sec_sepafreq,
+        simple_rules_only,
         solver_dir,
         time_limit
     );

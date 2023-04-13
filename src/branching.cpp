@@ -111,8 +111,8 @@ void setStrongAtTreeTopBranchingStrategy(SCIP* scip, int strong_branching_max_de
 void setBranchingStrategy(SCIP* scip, unsigned int strategy, int max_depth) {
     switch (strategy) {
         case BranchingStrategy::RELPSCOST: {
-            SCIPincludeBranchruleRelpscost(scip);
             setRelpscostBranchingStrategy(scip);
+            break;
         }
         case BranchingStrategy::STRONG: {
             setStrongBranchingStrategy(scip);
