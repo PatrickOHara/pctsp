@@ -18,7 +18,11 @@ from tspwplib import (
     rename_node_attributes,
     rename_edge_attributes,
 )
-from ..constants import LP_GAP_IMPROVEMENT_THRESHOLD, SEC_MAX_TAILING_OFF_ITER, STRONG_BRANCHING_MAX_DEPTH
+from ..constants import (
+    LP_GAP_IMPROVEMENT_THRESHOLD,
+    SEC_MAX_TAILING_OFF_ITER,
+    STRONG_BRANCHING_MAX_DEPTH,
+)
 from ..vial import (
     AlgorithmName,
     BranchingStrategy,
@@ -318,16 +322,17 @@ def missing(
     )
     experiment = pctsp_lab.read_experiment_from_file(experiment_name)
     missing_vials = pctsp_lab.missing_vials(experiment, experiment.vials)
-    for vial in missing_vials:
-        if vial.data_config.dataset == DatasetName.londonaq:
-            print(vial.uuid, vial.data_config.graph_name, vial.data_config.quota)
-        elif vial.data_config.dataset == DatasetName.tspwplib:
+    for v in missing_vials:
+        if v.data_config.dataset == DatasetName.londonaq:
+            print(v.uuid, v.data_config.graph_name, v.data_config.quota)
+        elif v.data_config.dataset == DatasetName.tspwplib:
             print(
-                vial.uuid,
-                vial.data_config.graph_name,
-                vial.data_config.alpha,
-                vial.data_config.kappa,
+                v.uuid,
+                v.data_config.graph_name,
+                v.data_config.alpha,
+                v.data_config.kappa,
             )
+
 
 @app.command(name="vial")
 def vial(
@@ -339,6 +344,7 @@ def vial(
     londonaq_root: Path = LondonaqRootOption,
     oplib_root: Path = OPLibRootOption,
 ) -> None:
+    """Re-run a vial with the given UUID"""
     logger = get_pctsp_logger(f"pctsp-lab-{experiment_name.value}", level=logging_level)
     pctsp_lab = Lab(
         lab_dir / dataset.value,
@@ -355,6 +361,7 @@ def vial(
         raise ValueError(f"Vial with UUID {vial_uuid} not found.")
     result = pctsp_lab.run_experiment_from_vial_list(experiment, [vial_to_run])[0]
     print(result)
+
 
 @app.command()
 def nmissing(
@@ -383,8 +390,8 @@ def infeasible(
     )
     experiment = pctsp_lab.read_experiment_from_file(experiment_name)
     infeasible_vials = pctsp_lab.infeasible_vials(experiment, experiment.vials)
-    for vial in infeasible_vials:
-        print(vial.uuid)
+    for v in infeasible_vials:
+        print(v.uuid)
 
 
 @app.command()
@@ -446,7 +453,7 @@ def londonaq(
         remove_one_connected_components=True,
         shortest_path_cutoff=False,
     )
-    vial = Vial(
+    londonaq_vial = Vial(
         data_config=data_config,
         model_params=model_params,
         preprocessing=preprocessing,
@@ -455,7 +462,7 @@ def londonaq(
     experiment = Experiment(
         name=ExperimentName.onerun, vials=[], timestamp=datetime.now()
     )
-    experiment.vials.append(vial)
+    experiment.vials.append(londonaq_vial)
 
     # the lab has all the equipment needed to run the experiment
     pctsp_lab = Lab(
@@ -551,7 +558,7 @@ def tsplib(
         remove_one_connected_components=False,
         shortest_path_cutoff=False,
     )
-    vial = Vial(
+    tsplib_vial = Vial(
         data_config=data_config,
         model_params=model_params,
         preprocessing=preprocessing,
@@ -560,7 +567,7 @@ def tsplib(
     experiment = Experiment(
         name=ExperimentName.onerun, vials=[], timestamp=datetime.now()
     )
-    experiment.vials.append(vial)
+    experiment.vials.append(tsplib_vial)
 
     # the lab has all the equipment needed to run the experiment
     pctsp_lab = Lab(

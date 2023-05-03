@@ -240,13 +240,18 @@ def cost_cover_table(
     def get_cc_name(cc_disjoint_paths: bool, cc_shortest_paths: bool) -> str:
         if cc_disjoint_paths and not cc_shortest_paths:
             return "Cost cover disjoint paths"
-        elif not cc_disjoint_paths and cc_shortest_paths:
+        if not cc_disjoint_paths and cc_shortest_paths:
             return "Cost cover shortest paths"
-        elif not cc_disjoint_paths and not cc_shortest_paths:
+        if not cc_disjoint_paths and not cc_shortest_paths:
             return "No cost cover"
         raise ValueError("Cannot be both disjoint and shortest paths")
 
-    ccdf["cc_name"] = ccdf[["cost_cover_disjoint_paths", "cost_cover_shortest_path"]].apply(lambda x: get_cc_name(x.cost_cover_disjoint_paths, x.cost_cover_shortest_path), axis=1)
+    ccdf["cc_name"] = ccdf[
+        ["cost_cover_disjoint_paths", "cost_cover_shortest_path"]
+    ].apply(
+        lambda x: get_cc_name(x.cost_cover_disjoint_paths, x.cost_cover_shortest_path),
+        axis=1,
+    )
 
     gb_cols = []
     if dataset == DatasetName.tspwplib:
@@ -417,13 +422,13 @@ def generate_all_tables(
             )
         except FileNotFoundError as e:
             logger.warning(str(e))
-        
+
         try:
             logger.info("Generating cost_cover table on %s dataset", dataset.value)
             cost_cover_table(dataset, tables_dir, lab_dir=lab_dir)
         except FileNotFoundError as e:
             logger.warning(str(e))
-        
+
         try:
             logger.info("Generating heuristics table on %s dataset", dataset.value)
             heuristics_table(

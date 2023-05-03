@@ -4,13 +4,14 @@ import itertools
 from pathlib import Path
 from typing import List
 
-from tspwplib import (
-    Generation,
-    GraphName,
-    LondonaqGraphName,
-)
+from tspwplib import Generation, GraphName
 
-from ..constants import FOUR_HOURS, LP_GAP_IMPROVEMENT_THRESHOLD, SEC_MAX_TAILING_OFF_ITER, STRONG_BRANCHING_MAX_DEPTH
+from ..constants import (
+    FOUR_HOURS,
+    LP_GAP_IMPROVEMENT_THRESHOLD,
+    SEC_MAX_TAILING_OFF_ITER,
+    STRONG_BRANCHING_MAX_DEPTH,
+)
 from ..vial import (
     AlgorithmName,
     BranchingStrategy,
