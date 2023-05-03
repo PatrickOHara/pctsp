@@ -18,7 +18,7 @@ from tspwplib import (
     rename_node_attributes,
     rename_edge_attributes,
 )
-from ..constants import LP_GAP_IMPROVEMENT_THRESHOLD
+from ..constants import LP_GAP_IMPROVEMENT_THRESHOLD, SEC_MAX_TAILING_OFF_ITER, STRONG_BRANCHING_MAX_DEPTH
 from ..vial import (
     AlgorithmName,
     BranchingStrategy,
@@ -223,7 +223,7 @@ def nbatches(
     """Get the number of batches for the experiment given a batch size"""
     if batch_size <= 0:
         raise ValueError("Batch size must be greater than zero")
-    logger = get_pctsp_logger(f"tspwp-lab-{experiment_name.value}", level=logging_level)
+    logger = get_pctsp_logger(f"pctsp-lab-{experiment_name.value}", level=logging_level)
     pctsp_lab = Lab(
         lab_dir / dataset.value,
         logger=logger,
@@ -329,6 +329,32 @@ def missing(
                 vial.data_config.kappa,
             )
 
+@app.command(name="vial")
+def vial(
+    dataset: DatasetName,
+    experiment_name: ExperimentName,
+    vial_uuid: str,
+    lab_dir: Path = LabDirOption,
+    logging_level: int = LoggingLevelOption,
+    londonaq_root: Path = LondonaqRootOption,
+    oplib_root: Path = OPLibRootOption,
+) -> None:
+    logger = get_pctsp_logger(f"pctsp-lab-{experiment_name.value}", level=logging_level)
+    pctsp_lab = Lab(
+        lab_dir / dataset.value,
+        logger=logger,
+        londonaq_root=londonaq_root,
+        oplib_root=oplib_root,
+    )
+    experiment = pctsp_lab.read_experiment_from_file(experiment_name)
+    vial_to_run = None
+    for v in experiment.vials:
+        if str(v.uuid) == vial_uuid:
+            vial_to_run = v
+    if not vial_to_run:
+        raise ValueError(f"Vial with UUID {vial_uuid} not found.")
+    result = pctsp_lab.run_experiment_from_vial_list(experiment, [vial_to_run])[0]
+    print(result)
 
 @app.command()
 def nmissing(
@@ -403,8 +429,8 @@ def londonaq(
         is_relaxation=algorithm_name in RELAXATION_ALGORITHMS,
     )
     if is_exact:
-        model_params.branching_strategy = BranchingStrategy.RELPSCOST
-        model_params.branching_max_depth = -1
+        model_params.branching_strategy = BranchingStrategy.STRONG_AT_TREE_TOP
+        model_params.branching_max_depth = STRONG_BRANCHING_MAX_DEPTH
         model_params.cost_cover_disjoint_paths = cost_cover_disjoint_paths
         model_params.cost_cover_shortest_path = cost_cover_shortest_path
         model_params.sec_disjoint_tour = True
@@ -452,7 +478,7 @@ def londonaq(
 def tsplib(
     algorithm_name: AlgorithmName,
     alpha: int = AlphaOption,
-    branching_max_depth: int = 1,
+    branching_max_depth: int = STRONG_BRANCHING_MAX_DEPTH,
     collapse_paths: bool = CollapsePathsOption,
     cost_cover_disjoint_paths: bool = True,
     cost_cover_shortest_path: bool = False,
@@ -467,7 +493,7 @@ def tsplib(
     path_depth_limit: int = PathDepthLimitOption,
     remove_leaves: bool = RemoveLeavesOption,
     sec_lp_gap_improvement_threshold: float = LP_GAP_IMPROVEMENT_THRESHOLD,
-    sec_max_tailing_off_iterations: int = 5,
+    sec_max_tailing_off_iterations: int = SEC_MAX_TAILING_OFF_ITER,
     step_size: int = StepSizeOption,
     time_limit: float = TimeLimitOption,
 ) -> None:

@@ -12,6 +12,7 @@ const unsigned int BranchingStrategy::RELPSCOST = 0;
 const unsigned int BranchingStrategy::STRONG = 1;
 const unsigned int BranchingStrategy::STRONG_AT_TREE_TOP = 2;
 const unsigned int BranchingStrategy::PSCOST = 3;
+const unsigned int BranchingStrategy::DEFAULT = 4;
 
 
 void includeBranchRules(SCIP* scip) {

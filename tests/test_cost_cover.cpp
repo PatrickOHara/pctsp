@@ -91,7 +91,7 @@ TEST_P(CostCoverFixture, testPathCostCover) {
     CostCoverEventHandler* cc_handler = dynamic_cast<CostCoverEventHandler*>(SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str()));
     int num_expected_cc_conss;
     int num_actual_cc_conss = cc_handler->getNumConssAdded();
-    auto opt_value = SCIPsolGetOrigObj(SCIPgetBestSol(scip));
+    auto opt_value = SCIPgetPrimalbound(scip);
     switch (test_case) {
         case GraphType::GRID8: {
             // vertices 4, 5, 6, 7 are all above the cost limit
@@ -178,7 +178,7 @@ TEST_P(CostCoverFixture, testShortestPathCostCover) {
     CostCoverEventHandler* cc_handler = dynamic_cast<CostCoverEventHandler*>(SCIPfindObjEventhdlr(scip, SHORTEST_PATH_COST_COVER_NAME.c_str()));
     int num_expected_cc_conss;
     int num_actual_cc_conss = cc_handler->getNumConssAdded();
-    auto opt_value = SCIPsolGetOrigObj(SCIPgetBestSol(scip));
+    auto opt_value = SCIPgetPrimalbound(scip);
     switch (test_case) {
         case GraphType::COMPLETE5:
         case GraphType::GRID8: {

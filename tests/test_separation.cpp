@@ -94,6 +94,9 @@ TEST(TestSeparation, testGetSolutionGraph) {
         auto target = boost::target(edge, graph);
         EXPECT_TRUE(boost::edge(source, target, solution_graph).second);
     }
+    for (auto & [key, value] : edge_variable_map) {
+        SCIPreleaseVar(scip, &value);
+    }
     SCIPfree(&scip);
 }
 

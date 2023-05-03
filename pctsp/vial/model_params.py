@@ -64,6 +64,7 @@ class BranchingStrategy(IntEnum):
     RELPSCOST = 0
     STRONG = 1
     STRONG_AT_TREE_TOP = 2
+    DEFAULT = 4
 
 
 # pylint: disable=abstract-method,too-many-instance-attributes

@@ -12,6 +12,7 @@ import typer
 from ..algorithms import SummaryStats
 from ..constants import PCTSP_SUMMARY_STATS_YAML
 from ..lab import Lab
+from ..utils import get_pctsp_logger
 from ..vial import (
     DatasetName,
     ExperimentName,
@@ -104,3 +105,24 @@ def write_branch_cut_experiment_to_csv(
         / f"{dataset.value}_{experiment_name.value}.csv"
     )
     experiment_df.to_csv(filename)
+
+@csv_app.command(name="all")
+def write_all_experiments_to_csv(
+    lab_dir: Path = LabDirOption,
+) -> None:
+    logger = get_pctsp_logger("write-all-experiment-csv")
+    for dataset in DatasetName:
+        try:
+            write_branch_cut_experiment_to_csv(dataset, ExperimentName.cost_cover, lab_dir)
+        except FileNotFoundError as e:
+            logger.warning(str(e))
+
+        try:
+            write_branch_cut_experiment_to_csv(dataset, ExperimentName.tailing_off, lab_dir)
+        except FileNotFoundError as e:
+            logger.warning(str(e))
+
+        try:
+            write_heuristics_experiment_to_csv(dataset, ExperimentName.compare_heuristics, lab_dir)
+        except FileNotFoundError as e:
+            logger.warning(str(e))

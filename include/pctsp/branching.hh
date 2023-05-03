@@ -11,6 +11,7 @@ struct BranchingStrategy {
     static const unsigned int RELPSCOST;
     static const unsigned int STRONG;
     static const unsigned int STRONG_AT_TREE_TOP;
+    static const unsigned int DEFAULT;
 };
 
 struct BRANCHING_RULE_NAMES {

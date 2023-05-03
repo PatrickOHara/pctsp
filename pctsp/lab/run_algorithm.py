@@ -228,6 +228,7 @@ def run_algorithm(
             time_limit=vial.model_params.time_limit,
         )
         logger.info("Status of model: %s", model.getStatus())
+        model.freeProb()
 
     else:
         raise NotImplementedError(
