@@ -4,7 +4,7 @@ from typing import List, Optional
 from tspwplib import EdgeWeightType, LondonaqGraphName
 from tspwplib.types import GraphName
 
-LONDONAQ_QUOTA_LIST: List[int] = [1000, 2000, 3000, 4000, 5000, 6000]
+LONDONAQ_QUOTA_LIST: List[int] = [1000, 2000, 3000, 4000, 5000]
 LONDONAQ_GRAPH_NAME_LIST: List[LondonaqGraphName] = [
     LondonaqGraphName.laqbbA,
     LondonaqGraphName.laqidA,
@@ -25,4 +25,7 @@ TSPLIB_GRAPH_NAME_LIST: List[Optional[GraphName]] = [
     GraphName.tsp225,
     GraphName.a280,
     GraphName.pr439,
+    GraphName.rat575,
+    GraphName.gr666,
+    GraphName.pr1002,
 ]

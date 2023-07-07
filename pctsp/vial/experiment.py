@@ -12,6 +12,7 @@ class ExperimentName(str, Enum):
 
     # pylint: disable=invalid-name
 
+    baseline = "baseline"
     cost_cover = "cost_cover"
     disjoint_tours_vs_heuristics = "disjoint_tours_vs_heuristics"
     dryrun = "dryrun"

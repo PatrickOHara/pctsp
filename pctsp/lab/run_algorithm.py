@@ -11,6 +11,7 @@ from tspwplib import (
     DisjointPaths,
     EdgeFunctionName,
     EdgesNotAdjacentException,
+    NotSimpleException,
     SimpleEdgeFunction,
     SimpleEdgeList,
     Vertex,
@@ -241,7 +242,7 @@ def run_algorithm(
     try:
         edge_list = remove_self_loops_from_edge_list(edge_list)
         edge_list = order_edge_list(edge_list)
-    except EdgesNotAdjacentException as exc:
+    except (EdgesNotAdjacentException, NotSimpleException) as exc:
         warning_message = "%s Ignore this warning if the solver stopped early."
         warning_message += "It means no feasible solution was found."
         logger.warning(warning_message, exc)

@@ -219,3 +219,58 @@ def cost_cover(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
     ]
     preprocessing_list = product_of_preprocessing([False], [False], [True])
     return product_of_vials(data_config_list, model_params_list, preprocessing_list)
+
+
+def baseline(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
+    """Baseline B&C algorithm with Extension and Collapse heuristic"""
+    time_limit = FOUR_HOURS
+    depth_limit = None
+    step = 1
+    collapse_paths = False
+    heuristic = AlgorithmName.bfs_extension_collapse
+
+    if dataset_name == DatasetName.tspwplib:
+        data_config_list = product_of_tspwplib_data_config(
+            dataset_root,
+            params.TSPLIB_ALPHA_LIST,
+            params.TSPLIB_KAPPA_LIST,
+            list(Generation),
+            params.TSPLIB_GRAPH_NAME_LIST,
+            params.TSPLIB_COST_FUNCTIONS,
+        )
+    elif dataset_name == DatasetName.londonaq:
+        data_config_list = product_of_londonaq_data_config(
+            dataset_root,
+            params.LONDONAQ_QUOTA_LIST,
+            params.LONDONAQ_GRAPH_NAME_LIST,
+        )
+    else:
+        raise ValueError(
+            f"{dataset_name} is not a supported dataset for experiment 'cost_cover'"
+        )
+    branching_strategy = BranchingStrategy.STRONG_AT_TREE_TOP
+
+    baseline_params = ModelParams(
+        algorithm=AlgorithmName.solve_pctsp,
+        branching_max_depth=STRONG_BRANCHING_MAX_DEPTH,
+        branching_strategy=branching_strategy,
+        collapse_paths=collapse_paths,
+        cost_cover_disjoint_paths=False,
+        cost_cover_shortest_path=False,
+        heuristic=heuristic,
+        is_exact=True,
+        is_heuristic=False,
+        is_relaxation=False,
+        path_depth_limit=depth_limit,
+        sec_disjoint_tour=True,
+        sec_lp_gap_improvement_threshold=LP_GAP_IMPROVEMENT_THRESHOLD,
+        sec_maxflow_mincut=True,
+        sec_max_tailing_off_iterations=SEC_MAX_TAILING_OFF_ITER,
+        sec_sepafreq=1,
+        step_size=step,
+        time_limit=time_limit,
+    )
+
+    model_params_list = [baseline_params]
+    preprocessing_list = product_of_preprocessing([False], [False], [True])
+    return product_of_vials(data_config_list, model_params_list, preprocessing_list)

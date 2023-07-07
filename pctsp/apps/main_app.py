@@ -45,6 +45,7 @@ from ..compare import (
     simple_branch_cut,
     tailing_off,
 )
+from ..compare.exact_experiment import baseline
 from ..lab import Lab, get_nbatches
 from ..utils import get_pctsp_logger
 from .options import (
@@ -81,6 +82,7 @@ app.add_typer(utils_app)
 
 
 tsplib_experiment_lookup = {
+    ExperimentName.baseline: baseline,
     ExperimentName.compare_heuristics: compare_heuristics,
     ExperimentName.cost_cover: cost_cover,
     ExperimentName.disjoint_tours_vs_heuristics: disjoint_tours_vs_heuristics,
@@ -90,6 +92,7 @@ tsplib_experiment_lookup = {
 }
 
 londonaq_experiment_lookup = {
+    ExperimentName.baseline: baseline,
     ExperimentName.compare_heuristics: compare_heuristics,
     ExperimentName.cost_cover: cost_cover,
     ExperimentName.dryrun: dryrun,
@@ -206,12 +209,10 @@ def batch(
         londonaq_root=londonaq_root,
         oplib_root=oplib_root,
     )
-    experiment = pctsp_lab.read_experiment_from_file(experiment_name)
+    experiment = pctsp_lab.read_experiment_from_file(experiment_name, only_missing_results=only_missing_results)
 
     # run the experiment - only the batched vials are run
-    pctsp_lab.run_batch(
-        experiment, batch_start, batch_size, only_missing_results=only_missing_results
-    )
+    pctsp_lab.run_batch(experiment, batch_start, batch_size)
 
 
 @app.command()
@@ -262,14 +263,9 @@ def slurm(
         londonaq_root=londonaq_root,
         oplib_root=oplib_root,
     )
-    experiment = pctsp_lab.read_experiment_from_file(experiment_name)
+    experiment = pctsp_lab.read_experiment_from_file(experiment_name, only_missing_results=only_missing_results)
     experiment_root = pctsp_lab.get_experiment_dir(experiment_name)
     num_batches = get_nbatches(len(experiment.vials), batch_size)
-    if only_missing_results:
-        num_batches = get_nbatches(
-            len(pctsp_lab.missing_vials(experiment, experiment.vials)), batch_size
-        )
-
     slurm_filepath = experiment_root / f"{experiment_name.value}.slurm"
     output_filename = f"joboutput_{experiment_name.value}_%j.out"
     error_filename = f"joboutput_{experiment_name.value}_%j.err"
@@ -332,6 +328,8 @@ def missing(
                 v.data_config.alpha,
                 v.data_config.kappa,
             )
+    missing_experiment = Experiment(name=experiment.name, vials=missing_vials, timestamp=experiment.timestamp)
+    pctsp_lab.write_experiment_to_file(missing_experiment, only_missing_results=True)
 
 
 @app.command(name="vial")
