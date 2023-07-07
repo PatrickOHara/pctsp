@@ -18,6 +18,21 @@ pctsp londonaq solve_pctsp --graph-name laqkxA
 
 Note one can use the `--help` option at any point to get support for the commands.
 
+## Docker
+
+For ease of use, why not use our pre-built docker image with the TSPLIB dataset included to run some algorithms?
+First you will need to pull the latest docker image:
+
+```bash
+docker pull patrickohara/pctsp:latest
+```
+
+For example, to run Suurballe's heuristic on the TSPLIB st70 instance:
+
+```bash
+docker run patrickohara/pctsp:latest pctsp tsplib suurballes_heuristic --graph-name st70
+```
+
 ## Batching & Slurm
 
 To make pushing hundreds or thousands of instances to Slurm managed clusters easier,
