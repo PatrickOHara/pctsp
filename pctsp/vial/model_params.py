@@ -5,6 +5,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 from tspwplib.types import StrEnumMixin
 
+
 # pylint: disable=invalid-name
 class AlgorithmName(StrEnumMixin, str, Enum):
     """Names of valid algorithms for PCTSP"""

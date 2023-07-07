@@ -92,7 +92,7 @@ def tailing_off(dataset_name, dataset_root: Path) -> List[Vial]:
     tailing_off_iter = [-1, SEC_MAX_TAILING_OFF_ITER, 10]
     gap_threshold = [LP_GAP_IMPROVEMENT_THRESHOLD]
     model_params_list = []
-    for (depth, strat, tail_iter, gap) in itertools.product(
+    for depth, strat, tail_iter, gap in itertools.product(
         strong_depth, strategy, tailing_off_iter, gap_threshold
     ):
         model_params_list.append(

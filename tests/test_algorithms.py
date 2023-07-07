@@ -94,7 +94,7 @@ def test_pctsp_with_heuristic(tspwplib_graph, root, logger_dir, time_limit):
         total_prize_of_tour(nx.get_node_attributes(tspwplib_graph, "prize"), tour)
         >= quota
     )
-    for (u, v) in edge_list:
+    for u, v in edge_list:
         assert tspwplib_graph.has_edge(u, v)
     for i in range(len(edge_list) - 1):
         assert edge_list[i][1] == edge_list[i + 1][0]

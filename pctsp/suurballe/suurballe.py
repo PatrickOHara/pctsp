@@ -302,7 +302,7 @@ def suurballe_shortest_vertex_disjoint_paths(
             T.labeled[v] = True  # make v labeled
 
             # process edges incident to v
-            for (u, w) in T.edges_incident_to_vertex[v]:
+            for u, w in T.edges_incident_to_vertex[v]:
                 process(T, u, w, v)
 
             # denoted x in the paper
@@ -426,7 +426,7 @@ def scan_parent(T, x, v):
     v : node
         Node which causes edge (u,w) to be processed.
     """
-    for (u, w) in T.edges_incident_to_vertex[x]:
+    for u, w in T.edges_incident_to_vertex[x]:
         # u and w are in different subtrees so process edge
         if u != x and is_ancestor(T, v, u):
             process(T, u, w, v)
