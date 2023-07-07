@@ -209,7 +209,9 @@ def batch(
         londonaq_root=londonaq_root,
         oplib_root=oplib_root,
     )
-    experiment = pctsp_lab.read_experiment_from_file(experiment_name, only_missing_results=only_missing_results)
+    experiment = pctsp_lab.read_experiment_from_file(
+        experiment_name, only_missing_results=only_missing_results
+    )
 
     # run the experiment - only the batched vials are run
     pctsp_lab.run_batch(experiment, batch_start, batch_size)
@@ -263,7 +265,9 @@ def slurm(
         londonaq_root=londonaq_root,
         oplib_root=oplib_root,
     )
-    experiment = pctsp_lab.read_experiment_from_file(experiment_name, only_missing_results=only_missing_results)
+    experiment = pctsp_lab.read_experiment_from_file(
+        experiment_name, only_missing_results=only_missing_results
+    )
     experiment_root = pctsp_lab.get_experiment_dir(experiment_name)
     num_batches = get_nbatches(len(experiment.vials), batch_size)
     slurm_filepath = experiment_root / f"{experiment_name.value}.slurm"
@@ -328,7 +332,9 @@ def missing(
                 v.data_config.alpha,
                 v.data_config.kappa,
             )
-    missing_experiment = Experiment(name=experiment.name, vials=missing_vials, timestamp=experiment.timestamp)
+    missing_experiment = Experiment(
+        name=experiment.name, vials=missing_vials, timestamp=experiment.timestamp
+    )
     pctsp_lab.write_experiment_to_file(missing_experiment, only_missing_results=True)
 
 

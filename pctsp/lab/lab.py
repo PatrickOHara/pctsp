@@ -224,10 +224,14 @@ class Lab:
         vial_dir.mkdir(exist_ok=True, parents=False)
         return vial_dir
 
-    def read_experiment_from_file(self, experiment_name: ExperimentName, only_missing_results: bool = False) -> Experiment:
+    def read_experiment_from_file(
+        self, experiment_name: ExperimentName, only_missing_results: bool = False
+    ) -> Experiment:
         """Read experiment from local json file"""
         if only_missing_results:
-            filepath = self.get_experiment_dir(experiment_name) / (MISSING_EXPERIMENT_PREFIX + EXPERIMENT_FILENAME)
+            filepath = self.get_experiment_dir(experiment_name) / (
+                MISSING_EXPERIMENT_PREFIX + EXPERIMENT_FILENAME
+            )
         else:
             filepath = self.get_experiment_dir(experiment_name) / EXPERIMENT_FILENAME
         if not filepath.exists():
@@ -237,10 +241,14 @@ class Lab:
             experiment_dict = json.load(json_file)
             return Experiment(**experiment_dict)
 
-    def write_experiment_to_file(self, experiment: Experiment, only_missing_results: bool = False) -> None:
+    def write_experiment_to_file(
+        self, experiment: Experiment, only_missing_results: bool = False
+    ) -> None:
         """Write experiment to local file"""
         if only_missing_results:
-            filepath = self.get_experiment_dir(experiment.name) / (MISSING_EXPERIMENT_PREFIX + EXPERIMENT_FILENAME)
+            filepath = self.get_experiment_dir(experiment.name) / (
+                MISSING_EXPERIMENT_PREFIX + EXPERIMENT_FILENAME
+            )
         else:
             filepath = self.get_experiment_dir(experiment.name) / EXPERIMENT_FILENAME
         self.logger.info("Writing experiment to %s", filepath)
