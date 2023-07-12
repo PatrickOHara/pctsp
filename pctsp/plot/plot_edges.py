@@ -37,11 +37,11 @@ def edge_scatter(
     ).flatten()
 
     # set the cosmetric params
-    edge_cosmetics = dict(
-        line=go.scatter.Line(width=0.5, color="#888"),
-        hoverinfo="none",
-        mode="lines",
-    )
+    edge_cosmetics = {
+        "line": go.scatter.Line(width=0.5, color="#888"),
+        "hoverinfo": "none",
+        "mode": "lines",
+    }
     edge_cosmetics.update(kwargs)
 
     # return a scatter line trace

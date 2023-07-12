@@ -2,7 +2,6 @@
 
 import networkx as nx
 from tspwplib import (
-    EdgeWeightType,
     build_path_to_oplib_instance,
     ProfitsProblem,
     BaseTSP,

@@ -31,12 +31,12 @@ def flat_dict_from_vial(vial: Vial) -> Dict[str, Any]:
     Returns:
         Dictionary of keys and values where values are not dicts
     """
-    vial_dict = dict(uuid=vial.uuid)
-    not_flat_dict = dict(
-        data_config=vial.data_config.dict(),
-        model_params=vial.model_params.dict(),
-        preprocessing=vial.preprocessing.dict(),
-    )
+    vial_dict = {"uuid": vial.uuid}
+    not_flat_dict = {
+        "data_config": vial.data_config.dict(),
+        "model_params": vial.model_params.dict(),
+        "preprocessing": vial.preprocessing.dict(),
+    }
     for value_dict in not_flat_dict.values():
         for field, value in value_dict.items():
             vial_dict[field] = value

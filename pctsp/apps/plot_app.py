@@ -203,5 +203,5 @@ def update_layout_heuristic(
         yaxis_title="GAP",
         plot_bgcolor="rgba(0, 0, 0, 0)",
         paper_bgcolor="rgba(0, 0, 0, 0)",
-        margin=dict(l=10, r=10, b=10, t=10, pad=0),
+        margin={"l": 10, "r": 10, "b": 10, "t": 10, "pad": 0},
     )

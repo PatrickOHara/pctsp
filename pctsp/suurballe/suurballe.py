@@ -335,7 +335,7 @@ def process(T, u, w, v):
         T.edges_incident_to_vertex[u].remove((u, w))
         T.edges_incident_to_vertex[w].remove((u, w))
         if T.tentative_distance[v] == sys.maxsize:
-            raise Exception()
+            raise ValueError()
         if T.tentative_distance[v] + T.transformed_cost[u][w] < T.tentative_distance[w]:
             T.tentative_distance[w] = T.tentative_distance[v] + T.transformed_cost[u][w]
             T.tentative_predecessor[w] = u
