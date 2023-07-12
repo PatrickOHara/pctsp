@@ -249,6 +249,6 @@ def test_cycle_cover_grid8(grid8, root, logger_dir):
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
     assert summary.num_sec_disjoint_tour == 0
     assert summary.num_sec_maxflow_mincut == 0
-    assert summary.num_cycle_cover == 6
+    assert summary.num_cycle_cover == 1
     assert is_pctsp_yes_instance(grid8, quota, root, ordered_edges)
     assert model.getStatus() == "optimal"

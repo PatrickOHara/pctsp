@@ -76,17 +76,17 @@ class ModelParams(BaseModel):
     is_exact: bool
     is_heuristic: bool
     is_relaxation: bool
-    branching_strategy: Optional[BranchingStrategy]
-    branching_max_depth: Optional[int]
-    collapse_paths: Optional[bool]
-    cost_cover_disjoint_paths: Optional[bool]
-    cost_cover_shortest_path: Optional[bool]
-    heuristic: Optional[AlgorithmName]
-    path_depth_limit: Optional[int]
-    sec_disjoint_tour: Optional[bool]
-    sec_lp_gap_improvement_threshold: Optional[float]
-    sec_maxflow_mincut: Optional[bool]
-    sec_max_tailing_off_iterations: Optional[int]
-    sec_sepafreq: Optional[int]
-    step_size: Optional[int]
-    time_limit: Optional[float]
+    branching_strategy: Optional[BranchingStrategy] = None
+    branching_max_depth: Optional[int] = None
+    collapse_paths: Optional[bool] = None
+    cost_cover_disjoint_paths: Optional[bool] = None
+    cost_cover_shortest_path: Optional[bool] = None
+    heuristic: Optional[AlgorithmName] = None
+    path_depth_limit: Optional[int] = None
+    sec_disjoint_tour: Optional[bool] = None
+    sec_lp_gap_improvement_threshold: Optional[float] = None
+    sec_maxflow_mincut: Optional[bool] = None
+    sec_max_tailing_off_iterations: Optional[int] = None
+    sec_sepafreq: Optional[int] = None
+    step_size: Optional[int] = None
+    time_limit: Optional[float] = None
