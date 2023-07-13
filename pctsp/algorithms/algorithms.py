@@ -43,6 +43,7 @@ def solve_pctsp(
     sec_maxflow_mincut: bool = True,
     sec_max_tailing_off_iterations: int = -1,
     sec_sepafreq: int = 1,
+    simple_rules_only: bool = False,
     time_limit: float = FOUR_HOURS,
 ) -> EdgeList:
     """Solve Prize-collecting TSP with branch and cut
@@ -61,6 +62,7 @@ def solve_pctsp(
         solver_dir: Directory to store logs and metrics
         sec_disjoint_tour: True if subtour elimination constraints using disjoint tours are used
         sec_maxflow_mincut: True if using the maxflow mincut SEC separation algorithm
+        simple_rules_only: If true, use simple branching, node selection, and separation rules
         time_limit: Stop searching after this many seconds
 
     Returns:
@@ -101,6 +103,7 @@ def solve_pctsp(
         sec_maxflow_mincut,
         sec_max_tailing_off_iterations,
         sec_sepafreq,
+        simple_rules_only,
         solver_dir,
         time_limit,
     )

@@ -11,3 +11,5 @@ SCIP_BOUNDS_CSV: str = "lower_upper_bounds.csv"
 SCIP_LOGS_TXT: str = "scip_logs.txt"
 SCIP_NODE_STATS_CSV: str = "scip_node_stats.csv"
 PCTSP_SUMMARY_STATS_YAML: str = "pctsp_summary_stats.yaml"
+SEC_MAX_TAILING_OFF_ITER = 5
+STRONG_BRANCHING_MAX_DEPTH = 1

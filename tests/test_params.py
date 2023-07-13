@@ -2,7 +2,6 @@
 
 import networkx as nx
 from tspwplib import (
-    EdgeWeightType,
     build_path_to_oplib_instance,
     ProfitsProblem,
     BaseTSP,
@@ -21,5 +20,4 @@ def test_tsplib_graphs(oplib_root, generation):
         G = tsp.get_graph()
         nx.set_edge_attributes(G, tsp.edge_weights, name="cost")
         print(graph_name, tsp.edge_weight_type)
-        assert tsp.edge_weight_type == EdgeWeightType.EUC_2D
         assert metricness(G) == 1

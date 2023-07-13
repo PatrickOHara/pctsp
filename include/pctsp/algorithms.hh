@@ -182,6 +182,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     bool sec_maxflow_mincut = true,
     int sec_max_tailing_off_iterations = -1,
     int sec_sepafreq = 1,
+    bool simple_rules_only = true,
     std::filesystem::path solver_dir = "./pctsp",
     float time_limit = 14400
 );
@@ -199,7 +200,8 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     double sec_lp_gap_improvement_threshold = 0.01,
     bool sec_maxflow_mincut = true,
     int sec_max_tailing_off_iterations = -1,
-    int sec_sepafreq = 1
+    int sec_sepafreq = 1,
+    bool simple_rules_only = true
 );
 
 std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
@@ -216,7 +218,8 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     double sec_lp_gap_improvement_threshold = 0.01,
     bool sec_maxflow_mincut = true,
     int sec_max_tailing_off_iterations = -1,
-    int sec_sepafreq = 1
+    int sec_sepafreq = 1,
+    bool simple_rules_only = true
 );
 
 #endif

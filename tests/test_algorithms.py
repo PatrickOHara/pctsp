@@ -94,7 +94,7 @@ def test_pctsp_with_heuristic(tspwplib_graph, root, logger_dir, time_limit):
         total_prize_of_tour(nx.get_node_attributes(tspwplib_graph, "prize"), tour)
         >= quota
     )
-    for (u, v) in edge_list:
+    for u, v in edge_list:
         assert tspwplib_graph.has_edge(u, v)
     for i in range(len(edge_list) - 1):
         assert edge_list[i][1] == edge_list[i + 1][0]
@@ -249,6 +249,6 @@ def test_cycle_cover_grid8(grid8, root, logger_dir):
     ordered_edges = reorder_edge_list_from_root(order_edge_list(edge_list), root)
     assert summary.num_sec_disjoint_tour == 0
     assert summary.num_sec_maxflow_mincut == 0
-    assert summary.num_cycle_cover == 6
+    assert summary.num_cycle_cover == 1
     assert is_pctsp_yes_instance(grid8, quota, root, ordered_edges)
     assert model.getStatus() == "optimal"

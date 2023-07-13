@@ -18,7 +18,11 @@ from tspwplib import (
     rename_node_attributes,
     rename_edge_attributes,
 )
-from ..constants import LP_GAP_IMPROVEMENT_THRESHOLD
+from ..constants import (
+    LP_GAP_IMPROVEMENT_THRESHOLD,
+    SEC_MAX_TAILING_OFF_ITER,
+    STRONG_BRANCHING_MAX_DEPTH,
+)
 from ..vial import (
     AlgorithmName,
     BranchingStrategy,
@@ -41,6 +45,7 @@ from ..compare import (
     simple_branch_cut,
     tailing_off,
 )
+from ..compare.exact_experiment import baseline
 from ..lab import Lab, get_nbatches
 from ..utils import get_pctsp_logger
 from .options import (
@@ -77,6 +82,7 @@ app.add_typer(utils_app)
 
 
 tsplib_experiment_lookup = {
+    ExperimentName.baseline: baseline,
     ExperimentName.compare_heuristics: compare_heuristics,
     ExperimentName.cost_cover: cost_cover,
     ExperimentName.disjoint_tours_vs_heuristics: disjoint_tours_vs_heuristics,
@@ -86,6 +92,7 @@ tsplib_experiment_lookup = {
 }
 
 londonaq_experiment_lookup = {
+    ExperimentName.baseline: baseline,
     ExperimentName.compare_heuristics: compare_heuristics,
     ExperimentName.cost_cover: cost_cover,
     ExperimentName.dryrun: dryrun,
@@ -202,12 +209,12 @@ def batch(
         londonaq_root=londonaq_root,
         oplib_root=oplib_root,
     )
-    experiment = pctsp_lab.read_experiment_from_file(experiment_name)
+    experiment = pctsp_lab.read_experiment_from_file(
+        experiment_name, only_missing_results=only_missing_results
+    )
 
     # run the experiment - only the batched vials are run
-    pctsp_lab.run_batch(
-        experiment, batch_start, batch_size, only_missing_results=only_missing_results
-    )
+    pctsp_lab.run_batch(experiment, batch_start, batch_size)
 
 
 @app.command()
@@ -223,7 +230,7 @@ def nbatches(
     """Get the number of batches for the experiment given a batch size"""
     if batch_size <= 0:
         raise ValueError("Batch size must be greater than zero")
-    logger = get_pctsp_logger(f"tspwp-lab-{experiment_name.value}", level=logging_level)
+    logger = get_pctsp_logger(f"pctsp-lab-{experiment_name.value}", level=logging_level)
     pctsp_lab = Lab(
         lab_dir / dataset.value,
         logger=logger,
@@ -258,14 +265,11 @@ def slurm(
         londonaq_root=londonaq_root,
         oplib_root=oplib_root,
     )
-    experiment = pctsp_lab.read_experiment_from_file(experiment_name)
+    experiment = pctsp_lab.read_experiment_from_file(
+        experiment_name, only_missing_results=only_missing_results
+    )
     experiment_root = pctsp_lab.get_experiment_dir(experiment_name)
     num_batches = get_nbatches(len(experiment.vials), batch_size)
-    if only_missing_results:
-        num_batches = get_nbatches(
-            len(pctsp_lab.missing_vials(experiment, experiment.vials)), batch_size
-        )
-
     slurm_filepath = experiment_root / f"{experiment_name.value}.slurm"
     output_filename = f"joboutput_{experiment_name.value}_%j.out"
     error_filename = f"joboutput_{experiment_name.value}_%j.err"
@@ -318,16 +322,49 @@ def missing(
     )
     experiment = pctsp_lab.read_experiment_from_file(experiment_name)
     missing_vials = pctsp_lab.missing_vials(experiment, experiment.vials)
-    for vial in missing_vials:
-        if vial.data_config.dataset == DatasetName.londonaq:
-            print(vial.uuid, vial.data_config.graph_name, vial.data_config.quota)
-        elif vial.data_config.dataset == DatasetName.tspwplib:
+    for v in missing_vials:
+        if v.data_config.dataset == DatasetName.londonaq:
+            print(v.uuid, v.data_config.graph_name, v.data_config.quota)
+        elif v.data_config.dataset == DatasetName.tspwplib:
             print(
-                vial.uuid,
-                vial.data_config.graph_name,
-                vial.data_config.alpha,
-                vial.data_config.kappa,
+                v.uuid,
+                v.data_config.graph_name,
+                v.data_config.alpha,
+                v.data_config.kappa,
             )
+    missing_experiment = Experiment(
+        name=experiment.name, vials=missing_vials, timestamp=experiment.timestamp
+    )
+    pctsp_lab.write_experiment_to_file(missing_experiment, only_missing_results=True)
+
+
+@app.command(name="vial")
+def vial(
+    dataset: DatasetName,
+    experiment_name: ExperimentName,
+    vial_uuid: str,
+    lab_dir: Path = LabDirOption,
+    logging_level: int = LoggingLevelOption,
+    londonaq_root: Path = LondonaqRootOption,
+    oplib_root: Path = OPLibRootOption,
+) -> None:
+    """Re-run a vial with the given UUID"""
+    logger = get_pctsp_logger(f"pctsp-lab-{experiment_name.value}", level=logging_level)
+    pctsp_lab = Lab(
+        lab_dir / dataset.value,
+        logger=logger,
+        londonaq_root=londonaq_root,
+        oplib_root=oplib_root,
+    )
+    experiment = pctsp_lab.read_experiment_from_file(experiment_name)
+    vial_to_run = None
+    for v in experiment.vials:
+        if str(v.uuid) == vial_uuid:
+            vial_to_run = v
+    if not vial_to_run:
+        raise ValueError(f"Vial with UUID {vial_uuid} not found.")
+    result = pctsp_lab.run_experiment_from_vial_list(experiment, [vial_to_run])[0]
+    print(result)
 
 
 @app.command()
@@ -357,8 +394,8 @@ def infeasible(
     )
     experiment = pctsp_lab.read_experiment_from_file(experiment_name)
     infeasible_vials = pctsp_lab.infeasible_vials(experiment, experiment.vials)
-    for vial in infeasible_vials:
-        print(vial.uuid)
+    for v in infeasible_vials:
+        print(v.uuid)
 
 
 @app.command()
@@ -403,8 +440,8 @@ def londonaq(
         is_relaxation=algorithm_name in RELAXATION_ALGORITHMS,
     )
     if is_exact:
-        model_params.branching_strategy = BranchingStrategy.RELPSCOST
-        model_params.branching_max_depth = -1
+        model_params.branching_strategy = BranchingStrategy.STRONG_AT_TREE_TOP
+        model_params.branching_max_depth = STRONG_BRANCHING_MAX_DEPTH
         model_params.cost_cover_disjoint_paths = cost_cover_disjoint_paths
         model_params.cost_cover_shortest_path = cost_cover_shortest_path
         model_params.sec_disjoint_tour = True
@@ -420,7 +457,7 @@ def londonaq(
         remove_one_connected_components=True,
         shortest_path_cutoff=False,
     )
-    vial = Vial(
+    londonaq_vial = Vial(
         data_config=data_config,
         model_params=model_params,
         preprocessing=preprocessing,
@@ -429,7 +466,7 @@ def londonaq(
     experiment = Experiment(
         name=ExperimentName.onerun, vials=[], timestamp=datetime.now()
     )
-    experiment.vials.append(vial)
+    experiment.vials.append(londonaq_vial)
 
     # the lab has all the equipment needed to run the experiment
     pctsp_lab = Lab(
@@ -452,7 +489,7 @@ def londonaq(
 def tsplib(
     algorithm_name: AlgorithmName,
     alpha: int = AlphaOption,
-    branching_max_depth: int = 1,
+    branching_max_depth: int = STRONG_BRANCHING_MAX_DEPTH,
     collapse_paths: bool = CollapsePathsOption,
     cost_cover_disjoint_paths: bool = True,
     cost_cover_shortest_path: bool = False,
@@ -467,7 +504,7 @@ def tsplib(
     path_depth_limit: int = PathDepthLimitOption,
     remove_leaves: bool = RemoveLeavesOption,
     sec_lp_gap_improvement_threshold: float = LP_GAP_IMPROVEMENT_THRESHOLD,
-    sec_max_tailing_off_iterations: int = 5,
+    sec_max_tailing_off_iterations: int = SEC_MAX_TAILING_OFF_ITER,
     step_size: int = StepSizeOption,
     time_limit: float = TimeLimitOption,
 ) -> None:
@@ -525,7 +562,7 @@ def tsplib(
         remove_one_connected_components=False,
         shortest_path_cutoff=False,
     )
-    vial = Vial(
+    tsplib_vial = Vial(
         data_config=data_config,
         model_params=model_params,
         preprocessing=preprocessing,
@@ -534,7 +571,7 @@ def tsplib(
     experiment = Experiment(
         name=ExperimentName.onerun, vials=[], timestamp=datetime.now()
     )
-    experiment.vials.append(vial)
+    experiment.vials.append(tsplib_vial)
 
     # the lab has all the equipment needed to run the experiment
     pctsp_lab = Lab(

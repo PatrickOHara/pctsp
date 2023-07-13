@@ -174,7 +174,7 @@ SCIP_DECL_CONSCHECK(PCTSPconshdlrSubtour::scip_check)
     SCIPgetTransformedVars(scip, nvars, SCIPgetVars(scip), transvars);
     auto nfixed = numFixedOrAggVars(transvars, nvars);
     BOOST_LOG_TRIVIAL(debug) << "scip_check: Checking for subtours. " << nfixed << " fixed/agg vars out of " << nvars;
-    BOOST_LOG_TRIVIAL(debug) << "LP objective value: " << SCIPgetLPObjval(scip) << ". Solution value: " << SCIPsolGetOrigObj(sol);
+    BOOST_LOG_TRIVIAL(debug) << "LP objective value: " << SCIPgetLPObjval(scip) << ". Solution value: " << SCIPgetPrimalbound(scip);
     if (isSolSimpleCycle(scip, sol, result)) {
         BOOST_LOG_TRIVIAL(debug) << "Solution is a simple cycle. No subtour violations found.";
         *result = SCIP_FEASIBLE;
@@ -217,7 +217,7 @@ SCIP_DECL_CONSENFOLP(PCTSPconshdlrSubtour::scip_enfolp) {
             && (SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_UNBOUNDEDRAY || SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL)) {
             // resolve the infeasibility by branching
             BOOST_LOG_TRIVIAL(debug)<< "BRANCHING in enfolp: Node " << node_id << " found to be tailing off. Gap is " << gap << ". Threshold is " << sec_lp_gap_improvement_threshold << std::endl;
-            *result = SCIP_BRANCHED;
+            SCIPbranchLP(scip, result);
         }
         else {
             // resolve the infeasibility by adding a subtour elimination constraint

@@ -26,7 +26,7 @@ class DataConfig(BaseModel):
     graph_name: Union[GraphName, LondonaqGraphName]
     quota: int
     root: int
-    alpha: Optional[int]
-    generation: Optional[Generation]
-    kappa: Optional[int]
-    triangle: Optional[int]
+    alpha: Optional[int] = None
+    generation: Optional[Generation] = None
+    kappa: Optional[int] = None
+    triangle: Optional[int] = None

@@ -8,6 +8,7 @@ from tspwplib import LondonaqGraphName
 from tspwplib.types import EdgeWeightType
 from ..compare import params
 from ..lab import Lab
+from ..utils import get_pctsp_logger
 from ..vial import (
     AlgorithmName,
     DatasetName,
@@ -26,7 +27,7 @@ tables_app = typer.Typer(name="tables", help="Write LaTeX tables to files")
 PRETTY_COLUMN_NAMES = {
     "algorithm": "Algorithm",
     "alpha": r"$\alpha$",
-    "branching_max_depth": r"$\Delta",
+    "branching_max_depth": r"$\Delta$",
     "branching_strategy": "Branching strategy",
     "cost_function": "Cost function",
     "avg_cuts": "AVG CUTS",
@@ -128,6 +129,7 @@ def pretty_dataframe(df: pd.DataFrame, long: bool = False) -> pd.DataFrame:
         0: "Relative branching",
         1: "Strong branching",
         2: "Strong at tree top",
+        4: "Default",
     }
     if "branching_strategy" in df:
         df = df.replace(branching_replacements)
@@ -234,8 +236,21 @@ def cost_cover_table(
     # create new columns
     ccdf["gap"] = (ccdf["upper_bound"] - ccdf["lower_bound"]) / ccdf["lower_bound"]
     ccdf["optimal"] = ccdf["gap"] == 0
-    ccdf["cc_name"] = ccdf["cost_cover_disjoint_paths"].apply(
-        lambda x: "Cost cover disjoint paths" if x else "Cost cover shortest paths"
+
+    def get_cc_name(cc_disjoint_paths: bool, cc_shortest_paths: bool) -> str:
+        if cc_disjoint_paths and not cc_shortest_paths:
+            return "Cost cover disjoint paths"
+        if not cc_disjoint_paths and cc_shortest_paths:
+            return "Cost cover shortest paths"
+        if not cc_disjoint_paths and not cc_shortest_paths:
+            return "No cost cover"
+        raise ValueError("Cannot be both disjoint and shortest paths")
+
+    ccdf["cc_name"] = ccdf[
+        ["cost_cover_disjoint_paths", "cost_cover_shortest_path"]
+    ].apply(
+        lambda x: get_cc_name(x.cost_cover_disjoint_paths, x.cost_cover_shortest_path),
+        axis=1,
     )
 
     gb_cols = []
@@ -398,12 +413,32 @@ def generate_all_tables(
     oplib_root: Path = OPLibRootOption,
 ) -> None:
     """Generate all the LaTeX tables for the paper"""
+    logger = get_pctsp_logger("write-all-tables")
     for dataset in DatasetName:
-        summarize_dataset(
-            dataset, tables_dir, londonaq_root=londonaq_root, oplib_root=oplib_root
-        )
-        cost_cover_table(dataset, tables_dir, lab_dir=lab_dir)
-        heuristics_table(
-            dataset, ExperimentName.compare_heuristics, tables_dir, lab_dir=lab_dir
-        )
-        # tailing_off_table(dataset, tables_dir, lab_dir=lab_dir)
+        try:
+            logger.info("Generating dataset tables for %s", dataset.value)
+            summarize_dataset(
+                dataset, tables_dir, londonaq_root=londonaq_root, oplib_root=oplib_root
+            )
+        except FileNotFoundError as e:
+            logger.warning(str(e))
+
+        try:
+            logger.info("Generating cost_cover table on %s dataset", dataset.value)
+            cost_cover_table(dataset, tables_dir, lab_dir=lab_dir)
+        except FileNotFoundError as e:
+            logger.warning(str(e))
+
+        try:
+            logger.info("Generating heuristics table on %s dataset", dataset.value)
+            heuristics_table(
+                dataset, ExperimentName.compare_heuristics, tables_dir, lab_dir=lab_dir
+            )
+        except FileNotFoundError as e:
+            logger.warning(str(e))
+
+        try:
+            logger.info("Generating tailing_off tables on %s dataset", dataset.value)
+            tailing_off_table(dataset, tables_dir, lab_dir=lab_dir)
+        except FileNotFoundError as e:
+            logger.warning(str(e))

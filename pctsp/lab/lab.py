@@ -35,6 +35,7 @@ from ..utils import get_pctsp_logger
 from .run_algorithm import run_algorithm, run_preprocessing
 
 EXPERIMENT_FILENAME = "experiment.json"
+MISSING_EXPERIMENT_PREFIX = "missing_"
 RESULT_FILENAME = "results.json"
 
 
@@ -223,18 +224,34 @@ class Lab:
         vial_dir.mkdir(exist_ok=True, parents=False)
         return vial_dir
 
-    def read_experiment_from_file(self, experiment_name: ExperimentName) -> Experiment:
+    def read_experiment_from_file(
+        self, experiment_name: ExperimentName, only_missing_results: bool = False
+    ) -> Experiment:
         """Read experiment from local json file"""
-        filepath = self.get_experiment_dir(experiment_name) / EXPERIMENT_FILENAME
+        if only_missing_results:
+            filepath = self.get_experiment_dir(experiment_name) / (
+                MISSING_EXPERIMENT_PREFIX + EXPERIMENT_FILENAME
+            )
+        else:
+            filepath = self.get_experiment_dir(experiment_name) / EXPERIMENT_FILENAME
         if not filepath.exists():
             raise FileNotFoundError(f"Could not find experiment json file: {filepath}")
+        self.logger.info("Reading experiment JSON file from %s", filepath)
         with open(filepath, "r", encoding="utf-8") as json_file:
             experiment_dict = json.load(json_file)
             return Experiment(**experiment_dict)
 
-    def write_experiment_to_file(self, experiment: Experiment) -> None:
+    def write_experiment_to_file(
+        self, experiment: Experiment, only_missing_results: bool = False
+    ) -> None:
         """Write experiment to local file"""
-        filepath = self.get_experiment_dir(experiment.name) / EXPERIMENT_FILENAME
+        if only_missing_results:
+            filepath = self.get_experiment_dir(experiment.name) / (
+                MISSING_EXPERIMENT_PREFIX + EXPERIMENT_FILENAME
+            )
+        else:
+            filepath = self.get_experiment_dir(experiment.name) / EXPERIMENT_FILENAME
+        self.logger.info("Writing experiment to %s", filepath)
         with open(filepath, "w", encoding="utf-8") as json_file:
             json.dump(json.loads(experiment.json()), json_file, indent=4)
 

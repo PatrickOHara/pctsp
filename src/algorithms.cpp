@@ -127,6 +127,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     bool sec_maxflow_mincut,
     int sec_max_tailing_off_iterations,
     int sec_sepafreq,
+    bool simple_rules_only,
     std::filesystem::path solver_dir,
     float time_limit
 ) {
@@ -143,7 +144,11 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     SCIPsetMessagehdlr(scip, handler);
 
     // add variables, constraints and the SEC cutting plane
-    auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name, sec_disjoint_tour, sec_lp_gap_improvement_threshold, sec_maxflow_mincut, sec_max_tailing_off_iterations, sec_sepafreq);
+    auto edge_var_map = modelPrizeCollectingTSP(
+        scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name,
+        sec_disjoint_tour, sec_lp_gap_improvement_threshold, sec_maxflow_mincut,
+        sec_max_tailing_off_iterations, sec_sepafreq, simple_rules_only
+    );
 
     // add the cost cover inequalities when a new solution is found
     // NOTE we assume the heuristic solution is feasible (trust the user)
@@ -233,28 +238,32 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     double sec_lp_gap_improvement_threshold,
     bool sec_maxflow_mincut,
     int sec_max_tailing_off_iterations,
-    int sec_sepafreq
+    int sec_sepafreq,
+    bool simple_rules_only
 ) {
-    // if the full solver is required then uncomment the below line
-    // SCIPincludeDefaultPlugins(scip);
+    if (simple_rules_only) {
+        // include branching rules
+        includeBranchRules(scip);
 
-    // include branching rules
-    includeBranchRules(scip);
+        // include constraint handlers
+        SCIPincludeConshdlrLinear(scip);
+        SCIPincludeConshdlrIntegral(scip);
+        SCIPincludeConshdlrKnapsack(scip);
+        SCIPincludeConshdlrVarbound(scip);
 
-    // include constraint handlers
-    SCIPincludeConshdlrLinear(scip);
-    SCIPincludeConshdlrIntegral(scip);
-    SCIPincludeConshdlrKnapsack(scip);
-    SCIPincludeConshdlrVarbound(scip);
+        // node selection rules
+        includeNodeSelection(scip);
 
-    // node selection rules
-    includeNodeSelection(scip);
+        // include separation methods
+        includeSeparation(scip);
 
-    // include separation methods
-    includeSeparation(scip);
-
-    // include heuristics
-    includeHeuristics(scip);
+        // include heuristics
+        includeHeuristics(scip);
+    }
+    else {
+        // use the default branching rules
+        SCIPincludeDefaultPlugins(scip);
+    }
 
     // add self loops to graph - we assume the input graph is simple
     if (hasSelfLoopsOnAllVertices(graph) == false) {
@@ -315,7 +324,8 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     double sec_lp_gap_improvement_threshold,
     bool sec_maxflow_mincut,
     int sec_max_tailing_off_iterations,
-    int sec_sepafreq
+    int sec_sepafreq,
+    bool simple_rules_only
 ) {
     // add edges to empty graph
     auto start = edge_list.begin();
@@ -341,5 +351,9 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
         solution = edgesFromVertexPairs(graph, pairs_first, pairs_last);
     }
 
-    return modelPrizeCollectingTSP(scip, graph, solution, cost_map, prize_map, quota, root_vertex, name, sec_disjoint_tour, sec_maxflow_mincut);
+    return modelPrizeCollectingTSP(
+        scip, graph, solution, cost_map, prize_map, quota, root_vertex, name,
+        sec_disjoint_tour, sec_lp_gap_improvement_threshold, sec_maxflow_mincut,
+        sec_max_tailing_off_iterations, sec_sepafreq, simple_rules_only
+    );
 }

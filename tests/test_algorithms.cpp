@@ -95,6 +95,7 @@ TEST_P(AlgorithmsFixture, testSolvePrizeCollectingTSP) {
         true,
         -1,
         1,
+        true,
         log_dir,
         60
     );
