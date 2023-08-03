@@ -14,15 +14,14 @@ from ..vial import (
 from . import params
 from .product_of_params import (
     product_of_londonaq_data_config,
+    product_of_londonaq_data_config_from_alpha,
     product_of_preprocessing,
     product_of_tspwplib_data_config,
     product_of_vials,
 )
 
-
-def compare_heuristics(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
-    """Compare the Extension & Collapse heuristic against Suurballe's heuristic"""
-    model_params_list = [
+def get_all_heuristic_params() -> List[ModelParams]:
+    return [
         ModelParams(  # Extension Collapse
             algorithm=AlgorithmName.bfs_extension_collapse,
             collapse_paths=False,
@@ -67,6 +66,18 @@ def compare_heuristics(dataset_name: DatasetName, dataset_root: Path) -> List[Vi
         ),
     ]
 
+def londonaq_alpha(dataset_root: Path) -> List[Vial]:
+    """Run heuristics on the londonaq dataset with a large alpha"""
+    data_config_list = product_of_londonaq_data_config_from_alpha(
+        dataset_root,
+        params.TSPLIB_ALPHA_LIST,
+        params.LONDONAQ_GRAPH_NAME_LIST,
+    )
+    preprocessing_list = product_of_preprocessing([False], [False], [True])
+    return product_of_vials(data_config_list, get_all_heuristic_params(), preprocessing_list)
+
+def compare_heuristics(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
+    """Compare the Extension & Collapse heuristic against Suurballe's heuristic"""
     if dataset_name == DatasetName.tspwplib:
         data_config_list = product_of_tspwplib_data_config(
             dataset_root,
@@ -87,4 +98,4 @@ def compare_heuristics(dataset_name: DatasetName, dataset_root: Path) -> List[Vi
             f"{dataset_name} is not a supported dataset for experiment 'compare_heuristics'"
         )
     preprocessing_list = product_of_preprocessing([False], [False], [True])
-    return product_of_vials(data_config_list, model_params_list, preprocessing_list)
+    return product_of_vials(data_config_list, get_all_heuristic_params(), preprocessing_list)

@@ -17,6 +17,7 @@ class ExperimentName(str, Enum):
     disjoint_tours_vs_heuristics = "disjoint_tours_vs_heuristics"
     dryrun = "dryrun"
     compare_heuristics = "compare_heuristics"
+    londonaq_alpha = "londonaq_alpha"
     onerun = "onerun"
     simple_branch_cut = "simple_branch_cut"
     tailing_off = "tailing_off"

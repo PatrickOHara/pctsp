@@ -42,6 +42,7 @@ from ..compare import (
     dryrun,
     compare_heuristics,
     disjoint_tours_vs_heuristics,
+    londonaq_alpha,
     simple_branch_cut,
     tailing_off,
 )
@@ -96,6 +97,7 @@ londonaq_experiment_lookup = {
     ExperimentName.compare_heuristics: compare_heuristics,
     ExperimentName.cost_cover: cost_cover,
     ExperimentName.dryrun: dryrun,
+    ExperimentName.londonaq_alpha: londonaq_alpha,
     ExperimentName.tailing_off: tailing_off,
 }
 
