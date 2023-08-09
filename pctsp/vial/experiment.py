@@ -15,6 +15,7 @@ class ExperimentName(str, Enum):
     baseline = "baseline"
     cost_cover = "cost_cover"
     disjoint_tours_vs_heuristics = "disjoint_tours_vs_heuristics"
+    cc_londonaq_alpha = "cc_londonaq_alpha"
     dryrun = "dryrun"
     compare_heuristics = "compare_heuristics"
     londonaq_alpha = "londonaq_alpha"

@@ -205,6 +205,14 @@ def run_algorithm(
                 path_depth_limit=vial.model_params.path_depth_limit,
                 step_size=vial.model_params.step_size,
             )
+            # if the heuristic is not a feasible solution, then ignore solution
+            if not is_pctsp_yes_instance(
+                graph,
+                vial.data_config.quota,
+                vial.data_config.root,
+                heuristic_edge_list,
+            ):
+                heuristic_edge_list = []
 
         model = Model(problemName=str(vial.uuid), createscip=True, defaultPlugins=False)
         edge_list = solve_pctsp(

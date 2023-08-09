@@ -89,6 +89,7 @@ def product_of_londonaq_data_config(
         )
     return data_config_list
 
+
 def product_of_londonaq_data_config_from_alpha(
     londonaq_root: Path,
     alpha_list: List[int],
