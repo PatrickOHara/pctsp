@@ -222,10 +222,11 @@ def cost_cover_table(
     dataset: DatasetName,
     tables_dir: Path,
     lab_dir: Path = LabDirOption,
+    experiment_name: ExperimentName = ExperimentName.cost_cover,
 ) -> None:
     """Write a table of cost cover experiments to LaTeX file"""
     tables_dir.mkdir(exist_ok=True, parents=False)
-    experiment_name = ExperimentName.cost_cover
+    
     stats_lab = Lab(lab_dir / dataset.value)
     filename = (
         stats_lab.get_experiment_dir(experiment_name)
@@ -258,7 +259,10 @@ def cost_cover_table(
         ccdf["alpha"] = ccdf["alpha"] / 100
         gb_cols.extend(["cost_function", "alpha"])
     elif dataset == DatasetName.londonaq:
-        gb_cols.append("quota")
+        if experiment_name == ExperimentName.cc_londonaq_alpha:
+            gb_cols.append("alpha")
+        elif experiment_name == ExperimentName.cost_cover:
+            gb_cols.append("quota")
         ccdf = ccdf.loc[ccdf.graph_name != LondonaqGraphName.laqtinyA]
     gb_cols.append("cc_name")
     ccgb = ccdf.groupby(gb_cols)
@@ -317,13 +321,15 @@ def cost_cover_table(
     table_tex_filepath.write_text(table_str, encoding="utf-8")
 
 
-def get_heuristics_df(dataset: DatasetName, lab_dir: Path) -> pd.DataFrame:
+def get_heuristics_df(
+    dataset: DatasetName,
+    lab_dir: Path,
+    exact_experiment_name = ExperimentName.cost_cover,
+    heuristic_experiment_name: ExperimentName = ExperimentName.compare_heuristics,
+) -> pd.DataFrame:
     """Get a dataframe with the gap between the heuristic solution
     and the lower bounds from an exact algorithm
     """
-    heuristic_experiment_name = ExperimentName.compare_heuristics
-    exact_experiment_name = ExperimentName.cost_cover
-
     heuristic_df = pd.read_csv(
         lab_dir
         / dataset.value
@@ -368,9 +374,10 @@ def heuristics_table(
     experiment_name: ExperimentName,
     tables_dir: Path,
     lab_dir: Path = LabDirOption,
+    exact_experiment_name: ExperimentName = ExperimentName.cost_cover,
 ) -> None:
     """Write a table of heuristic performance to a LaTeX file"""
-    heuristic_df = get_heuristics_df(dataset, lab_dir)
+    heuristic_df = get_heuristics_df(dataset, lab_dir, exact_experiment_name=exact_experiment_name, heuristic_experiment_name=experiment_name)
     heuristic_df = heuristic_df[
         heuristic_df.index.get_level_values("graph_name") != LondonaqGraphName.laqtinyA
     ]
