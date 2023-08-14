@@ -37,9 +37,12 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
 ) {
     auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name);
     SCIPsolve(scip);
-    SCIP_SOL* sol = SCIPgetBestSol(scip);
-    auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
-    return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+    if (SCIPgetStatus(scip) != SCIP_INFEASIBLE) {
+        SCIP_SOL* sol = SCIPgetBestSol(scip);
+        auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+        return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+    }
+    return std::vector<std::pair<PCTSPvertex, PCTSPvertex>>();
 }
 
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
@@ -55,9 +58,13 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
 ) {
     auto edge_var_map = modelPrizeCollectingTSP(scip, graph, edge_list, heuristic_edges, cost_dict, prize_dict, quota, root_vertex, name);
     SCIPsolve(scip);
-    SCIP_SOL* sol = SCIPgetBestSol(scip);
-    auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
-    return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+    if (SCIPgetStatus(scip) != SCIP_INFEASIBLE) {
+        SCIP_SOL* sol = SCIPgetBestSol(scip);
+        auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+        return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+    }
+    BOOST_LOG_TRIVIAL(info) << "Solution is not feasible. Returning empty solution vector.";
+    return std::vector<std::pair<PCTSPvertex, PCTSPvertex>>();
 }
 
 SummaryStats getSummaryStatsFromSCIP(SCIP* scip) {
@@ -198,10 +205,14 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
 
     // solve the model
     SCIPsolve(scip);
+    BOOST_LOG_TRIVIAL(info) << "SCIP solve has finished.";
 
     // get the solution
-    SCIP_SOL* sol = SCIPgetBestSol(scip);
-    auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+    std::vector<PCTSPedge> solution_edges = std::vector<PCTSPedge>();
+    if (SCIPgetNSols(scip) > 0) {
+        SCIP_SOL* sol = SCIPgetBestSol(scip);
+        auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+    }
 
     // get the node stats of the solver
     // auto node_stats = node_eventhdlr->getNodeStatsVector();

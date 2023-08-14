@@ -235,8 +235,10 @@ def cost_cover_table(
     ccdf: pd.DataFrame = pd.read_csv(filename)
     ccdf = ccdf.loc[ccdf["cost_function"] != EdgeWeightType.SEMI_MST]
     # create new columns
-    ccdf["gap"] = (ccdf["upper_bound"] - ccdf["lower_bound"]) / ccdf["lower_bound"]
-    ccdf["optimal"] = ccdf["gap"] == 0
+    SCIP_STATUS_OPTIMAL = 11        # see https://www.scipopt.org/doc/html/type__stat_8h_source.php
+    SCIP_STATUS_INFEASIBLE = 12
+    ccdf["gap"] = ccdf.apply(lambda x: np.nan if x["status"] == SCIP_STATUS_INFEASIBLE else (x["upper_bound"] - x["lower_bound"]) / x["lower_bound"], axis="columns")
+    ccdf["optimal"] = (ccdf["gap"] == 0) & (ccdf["status"] == SCIP_STATUS_OPTIMAL)
 
     def get_cc_name(cc_disjoint_paths: bool, cc_shortest_paths: bool) -> str:
         if cc_disjoint_paths and not cc_shortest_paths:
@@ -286,7 +288,6 @@ def cost_cover_table(
     df = df.drop(
         [
             "avg_cuts",
-            "num_feasible_solutions",
             "num_cost_cover_disjoint_paths",
             "num_cost_cover_shortest_paths",
             "nconss_presolve_disjoint_paths",
@@ -294,6 +295,10 @@ def cost_cover_table(
         ],
         axis="columns",
     )
+    if experiment_name == ExperimentName.cc_londonaq_alpha:
+        df = df.drop("num_optimal_solutions", axis="columns")
+    elif experiment_name == ExperimentName.cost_cover:
+        df = df.drop("num_feasible_solutions", axis="columns")
     df = df.unstack()
     df = df.swaplevel(0, 1, axis="columns").sort_index(axis=1)
     df = pretty_dataframe(df)
