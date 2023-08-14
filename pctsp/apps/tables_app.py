@@ -31,15 +31,17 @@ PRETTY_COLUMN_NAMES = {
     "branching_strategy": "Branching strategy",
     "cost_function": "Cost function",
     "avg_cuts": "AVG CUTS",
-    "avg_cuts_presolve": "PRE-CUTS",
+    "avg_cuts_presolve": r"$\overline{\text{PRE-CUTS}}$",
     "duration": "TIME (s)",
     "graph_name": "Graph name",
     "kappa": r"$\kappa$",
     "gap": "GAP",
     "max_gap": r"$\max(\text{GAP})$",
-    "mean_duration": "TIME (s)",
-    "mean_gap": "GAP",
-    "min_gap": r"$\min(\text{GAP})$",
+    "mean_duration": r"$\overline{\text{TIME}}$ (s)",
+    "mean_gap": r"$\overline{\text{GAP}}$",
+    "mean_lower_bound": r"$\overline{\text{LB}}$",
+    "mean_upper_bound": r"$\overline{\text{UB}}$",
+    "min_gap": r"$\min(\\text{GAP})$",
     "mean_num_nodes": r"$\mu (NODES)$",
     "mean_num_sec_disjoint_tour": r"$\mu (SEC_DT) $",
     "mean_num_sec_maxflow_mincut": r"$\mu (SEC_MM) $",
@@ -57,6 +59,10 @@ PRETTY_COLUMN_NAMES = {
     "std_gap": r"$\sigma (\text{GAP})$",
     "quota": "Quota",
 }
+
+SI_GAP = "S[round-mode=places,round-precision=3,scientific-notation=false,table-format=1.3]"
+SI_OPT = "S[scientific-notation=false]"
+SI_NUM = "S[table-format=1.2e3]"
 
 
 def make_column_name_pretty(name: str) -> str:
@@ -226,7 +232,7 @@ def cost_cover_table(
 ) -> None:
     """Write a table of cost cover experiments to LaTeX file"""
     tables_dir.mkdir(exist_ok=True, parents=False)
-    
+
     stats_lab = Lab(lab_dir / dataset.value)
     filename = (
         stats_lab.get_experiment_dir(experiment_name)
@@ -237,6 +243,11 @@ def cost_cover_table(
     # create new columns
     SCIP_STATUS_OPTIMAL = 11        # see https://www.scipopt.org/doc/html/type__stat_8h_source.php
     SCIP_STATUS_INFEASIBLE = 12
+    SCIP_BIG_NUMBER = 100000000000000000000.0
+    def set_to_nan(value: float) -> float:
+        return np.nan if value == SCIP_BIG_NUMBER else value
+    ccdf["lower_bound"] = ccdf["lower_bound"].apply(set_to_nan)
+    ccdf["upper_bound"] = ccdf["upper_bound"].apply(set_to_nan)
     ccdf["gap"] = ccdf.apply(lambda x: np.nan if x["status"] == SCIP_STATUS_INFEASIBLE else (x["upper_bound"] - x["lower_bound"]) / x["lower_bound"], axis="columns")
     ccdf["optimal"] = (ccdf["gap"] == 0) & (ccdf["status"] == SCIP_STATUS_OPTIMAL)
 
@@ -271,6 +282,8 @@ def cost_cover_table(
 
     df = ccgb.agg(
         mean_duration=("duration", np.mean),
+        mean_lower_bound=("lower_bound", np.mean),
+        mean_upper_bound=("upper_bound", np.mean),
         mean_gap=("gap", np.mean),
         num_optimal_solutions=("optimal", sum),
         num_feasible_solutions=("feasible", sum),
@@ -287,28 +300,27 @@ def cost_cover_table(
     )
     df = df.drop(
         [
-            "avg_cuts",
             "num_cost_cover_disjoint_paths",
             "num_cost_cover_shortest_paths",
             "nconss_presolve_disjoint_paths",
             "nconss_presolve_shortest_paths",
+            "avg_cuts",
         ],
         axis="columns",
     )
     if experiment_name == ExperimentName.cc_londonaq_alpha:
-        df = df.drop("num_optimal_solutions", axis="columns")
+        df = df.drop(["num_optimal_solutions", "avg_cuts_presolve", "mean_duration"], axis="columns")
+        column_format = "l" + 3 * (SI_GAP + SI_NUM + SI_NUM + "r")
     elif experiment_name == ExperimentName.cost_cover:
-        df = df.drop("num_feasible_solutions", axis="columns")
+        df = df.drop(["num_feasible_solutions", "mean_lower_bound", "mean_upper_bound"], axis="columns")
+        column_format = "l" + 3 * (SI_NUM + SI_NUM + SI_GAP + "r")
     df = df.unstack()
     df = df.swaplevel(0, 1, axis="columns").sort_index(axis=1)
     df = pretty_dataframe(df)
     table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
 
     # style table using the siunitx package
-    si_gap = "S[round-mode=places,round-precision=3,scientific-notation=false,table-format=1.3]"
-    si_opt = "S[scientific-notation=false]"
-    si_num = "S[table-format=1.2e3]"
-    column_format = "l" + 2 * (si_num + si_num + si_gap + si_opt)
+
 
     if dataset == DatasetName.tspwplib:
         column_format = "l" + column_format
@@ -319,11 +331,11 @@ def cost_cover_table(
         styled_df = df.style.format()
 
     table_str = styled_df.to_latex(
-        multicol_align="c", siunitx=True, column_format=column_format
+        hrules=True, multicol_align="c", siunitx=True, column_format=column_format
     )
     table_str = table_str.replace("cc_name", "")
     print(table_str)
-    table_tex_filepath.write_text(table_str, encoding="utf-8")
+    # table_tex_filepath.write_text(table_str, encoding="utf-8")
 
 
 def get_heuristics_df(
@@ -382,38 +394,68 @@ def heuristics_table(
     exact_experiment_name: ExperimentName = ExperimentName.cost_cover,
 ) -> None:
     """Write a table of heuristic performance to a LaTeX file"""
+    logger = get_pctsp_logger("heuristics-table")
     heuristic_df = get_heuristics_df(dataset, lab_dir, exact_experiment_name=exact_experiment_name, heuristic_experiment_name=experiment_name)
+
+    # NOTE remove SBL-EC heuristic!
+    heuristic_df = heuristic_df.loc[heuristic_df["algorithm"] != AlgorithmName.suurballes_extension_collapse]
+
     heuristic_df = heuristic_df[
         heuristic_df.index.get_level_values("graph_name") != LondonaqGraphName.laqtinyA
     ]
     table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
     if dataset == DatasetName.tspwplib:
-        cols = ["kappa", "cost_function", "algorithm"]
+        cols = ["cost_function", "kappa", "algorithm"]
         heuristic_df = heuristic_df[
             heuristic_df.index.get_level_values("cost_function").isin(
                 params.TSPLIB_COST_FUNCTIONS
             )
         ]
-        heuristic_gb = heuristic_df.groupby(cols)
-        summary_df = heuristic_gb.agg(
-            num_feasible_solutions=("feasible", sum),
-        )
-        summary_df = summary_df.unstack().unstack()
-        summary_df = summary_df.swaplevel(1, 2, axis="columns")
+    elif dataset == DatasetName.londonaq and experiment_name == ExperimentName.londonaq_alpha:
+        cols = ["alpha", "algorithm"]
     elif dataset == DatasetName.londonaq:
-        summary_df = heuristic_df.reset_index(level=["dataset", "root"]).set_index(
-            "algorithm", append=True
-        )[["gap"]]
-        summary_df = summary_df.unstack()
-    replacements = {
-        key.value: ShortAlgorithmName[key.name].value for key in AlgorithmName
-    }
-    replacements[EdgeWeightType.EUC_2D] = "EUC"
+        cols = ["quota", "algorithm"]
+    else:
+        raise ValueError(f"Dataset {dataset} not recognized.")
+    heuristic_gb = heuristic_df.groupby(cols)
+    summary_df = heuristic_gb.agg(
+        # num_optimal_solutions=("gap", lambda x: x==0.0),
+        num_feasible_solutions=("feasible", sum),
+        mean_gap=("gap", np.mean),
+        mean_duration=("duration", np.mean),
+    )
+    summary_df = summary_df.unstack(level="algorithm")
+    summary_df.columns.rename(["metric", "algorithm"], inplace=True)
+    summary_df = summary_df.swaplevel("algorithm", "metric", axis="columns")
+
+    if dataset == DatasetName.londonaq:
+        summary_df.index.rename(PRETTY_COLUMN_NAMES["quota"])
+
+    summary_df = summary_df.sort_index(axis="columns")
+    summary_df = summary_df.sort_index(axis="index")
+
+    summary_df = summary_df.rename(
+        lambda x: ShortAlgorithmName[x],
+        axis="columns",
+        level="algorithm"
+    ).rename(PRETTY_COLUMN_NAMES, axis="columns", level="metric")
+    summary_df = summary_df.rename({
+        EdgeWeightType.EUC_2D: "EUC",
+        EdgeWeightType.GEO: "GEO",
+        EdgeWeightType.MST: "MST",
+    }, axis="index")
+
     print(summary_df)
-    table_str = summary_df.style.format_index(
-        formatter=lambda x: replacements[x] if x in replacements else x, axis="columns"
-    ).to_latex(hrules=True, multicol_align="c")
+    column_format = "l"
+    if dataset == DatasetName.tspwplib:
+        column_format += "l"
+    column_format += 4*(SI_NUM + SI_GAP + "r")
+
+    table_str = summary_df.style.to_latex(
+        hrules=True, multicol_align="c", multirow_align="naive", siunitx=True, column_format=column_format
+    )
     print(table_str)
+    logger.info("Writing table to LaTeX file: %s", table_tex_filepath)
     table_tex_filepath.write_text(table_str, encoding="utf-8")
 
 
