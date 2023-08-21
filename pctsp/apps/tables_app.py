@@ -46,8 +46,8 @@ PRETTY_COLUMN_NAMES = {
     "mean_num_sec_disjoint_tour": r"$\mu (SEC_DT) $",
     "mean_num_sec_maxflow_mincut": r"$\mu (SEC_MM) $",
     "metricness": r"$\zeta(G, c)$",
-    "num_edges": r"$m$",
-    "num_nodes": r"$n$",
+    "num_edges": r"$|E(G)|$",
+    "num_nodes": r"$|V(G)|$",
     "total_cost": r"$c(E(G))$",
     "total_prize": r"$p(V(G))$",
     "num_secs": r"$\mu (SEC)$",
@@ -58,11 +58,22 @@ PRETTY_COLUMN_NAMES = {
     "sec_sepafreq": "SEC freq",
     "std_gap": r"$\sigma (\text{GAP})$",
     "quota": "Quota",
+    "biggest_disjoint_prize": r"$\max_{t \in G} \{ p(V(\cP_1)) + p(V(\cP_2)) - p(t) \}$",
+    "disjoint_prize_ratio": r"$D(G)$",
+    "preprocessed_num_nodes": r"$|V(H)|$",
+    "preprocessed_num_edges": r"$|E(H)|$",
+    "preprocessed_total_cost": r"$c(E(H))",
+    "preprocessed_total_prize": r"$p(V(H))$",
+    "preprocessed_metricness": r"$\zeta(H, c)$",
+    "preprocessed_prize_ratio": r"$\frac{p(V(H))}{p(V(G))}$",
+    "mean_preprocessed_prize_ratio": r"\text{AVG}$\left(\frac{p(V(H))}{p(V(G))}\right)$",
+    "mean_disjoint_prize_ratio": r"\text{AVG}$(D(G))$",
 }
 
 SI_GAP = "S[round-mode=places,round-precision=3,scientific-notation=false,table-format=1.3]"
 SI_OPT = "S[scientific-notation=false]"
 SI_NUM = "S[table-format=1.2e3]"
+SI_SEP = "S[round-mode=none,group-separator = {,},group-minimum-digits = 4,scientific-notation=false,table-format=5.0]"
 
 
 def make_column_name_pretty(name: str) -> str:
@@ -80,21 +91,37 @@ def summarize_dataset(
     oplib_root: Path = OPLibRootOption,
 ) -> None:
     """Create a table summarizing each instance of a dataset"""
+    dataset_logger = get_pctsp_logger("dataset")
     if dataset == DatasetName.londonaq:
         filepath = londonaq_root / "londonaq_dataset.csv"
         tables_path = tables_dir / "londonaq_dataset.tex"
+        columns = [
+            "graph_name","num_nodes","num_edges","preprocessed_num_nodes","preprocessed_num_edges","preprocessed_prize_ratio", "metricness","disjoint_prize_ratio"
+        ]
+        column_format = "l" + 4 * SI_SEP + 3 * SI_GAP
     elif dataset == DatasetName.tspwplib:
         filepath = oplib_root / "tsplib_dataset.csv"
         tables_path = tables_dir / "tsplib_dataset.tex"
+        column_format = "l" + 4 * SI_GAP
+    dataset_logger.info("Reading dataset CSV from %s", filepath)
     df = pd.read_csv(filepath)
-    df.style.format(
-        {
-            "metricness": "{:.2f}",
-            "graph_name": lambda x: x[:-1] if x in list(LondonaqGraphName) else x,
-        }
-    ).format_index(make_column_name_pretty, axis="columns").hide(axis="index").to_latex(
+    if dataset == DatasetName.londonaq:
+        df = df[columns].set_index("graph_name")
+    elif dataset == DatasetName.tspwplib:
+        dataset_logger.info("Aggregating dataset stats.")
+        df = df.groupby(["cost_function", "kappa"]).aggregate(
+            mean_disjoint_prize_ratio=("disjoint_prize_ratio", np.mean),
+            mean_preprocessed_prize_ratio=("preprocessed_prize_ratio", np.mean),
+        )
+        df = df.unstack(level="cost_function").swaplevel(i="cost_function", j=0, axis="columns").sort_index(axis="columns")
+    print(df)
+    dataset_logger.info("Writing dataset LaTeX table to %s", tables_path)
+    df.style.format_index(make_column_name_pretty, axis="columns").format_index(make_column_name_pretty, axis="index").to_latex(
         buf=tables_path,
         hrules=True,
+        siunitx=True,
+        column_format=column_format,
+        multicol_align="c",
     )
 
 
