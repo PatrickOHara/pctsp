@@ -409,6 +409,7 @@ def get_heuristics_df(
     heuristic_df["gap"] = (
         heuristic_df["objective"] - heuristic_df["lower_bound"]
     ) / heuristic_df["lower_bound"]
+    heuristic_df["is_optimal"] = heuristic_df["gap"] == 0.0
     return heuristic_df
 
 
@@ -419,18 +420,23 @@ def heuristics_table(
     tables_dir: Path,
     lab_dir: Path = LabDirOption,
     exact_experiment_name: ExperimentName = ExperimentName.cost_cover,
+    sbl_ec_only: bool = False,
 ) -> None:
     """Write a table of heuristic performance to a LaTeX file"""
     logger = get_pctsp_logger("heuristics-table")
     heuristic_df = get_heuristics_df(dataset, lab_dir, exact_experiment_name=exact_experiment_name, heuristic_experiment_name=experiment_name)
 
     # NOTE remove SBL-EC heuristic!
-    heuristic_df = heuristic_df.loc[heuristic_df["algorithm"] != AlgorithmName.suurballes_extension_collapse]
-
+    if sbl_ec_only:
+        heuristic_df = heuristic_df.loc[heuristic_df["algorithm"] == AlgorithmName.suurballes_extension_collapse]
+        table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}_{ShortAlgorithmName.suurballes_extension_collapse.value}.tex"
+    else:
+        heuristic_df = heuristic_df.loc[heuristic_df["algorithm"] != AlgorithmName.suurballes_extension_collapse]
+        table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
     heuristic_df = heuristic_df[
         heuristic_df.index.get_level_values("graph_name") != LondonaqGraphName.laqtinyA
     ]
-    table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
+
     if dataset == DatasetName.tspwplib:
         cols = ["cost_function", "kappa", "algorithm"]
         heuristic_df = heuristic_df[
@@ -446,7 +452,7 @@ def heuristics_table(
         raise ValueError(f"Dataset {dataset} not recognized.")
     heuristic_gb = heuristic_df.groupby(cols)
     summary_df = heuristic_gb.agg(
-        # num_optimal_solutions=("gap", lambda x: x==0.0),
+        num_optimal_solutions=("is_optimal", sum),
         num_feasible_solutions=("feasible", sum),
         mean_gap=("gap", np.mean),
         mean_duration=("duration", np.mean),
@@ -483,7 +489,7 @@ def heuristics_table(
     )
     print(table_str)
     logger.info("Writing table to LaTeX file: %s", table_tex_filepath)
-    table_tex_filepath.write_text(table_str, encoding="utf-8")
+    # table_tex_filepath.write_text(table_str, encoding="utf-8")
 
 
 @tables_app.command(name="all")

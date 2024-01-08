@@ -134,6 +134,7 @@ def get_graph_stats(graph: nx.Graph, root_vertex: int) -> Dict[str, float]:
             biggest_vertex = u
     instance_stats["biggest_disjoint_prize"] = biggest_prize
     instance_stats["disjoint_prize_ratio"] = float(biggest_prize) / float(og_prize)
+    instance_stats["max_disjoint_paths_cost"] = max(vertex_disjoint_cost_map(tree, biggest_vertex).values())
 
     # preprocessing
     graph = remove_one_connected_components(graph, root_vertex)
