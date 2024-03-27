@@ -296,9 +296,11 @@ def cost_cover_table(
     ccdf["lower_bound"] = ccdf["lower_bound"].apply(set_to_nan)
     ccdf["upper_bound"] = ccdf["upper_bound"].apply(set_to_nan)
     ccdf["gap"] = ccdf.apply(
-        lambda x: np.nan
-        if x["status"] == SCIP_STATUS_INFEASIBLE
-        else (x["upper_bound"] - x["lower_bound"]) / x["lower_bound"],
+        lambda x: (
+            np.nan
+            if x["status"] == SCIP_STATUS_INFEASIBLE
+            else (x["upper_bound"] - x["lower_bound"]) / x["lower_bound"]
+        ),
         axis="columns",
     )
     ccdf["optimal"] = (ccdf["gap"] == 0) & (ccdf["status"] == SCIP_STATUS_OPTIMAL)

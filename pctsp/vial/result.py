@@ -10,7 +10,6 @@ from pydantic import BaseModel
 
 # pylint: disable=abstract-method
 class Result(BaseModel):
-
     """Results of an experiment"""
 
     vial_uuid: UUID
