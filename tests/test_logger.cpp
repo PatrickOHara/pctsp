@@ -17,3 +17,11 @@ TEST(TestLogger, testBasicLogger) {
     BOOST_LOG_TRIVIAL(error) << "An error severity message";
     BOOST_LOG_TRIVIAL(fatal) << "A fatal severity message";
 }
+
+TEST(TestLogger, testLoggingSize) {
+    int py_warning_level = 30;
+    int level = getBoostLevelFromPyLevel(py_warning_level);
+    PCTSPinitLogging(level);
+    std::vector<int> myVector = {1,2,3,4};
+    BOOST_LOG_TRIVIAL(warning) << "Size of myVector: " << std::to_string(myVector.size());
+}

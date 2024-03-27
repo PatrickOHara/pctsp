@@ -22,6 +22,7 @@ from .product_of_params import (
 
 
 def get_all_heuristic_params() -> List[ModelParams]:
+    """Get list of heuristic parameters for all heuristics."""
     return [
         ModelParams(  # Extension Collapse
             algorithm=AlgorithmName.bfs_extension_collapse,
@@ -68,6 +69,7 @@ def get_all_heuristic_params() -> List[ModelParams]:
     ]
 
 
+# pylint: disable=unused-argument
 def londonaq_alpha(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
     """Run heuristics on the londonaq dataset with a large alpha"""
     data_config_list = product_of_londonaq_data_config_from_alpha(

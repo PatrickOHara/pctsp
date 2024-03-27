@@ -37,7 +37,7 @@ class Result(BaseModel):
         filename = str(self.vial_uuid) + ".json"
         filepath = directory / filename
         with open(filepath, "w", encoding="utf-8") as json_file:
-            json.dump(json.loads(self.json()), json_file, indent=4)
+            json.dump(json.loads(self.model_dump_json()), json_file, indent=4)
         return filepath
 
     @classmethod

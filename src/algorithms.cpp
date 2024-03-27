@@ -314,9 +314,12 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     if (heuristic_edges.size() > 0) {
         auto first = heuristic_edges.begin();
         auto last = heuristic_edges.end();
-        BOOST_LOG_TRIVIAL(info) << "Adding starting solution with " << heuristic_edges.size() << " edges to solver.";
+        BOOST_LOG_TRIVIAL(info) << "Adding starting heuristic solution to solver.";
         SCIP_HEUR* heur = NULL;
         addHeuristicEdgesToSolver(scip, graph, heur, edge_variable_map, first, last);
+    }
+    else {
+        BOOST_LOG_TRIVIAL(info) << "No heuristic solution passed to solver.";
     }
     return edge_variable_map;
 }

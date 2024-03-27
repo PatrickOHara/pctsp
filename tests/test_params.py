@@ -6,13 +6,13 @@ from tspwplib import (
     ProfitsProblem,
     BaseTSP,
     metricness,
+    GraphName,
 )
-from pctsp.compare import params
 
 
 def test_tsplib_graphs(oplib_root, generation):
     """Check the graphs have the desired properties"""
-    for graph_name in params.TSPLIB_GRAPH_NAME_LIST:
+    for graph_name in [GraphName.att48, GraphName.st70, GraphName.eil76]:
         # the graph is metric
         filepath = build_path_to_oplib_instance(oplib_root, generation, graph_name)
         problem = ProfitsProblem.load(filepath)

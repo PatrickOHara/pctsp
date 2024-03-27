@@ -51,5 +51,5 @@ def dryrun(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
         raise ValueError(
             f"{dataset_name} is not a supported dataset for experiment 'dryrun'"
         )
-    preprocessing_list = product_of_preprocessing([True], [True], [True])
+    preprocessing_list = product_of_preprocessing([False], [False], [True])
     return product_of_vials(data_config_list, model_params_list, preprocessing_list)

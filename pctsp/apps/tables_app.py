@@ -70,10 +70,17 @@ PRETTY_COLUMN_NAMES = {
     "mean_disjoint_prize_ratio": r"\text{AVG}$(D(G))$",
 }
 
-SI_GAP = "S[round-mode=places,round-precision=3,scientific-notation=false,table-format=1.3]"
+# pylint: disable=line-too-long,too-many-statements
+SI_GAP = (
+    "S[round-mode=places,round-precision=3,scientific-notation=false,table-format=1.3]"
+)
 SI_OPT = "S[scientific-notation=false]"
 SI_NUM = "S[table-format=1.2e3]"
 SI_SEP = "S[round-mode=none,group-separator = {,},group-minimum-digits = 4,scientific-notation=false,table-format=5.0]"
+
+SCIP_STATUS_OPTIMAL = 11
+SCIP_STATUS_INFEASIBLE = 12
+SCIP_BIG_NUMBER = 100000000000000000000.0
 
 
 def make_column_name_pretty(name: str) -> str:
@@ -96,7 +103,14 @@ def summarize_dataset(
         filepath = londonaq_root / "londonaq_dataset.csv"
         tables_path = tables_dir / "londonaq_dataset.tex"
         columns = [
-            "graph_name","num_nodes","num_edges","preprocessed_num_nodes","preprocessed_num_edges","preprocessed_prize_ratio", "metricness","disjoint_prize_ratio"
+            "graph_name",
+            "num_nodes",
+            "num_edges",
+            "preprocessed_num_nodes",
+            "preprocessed_num_edges",
+            "preprocessed_prize_ratio",
+            "metricness",
+            "disjoint_prize_ratio",
         ]
         column_format = "l" + 4 * SI_SEP + 3 * SI_GAP
     elif dataset == DatasetName.tspwplib:
@@ -113,10 +127,16 @@ def summarize_dataset(
             mean_disjoint_prize_ratio=("disjoint_prize_ratio", np.mean),
             mean_preprocessed_prize_ratio=("preprocessed_prize_ratio", np.mean),
         )
-        df = df.unstack(level="cost_function").swaplevel(i="cost_function", j=0, axis="columns").sort_index(axis="columns")
+        df = (
+            df.unstack(level="cost_function")
+            .swaplevel(i="cost_function", j=0, axis="columns")
+            .sort_index(axis="columns")
+        )
     print(df)
     dataset_logger.info("Writing dataset LaTeX table to %s", tables_path)
-    df.style.format_index(make_column_name_pretty, axis="columns").format_index(make_column_name_pretty, axis="index").to_latex(
+    df.style.format_index(make_column_name_pretty, axis="columns").format_index(
+        make_column_name_pretty, axis="index"
+    ).to_latex(
         buf=tables_path,
         hrules=True,
         siunitx=True,
@@ -268,14 +288,19 @@ def cost_cover_table(
     ccdf: pd.DataFrame = pd.read_csv(filename)
     ccdf = ccdf.loc[ccdf["cost_function"] != EdgeWeightType.SEMI_MST]
     # create new columns
-    SCIP_STATUS_OPTIMAL = 11        # see https://www.scipopt.org/doc/html/type__stat_8h_source.php
-    SCIP_STATUS_INFEASIBLE = 12
-    SCIP_BIG_NUMBER = 100000000000000000000.0
+    # see https://www.scipopt.org/doc/html/type__stat_8h_source.php
+
     def set_to_nan(value: float) -> float:
         return np.nan if value == SCIP_BIG_NUMBER else value
+
     ccdf["lower_bound"] = ccdf["lower_bound"].apply(set_to_nan)
     ccdf["upper_bound"] = ccdf["upper_bound"].apply(set_to_nan)
-    ccdf["gap"] = ccdf.apply(lambda x: np.nan if x["status"] == SCIP_STATUS_INFEASIBLE else (x["upper_bound"] - x["lower_bound"]) / x["lower_bound"], axis="columns")
+    ccdf["gap"] = ccdf.apply(
+        lambda x: np.nan
+        if x["status"] == SCIP_STATUS_INFEASIBLE
+        else (x["upper_bound"] - x["lower_bound"]) / x["lower_bound"],
+        axis="columns",
+    )
     ccdf["optimal"] = (ccdf["gap"] == 0) & (ccdf["status"] == SCIP_STATUS_OPTIMAL)
 
     def get_cc_name(cc_disjoint_paths: bool, cc_shortest_paths: bool) -> str:
@@ -336,10 +361,16 @@ def cost_cover_table(
         axis="columns",
     )
     if experiment_name == ExperimentName.cc_londonaq_alpha:
-        df = df.drop(["num_optimal_solutions", "avg_cuts_presolve", "mean_duration"], axis="columns")
+        df = df.drop(
+            ["num_optimal_solutions", "avg_cuts_presolve", "mean_duration"],
+            axis="columns",
+        )
         column_format = "l" + 3 * (SI_GAP + SI_NUM + SI_NUM + "r")
     elif experiment_name == ExperimentName.cost_cover:
-        df = df.drop(["num_feasible_solutions", "mean_lower_bound", "mean_upper_bound"], axis="columns")
+        df = df.drop(
+            ["num_feasible_solutions", "mean_lower_bound", "mean_upper_bound"],
+            axis="columns",
+        )
         column_format = "l" + 3 * (SI_NUM + SI_NUM + SI_GAP + "r")
     df = df.unstack()
     df = df.swaplevel(0, 1, axis="columns").sort_index(axis=1)
@@ -347,7 +378,6 @@ def cost_cover_table(
     table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
 
     # style table using the siunitx package
-
 
     if dataset == DatasetName.tspwplib:
         column_format = "l" + column_format
@@ -362,13 +392,13 @@ def cost_cover_table(
     )
     table_str = table_str.replace("cc_name", "")
     print(table_str)
-    # table_tex_filepath.write_text(table_str, encoding="utf-8")
+    table_tex_filepath.write_text(table_str, encoding="utf-8")
 
 
 def get_heuristics_df(
     dataset: DatasetName,
     lab_dir: Path,
-    exact_experiment_name = ExperimentName.cost_cover,
+    exact_experiment_name=ExperimentName.cost_cover,
     heuristic_experiment_name: ExperimentName = ExperimentName.compare_heuristics,
 ) -> pd.DataFrame:
     """Get a dataframe with the gap between the heuristic solution
@@ -424,14 +454,26 @@ def heuristics_table(
 ) -> None:
     """Write a table of heuristic performance to a LaTeX file"""
     logger = get_pctsp_logger("heuristics-table")
-    heuristic_df = get_heuristics_df(dataset, lab_dir, exact_experiment_name=exact_experiment_name, heuristic_experiment_name=experiment_name)
+    heuristic_df = get_heuristics_df(
+        dataset,
+        lab_dir,
+        exact_experiment_name=exact_experiment_name,
+        heuristic_experiment_name=experiment_name,
+    )
 
     # NOTE remove SBL-EC heuristic!
     if sbl_ec_only:
-        heuristic_df = heuristic_df.loc[heuristic_df["algorithm"] == AlgorithmName.suurballes_extension_collapse]
-        table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}_{ShortAlgorithmName.suurballes_extension_collapse.value}.tex"
+        heuristic_df = heuristic_df.loc[
+            heuristic_df["algorithm"] == AlgorithmName.suurballes_extension_collapse
+        ]
+        table_tex_filepath = (
+            tables_dir
+            / f"{dataset.value}_{experiment_name.value}_{ShortAlgorithmName.suurballes_extension_collapse.value}.tex"
+        )
     else:
-        heuristic_df = heuristic_df.loc[heuristic_df["algorithm"] != AlgorithmName.suurballes_extension_collapse]
+        heuristic_df = heuristic_df.loc[
+            heuristic_df["algorithm"] != AlgorithmName.suurballes_extension_collapse
+        ]
         table_tex_filepath = tables_dir / f"{dataset.value}_{experiment_name.value}.tex"
     heuristic_df = heuristic_df[
         heuristic_df.index.get_level_values("graph_name") != LondonaqGraphName.laqtinyA
@@ -444,7 +486,10 @@ def heuristics_table(
                 params.TSPLIB_COST_FUNCTIONS
             )
         ]
-    elif dataset == DatasetName.londonaq and experiment_name == ExperimentName.londonaq_alpha:
+    elif (
+        dataset == DatasetName.londonaq
+        and experiment_name == ExperimentName.londonaq_alpha
+    ):
         cols = ["alpha", "algorithm"]
     elif dataset == DatasetName.londonaq:
         cols = ["quota", "algorithm"]
@@ -468,24 +513,29 @@ def heuristics_table(
     summary_df = summary_df.sort_index(axis="index")
 
     summary_df = summary_df.rename(
-        lambda x: ShortAlgorithmName[x],
-        axis="columns",
-        level="algorithm"
+        lambda x: ShortAlgorithmName[x], axis="columns", level="algorithm"
     ).rename(PRETTY_COLUMN_NAMES, axis="columns", level="metric")
-    summary_df = summary_df.rename({
-        EdgeWeightType.EUC_2D: "EUC",
-        EdgeWeightType.GEO: "GEO",
-        EdgeWeightType.MST: "MST",
-    }, axis="index")
+    summary_df = summary_df.rename(
+        {
+            EdgeWeightType.EUC_2D: "EUC",
+            EdgeWeightType.GEO: "GEO",
+            EdgeWeightType.MST: "MST",
+        },
+        axis="index",
+    )
 
     print(summary_df)
     column_format = "l"
     if dataset == DatasetName.tspwplib:
         column_format += "l"
-    column_format += 4*(SI_NUM + SI_GAP + "r")
+    column_format += 4 * (SI_NUM + SI_GAP + "r")
 
     table_str = summary_df.style.to_latex(
-        hrules=True, multicol_align="c", multirow_align="naive", siunitx=True, column_format=column_format
+        hrules=True,
+        multicol_align="c",
+        multirow_align="naive",
+        siunitx=True,
+        column_format=column_format,
     )
     print(table_str)
     logger.info("Writing table to LaTeX file: %s", table_tex_filepath)

@@ -1,6 +1,7 @@
 """Dataset app"""
 
-from typing import Any, Dict, List
+import itertools
+from typing import Dict, List
 from pathlib import Path
 import networkx as nx
 import pandas as pd
@@ -24,7 +25,11 @@ from tspwplib import (
     total_prize,
 )
 from ..compare import params
-from ..preprocessing import remove_one_connected_components, undirected_vertex_disjoint_paths_map, vertex_disjoint_cost_map
+from ..preprocessing import (
+    remove_one_connected_components,
+    undirected_vertex_disjoint_paths_map,
+    vertex_disjoint_cost_map,
+)
 from ..suurballe import suurballe_shortest_vertex_disjoint_paths
 from ..utils import get_pctsp_logger
 from ..vial import DatasetName
@@ -44,7 +49,7 @@ def stats_of_dataset(
     logger = get_pctsp_logger("dataset-stats")
     dataset_stats: List[Dict[str, float]] = []
     names = []
-    index=None
+    index = None
     if dataset == DatasetName.londonaq:
         logger.info("Calculating stats for londonaq dataset.")
         for graph_name in params.LONDONAQ_GRAPH_NAME_LIST:
@@ -60,31 +65,40 @@ def stats_of_dataset(
         index = pd.Index(names, name="graph_name")
 
     elif dataset == DatasetName.tspwplib:
-        for graph_name in params.TSPLIB_GRAPH_NAME_LIST:
-            for gen in Generation:
-                problem_path = build_path_to_oplib_instance(oplib_root, gen, graph_name)
-                for cost in params.TSPLIB_COST_FUNCTIONS:
-                    for kappa in params.TSPLIB_KAPPA_LIST:
-                        logger.info("Loading %s on generation %s with cost %s and kappa %s", graph_name.value, gen.value, cost.value, kappa)
-                        problem_path = build_path_to_oplib_instance(
-                            oplib_root,
-                            gen,
-                            graph_name,
-                        )
-                        # load the problem from file
-                        problem = ProfitsProblem().load(problem_path)
-                        tsp = BaseTSP.from_tsplib95(problem)
-                        graph = tsp.get_graph()
-                        nx.set_node_attributes(graph, problem.get_node_score(), name="prize")
-                        rename_edge_attributes(graph, {"weight": "cost"}, del_old_attr=True)
-                        graph = sparsify_uid(graph, kappa)
-                        if cost == EdgeWeightType.MST:
-                            new_cost = mst_cost(graph, cost_attr="cost")
-                            nx.set_edge_attributes(graph, new_cost, name="cost")
-                        logger.info("Calculating stats for %s", graph_name.value)
-                        dataset_stats.append(get_graph_stats(graph, tsp.depots[0]))
-                        names.append((graph_name.value, gen.value, cost.value, kappa))
-        index = pd.MultiIndex.from_tuples(names, names=["graph_name", "generation", "cost_function", "kappa"])
+        for graph_name, gen, cost, kappa in itertools.product(
+            params.TSPLIB_GRAPH_NAME_LIST,
+            Generation,
+            params.TSPLIB_COST_FUNCTIONS,
+            params.TSPLIB_KAPPA_LIST,
+        ):
+            logger.info(
+                "Loading %s on generation %s with cost %s and kappa %s",
+                graph_name.value,
+                gen.value,
+                cost.value,
+                kappa,
+            )
+            problem_path = build_path_to_oplib_instance(
+                oplib_root,
+                gen,
+                graph_name,
+            )
+            # load the problem from file
+            problem = ProfitsProblem().load(problem_path)
+            tsp = BaseTSP.from_tsplib95(problem)
+            graph = tsp.get_graph()
+            nx.set_node_attributes(graph, problem.get_node_score(), name="prize")
+            rename_edge_attributes(graph, {"weight": "cost"}, del_old_attr=True)
+            graph = sparsify_uid(graph, kappa)
+            if cost == EdgeWeightType.MST:
+                new_cost = mst_cost(graph, cost_attr="cost")
+                nx.set_edge_attributes(graph, new_cost, name="cost")
+            logger.info("Calculating stats for %s", graph_name.value)
+            dataset_stats.append(get_graph_stats(graph, tsp.depots[0]))
+            names.append((graph_name.value, gen.value, cost.value, kappa))
+        index = pd.MultiIndex.from_tuples(
+            names, names=["graph_name", "generation", "cost_function", "kappa"]
+        )
 
     logger.info("Creating dataframe from dataset stats.")
     df = pd.DataFrame(dataset_stats, index=index)
@@ -99,17 +113,23 @@ def stats_of_dataset(
 
 
 def get_graph_stats(graph: nx.Graph, root_vertex: int) -> Dict[str, float]:
-    # count the number of edges, vertices, total prize, total cost and the metricness
+    """Calculate features such as the number of edges, vertices, total prize,
+    total cost and the metricness.
+    """
     instance_stats = {}
     instance_stats["num_nodes"] = graph.number_of_nodes()
     instance_stats["num_edges"] = graph.number_of_edges()
-    instance_stats["total_cost"] = total_cost(nx.get_edge_attributes(graph, "cost"), list(graph.edges()))
-    og_prize =  total_prize(nx.get_node_attributes(graph, "prize"), list(graph.nodes()))
+    instance_stats["total_cost"] = total_cost(
+        nx.get_edge_attributes(graph, "cost"), list(graph.edges())
+    )
+    og_prize = total_prize(nx.get_node_attributes(graph, "prize"), list(graph.nodes()))
     instance_stats["total_prize"] = og_prize
     try:
         instance_stats["metricness"] = metricness(graph)
-    except nx.exception.NetworkXException:  # FIXME change to NotConnectedException
-        largest_component_graph = graph.subgraph(max(nx.connected_components(graph), key=len))
+    except nx.exception.NetworkXException:  # NOTE change to NotConnectedException
+        largest_component_graph = graph.subgraph(
+            max(nx.connected_components(graph), key=len)
+        )
         instance_stats["metricness"] = metricness(largest_component_graph)
 
     # evaluate the largest prize of any least-cost vertex-disjoint paths
@@ -126,14 +146,21 @@ def get_graph_stats(graph: nx.Graph, root_vertex: int) -> Dict[str, float]:
     biggest_prize = 0
     biggest_vertex = None
     prize_map = nx.get_node_attributes(graph, "prize")
-    for u, (p1, p2) in vertex_disjoint_paths_map.items():
-        prize = total_prize(prize_map, p1) + total_prize(prize_map, p2) - prize_map[u] - prize_map[root_vertex]
+    for u, (path1, path2) in vertex_disjoint_paths_map.items():
+        prize = (
+            total_prize(prize_map, path1)
+            + total_prize(prize_map, path2)
+            - prize_map[u]
+            - prize_map[root_vertex]
+        )
         if prize > biggest_prize:
             biggest_prize = prize
             biggest_vertex = u
     instance_stats["biggest_disjoint_prize"] = biggest_prize
     instance_stats["disjoint_prize_ratio"] = float(biggest_prize) / float(og_prize)
-    instance_stats["max_disjoint_paths_cost"] = max(vertex_disjoint_cost_map(tree, biggest_vertex).values())
+    instance_stats["max_disjoint_paths_cost"] = max(
+        vertex_disjoint_cost_map(tree, biggest_vertex).values()
+    )
 
     # preprocessing
     graph = remove_one_connected_components(graph, root_vertex)
@@ -141,7 +168,9 @@ def get_graph_stats(graph: nx.Graph, root_vertex: int) -> Dict[str, float]:
     # re-evaluate stats after preprocessing
     instance_stats["preprocessed_num_nodes"] = graph.number_of_nodes()
     instance_stats["preprocessed_num_edges"] = graph.number_of_edges()
-    instance_stats["preprocessed_total_cost"] = total_cost(nx.get_edge_attributes(graph, "cost"), list(graph.edges()))
+    instance_stats["preprocessed_total_cost"] = total_cost(
+        nx.get_edge_attributes(graph, "cost"), list(graph.edges())
+    )
     pp_prize = total_prize(nx.get_node_attributes(graph, "prize"), list(graph.nodes()))
     instance_stats["preprocessed_total_prize"] = pp_prize
     instance_stats["preprocessed_metricness"] = metricness(graph)

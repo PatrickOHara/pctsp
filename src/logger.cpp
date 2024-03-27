@@ -1,5 +1,11 @@
 
 #include "pctsp/logger.hh"
+#include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/support/date_time.hpp>  
+
+namespace src = boost::log::sources;
+namespace expr = boost::log::expressions;
+namespace keywords = boost::log::keywords;
 
 int getBoostLevelFromPyLevel(int py_logging_level) {
     int boost_level;
@@ -30,5 +36,13 @@ int getBoostLevelFromPyLevel(int py_logging_level) {
 }
 
 void PCTSPinitLogging(int level) {
+    logging::add_common_attributes();
     logging::core::get()->set_filter(logging::trivial::severity >= level);
+    keywords::format =
+    (
+        expr::stream
+            << expr::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d %H:%M:%S")
+            << ": <" << logging::trivial::severity
+            << "> " << expr::smessage
+    );
 }
