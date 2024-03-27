@@ -100,7 +100,7 @@ SCIP_RETCODE addSubtourEliminationConstraint(
 
     // the name of the constraint contains every vertex in the set
     std::string cons_name = "SubtourElimination_" + joinVariableNames(all_vars);
-    BOOST_LOG_TRIVIAL(debug) << edge_variables.size() << " edge variables and " << vertex_variables.size() << " vertex variables added to new subtour elimination constraint.";
+    BOOST_LOG_TRIVIAL(debug) << std::to_string(edge_variables.size()) << " edge variables and " << std::to_string(vertex_variables.size()) << " vertex variables added to new subtour elimination constraint.";
 
     // create the subtour elimination constraint
     double lhs = -SCIPinfinity(scip);
@@ -173,8 +173,8 @@ SCIP_DECL_CONSCHECK(PCTSPconshdlrSubtour::scip_check)
     SCIP_VAR* transvars[nvars];
     SCIPgetTransformedVars(scip, nvars, SCIPgetVars(scip), transvars);
     auto nfixed = numFixedOrAggVars(transvars, nvars);
-    BOOST_LOG_TRIVIAL(debug) << "scip_check: Checking for subtours. " << nfixed << " fixed/agg vars out of " << nvars;
-    BOOST_LOG_TRIVIAL(debug) << "LP objective value: " << SCIPgetLPObjval(scip) << ". Solution value: " << SCIPgetPrimalbound(scip);
+    BOOST_LOG_TRIVIAL(debug) << "scip_check: Checking for subtours. " << std::to_string(nfixed) << " fixed/agg vars out of " << std::to_string(nvars);
+    BOOST_LOG_TRIVIAL(debug) << "LP objective value: " << std::to_string(SCIPgetLPObjval(scip)) << ". Solution value: " << std::to_string(SCIPgetPrimalbound(scip));
     if (isSolSimpleCycle(scip, sol, result)) {
         BOOST_LOG_TRIVIAL(debug) << "Solution is a simple cycle. No subtour violations found.";
         *result = SCIP_FEASIBLE;
@@ -216,7 +216,7 @@ SCIP_DECL_CONSENFOLP(PCTSPconshdlrSubtour::scip_enfolp) {
         if (isNodeTailingOff(node_rolling_lp_gap[node_id], sec_lp_gap_improvement_threshold, sec_max_tailing_off_iterations)
             && (SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_UNBOUNDEDRAY || SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL)) {
             // resolve the infeasibility by branching
-            BOOST_LOG_TRIVIAL(debug)<< "BRANCHING in enfolp: Node " << node_id << " found to be tailing off. Gap is " << gap << ". Threshold is " << sec_lp_gap_improvement_threshold << std::endl;
+            BOOST_LOG_TRIVIAL(debug)<< "BRANCHING in enfolp: Node " << std::to_string(node_id) << " found to be tailing off. Gap is " << std::to_string(gap) << ". Threshold is " << std::to_string(sec_lp_gap_improvement_threshold) << std::endl;
             SCIPbranchLP(scip, result);
         }
         else {
@@ -396,7 +396,7 @@ SCIP_RETCODE PCTSPseparateMaxflowMincut(
                 auto unreachable = getUnreachableVertices(support_graph, support_root, residual_capacity);
                 if (unreachable.size() >= 3) {   // do not add SEC for small groups of vertices
                     // the component not containing the root violates the subtour elimination constraint
-                    BOOST_LOG_TRIVIAL(debug) << unreachable.size() << " vertices are unreachable from root of the residual graph.";
+                    BOOST_LOG_TRIVIAL(debug) << std::to_string(unreachable.size()) << " vertices are unreachable from root of the residual graph.";
                     input_vertices = getOldVertices(lookup, unreachable);
                 }
                 else {  // unreachable size is less than 3

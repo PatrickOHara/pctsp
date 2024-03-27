@@ -10,6 +10,7 @@ import typer
 from ..vial import DatasetName, ShortAlgorithmName
 from .options import LabDirOption
 from .tables_app import get_heuristics_df
+from ..utils import get_pctsp_logger
 
 plot_app = typer.Typer(name="plot", help="Plotting results")
 
@@ -29,8 +30,11 @@ def plot_heuristics_figure(
     lab_dir: Path = LabDirOption,
 ) -> None:
     """Plot a figure showing the performance of heuristics on a dataset"""
+    logger = get_pctsp_logger("plot-heuristics")
     figures_dir.mkdir(exist_ok=True, parents=False)
+    logger.info("Reading heuristics results from %s.", lab_dir)
     tspwplib_df = get_heuristics_df(DatasetName.tspwplib, lab_dir)
+    logger.info("TSPLIB heuristics dataframe has %s rows.", len(tspwplib_df))
     londonaq_df = get_heuristics_df(DatasetName.londonaq, lab_dir)
 
     # give short names to algorithms
@@ -86,6 +90,12 @@ def plot_heuristics_figure(
             kappa_df = kappa_df.iloc[
                 kappa_df.index.get_level_values("cost_function") == cost_function
             ]
+            logger.info(
+                "Plotting %s points for cost function %s and kappa %s.",
+                len(kappa_df),
+                cost_function.value,
+                kappa,
+            )
             for algorithm in [
                 ShortAlgorithmName.bfs_extension_collapse,
                 ShortAlgorithmName.bfs_path_extension_collapse,
@@ -113,9 +123,15 @@ def plot_heuristics_figure(
                 "x": 1,
             },
         )
-        bottom_fig.write_image(
-            str(figures_dir / f"{DatasetName.tspwplib}_{cost_function}_heuristics.pdf")
+        figure_path = (
+            figures_dir / f"{DatasetName.tspwplib}_{cost_function}_heuristics.pdf"
         )
+        logger.info(
+            "Writing figure for cost function %s to %s",
+            cost_function.value,
+            figure_path,
+        )
+        bottom_fig.write_image(str(figure_path))
 
 
 def add_traces_heuristic(

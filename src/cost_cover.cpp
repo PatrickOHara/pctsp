@@ -11,7 +11,7 @@ SCIP_RETCODE addCoverInequality(
     // x(S) <= |x(S)| - 1 
     int nvars = variables.size();
     std::vector<double> var_coefs(nvars);
-    BOOST_LOG_TRIVIAL(debug) << nvars << " variables added to cover inequality.";
+    BOOST_LOG_TRIVIAL(debug) << std::to_string(nvars) << " variables added to cover inequality.";
     for (int i = 0; i < nvars; i ++) {
         var_coefs[i] = 1;
     }

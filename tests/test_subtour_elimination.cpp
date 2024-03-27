@@ -154,7 +154,7 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     int quota;
     switch (GetParam()) {
         case GraphType::COMPLETE25: quota = totalPrizeOfGraph(graph, prize_map); break;
-        default: quota = 3; break;
+        default: quota = 4; break;
     }
 
     addSelfLoopsToGraph(graph);
@@ -204,17 +204,17 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
             break;
         }
         case GraphType::SUURBALLE: {
-            expected_cost = 15;
+            expected_cost = 16;
             expected_nnodes = 3;
+            expected_num_sec_maxflow_mincut = 4;
             break;
         }
         case GraphType::COMPLETE4: {
-            expected_cost = 4;
-            expected_num_sec_maxflow_mincut = 3;
+            expected_cost = 6;
             break;
         }
         case GraphType::COMPLETE5: {
-            expected_cost = 5;
+            expected_cost = 7;
             break;
         }
         case GraphType::COMPLETE25: {
@@ -231,8 +231,8 @@ TEST_P(SubtourGraphFixture, testSubtourParams) {
     EXPECT_EQ(expected_cost, actual_cost);
     auto summary_yaml = logger_dir / PCTSP_SUMMARY_STATS_YAML;
     auto stats = readSummaryStatsFromYaml(summary_yaml);
-    // EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
-    // EXPECT_EQ(stats.num_sec_disjoint_tour, expected_num_sec_disjoint_tour);
+    EXPECT_EQ(stats.num_sec_maxflow_mincut, expected_num_sec_maxflow_mincut);
+    EXPECT_EQ(stats.num_sec_disjoint_tour, expected_num_sec_disjoint_tour);
     // EXPECT_EQ(SCIPgetNNodes(scip), expected_nnodes);
     SCIPfree(&scip);
 }
@@ -282,6 +282,7 @@ TEST(TestSubtourElimination, testPushIntoRollingLpGapList) {
     EXPECT_EQ(rolling_gaps.back(), gap);
 }
 
+
 TEST_P(SubtourGraphFixture, testTailingOff) {
     PCTSPinitLogging(logging::trivial::warning);
     bool sec_disjoint_tour = true;
@@ -302,6 +303,7 @@ TEST_P(SubtourGraphFixture, testTailingOff) {
     SCIP* scip = NULL;
     SCIPcreate(&scip);
     std::string name = "testTailingOff";
+
 
     auto solution_edges = solvePrizeCollectingTSP(
         scip,

@@ -37,9 +37,12 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
 ) {
     auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name);
     SCIPsolve(scip);
-    SCIP_SOL* sol = SCIPgetBestSol(scip);
-    auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
-    return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+    if (SCIPgetStatus(scip) != SCIP_STATUS_INFEASIBLE) {
+        SCIP_SOL* sol = SCIPgetBestSol(scip);
+        auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+        return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+    }
+    return std::vector<std::pair<PCTSPvertex, PCTSPvertex>>();
 }
 
 std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
@@ -55,9 +58,13 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
 ) {
     auto edge_var_map = modelPrizeCollectingTSP(scip, graph, edge_list, heuristic_edges, cost_dict, prize_dict, quota, root_vertex, name);
     SCIPsolve(scip);
-    SCIP_SOL* sol = SCIPgetBestSol(scip);
-    auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
-    return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+    if (SCIPgetStatus(scip) != SCIP_STATUS_INFEASIBLE) {
+        SCIP_SOL* sol = SCIPgetBestSol(scip);
+        auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+        return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
+    }
+    BOOST_LOG_TRIVIAL(info) << "Solution is not feasible. Returning empty solution vector.";
+    return std::vector<std::pair<PCTSPvertex, PCTSPvertex>>();
 }
 
 SummaryStats getSummaryStatsFromSCIP(SCIP* scip) {
@@ -198,10 +205,14 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
 
     // solve the model
     SCIPsolve(scip);
+    BOOST_LOG_TRIVIAL(info) << "SCIP solve has finished.";
 
     // get the solution
-    SCIP_SOL* sol = SCIPgetBestSol(scip);
-    auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+    std::vector<PCTSPedge> solution_edges = std::vector<PCTSPedge>();
+    if (SCIPgetNSols(scip) > 0) {
+        SCIP_SOL* sol = SCIPgetBestSol(scip);
+        solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+    }
 
     // get the node stats of the solver
     // auto node_stats = node_eventhdlr->getNodeStatsVector();
@@ -303,9 +314,12 @@ std::map<PCTSPedge, SCIP_VAR*> modelPrizeCollectingTSP(
     if (heuristic_edges.size() > 0) {
         auto first = heuristic_edges.begin();
         auto last = heuristic_edges.end();
-        BOOST_LOG_TRIVIAL(info) << "Adding starting solution with " << heuristic_edges.size() << " edges to solver.";
+        BOOST_LOG_TRIVIAL(info) << "Adding starting heuristic solution to solver.";
         SCIP_HEUR* heur = NULL;
         addHeuristicEdgesToSolver(scip, graph, heur, edge_variable_map, first, last);
+    }
+    else {
+        BOOST_LOG_TRIVIAL(info) << "No heuristic solution passed to solver.";
     }
     return edge_variable_map;
 }

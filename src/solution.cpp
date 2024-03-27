@@ -81,7 +81,7 @@ void logSolutionEdges(
             auto source = boost::source(edge, graph);
             auto target = boost::target(edge, graph);
             auto name = SCIPvarGetName(var);
-            BOOST_LOG_TRIVIAL(debug) << "Edge " << source << "-" << target << " has value " << value;
+            BOOST_LOG_TRIVIAL(debug) << "Edge " << std::to_string(source) << "-" << std::to_string(target) << " has value " << std::to_string(value);
         }
     }
 }

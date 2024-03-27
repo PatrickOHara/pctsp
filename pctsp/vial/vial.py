@@ -3,7 +3,7 @@
 from typing import Any, Dict
 from uuid import UUID
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from .data_config import DataConfig
 from .model_params import ModelParams
 from .preprocessing import Preprocessing
@@ -18,6 +18,9 @@ class Vial(BaseModel):
     data_config: DataConfig
     model_params: ModelParams
     preprocessing: Preprocessing
+
+    # ignore pydantic namespaces
+    model_config = ConfigDict(protected_namespaces=())
 
 
 def flat_dict_from_vial(vial: Vial) -> Dict[str, Any]:

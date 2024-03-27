@@ -22,6 +22,7 @@ from ..vial import (
 from . import params
 from .product_of_params import (
     product_of_londonaq_data_config,
+    product_of_londonaq_data_config_from_alpha,
     product_of_model_params,
     product_of_preprocessing,
     product_of_tspwplib_data_config,
@@ -122,33 +123,12 @@ def tailing_off(dataset_name, dataset_root: Path) -> List[Vial]:
     return product_of_vials(data_config_list, model_params_list, preprocessing_list)
 
 
-def cost_cover(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
-    """Compare the branch and cut algorithm with and without cost cover inequalities"""
+def __get_cc_params() -> List[ModelParams]:
     time_limit = FOUR_HOURS
     depth_limit = None
     step = 10
     collapse_paths = True
     heuristic = AlgorithmName.suurballes_path_extension_collapse
-
-    if dataset_name == DatasetName.tspwplib:
-        data_config_list = product_of_tspwplib_data_config(
-            dataset_root,
-            params.TSPLIB_ALPHA_LIST,
-            params.TSPLIB_KAPPA_LIST,
-            list(Generation),
-            params.TSPLIB_GRAPH_NAME_LIST,
-            params.TSPLIB_COST_FUNCTIONS,
-        )
-    elif dataset_name == DatasetName.londonaq:
-        data_config_list = product_of_londonaq_data_config(
-            dataset_root,
-            params.LONDONAQ_QUOTA_LIST,
-            params.LONDONAQ_GRAPH_NAME_LIST,
-        )
-    else:
-        raise ValueError(
-            f"{dataset_name} is not a supported dataset for experiment 'cost_cover'"
-        )
     branching_strategy = BranchingStrategy.STRONG_AT_TREE_TOP
 
     no_cc_params = ModelParams(
@@ -212,13 +192,52 @@ def cost_cover(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
         step_size=step,
         time_limit=time_limit,
     )
-    model_params_list = [
+    return [
         no_cc_params,
         disjoint_paths_cc_params,
         shortest_path_cc_params,
     ]
+
+
+def cost_cover(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
+    """Compare the branch and cut algorithm with and without cost cover inequalities"""
+    if dataset_name == DatasetName.tspwplib:
+        data_config_list = product_of_tspwplib_data_config(
+            dataset_root,
+            params.TSPLIB_ALPHA_LIST,
+            params.TSPLIB_KAPPA_LIST,
+            list(Generation),
+            params.TSPLIB_GRAPH_NAME_LIST,
+            params.TSPLIB_COST_FUNCTIONS,
+        )
+    elif dataset_name == DatasetName.londonaq:
+        data_config_list = product_of_londonaq_data_config(
+            dataset_root,
+            params.LONDONAQ_QUOTA_LIST,
+            params.LONDONAQ_GRAPH_NAME_LIST,
+        )
+    else:
+        raise ValueError(
+            f"{dataset_name} is not a supported dataset for experiment 'cost_cover'"
+        )
+
     preprocessing_list = product_of_preprocessing([False], [False], [True])
-    return product_of_vials(data_config_list, model_params_list, preprocessing_list)
+    return product_of_vials(data_config_list, __get_cc_params(), preprocessing_list)
+
+
+def cc_londonaq_alpha(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:
+    """Run each cost cover algorithm for different values of alpha on londonaq"""
+    if dataset_name != DatasetName.londonaq:
+        raise ValueError(
+            f"{dataset_name} is not a supported dataset for experiment 'cc_londonaq_alpha'"
+        )
+    data_config_list = product_of_londonaq_data_config_from_alpha(
+        dataset_root,
+        params.TSPLIB_ALPHA_LIST,
+        params.LONDONAQ_GRAPH_NAME_LIST,
+    )
+    preprocessing_list = product_of_preprocessing([False], [False], [True])
+    return product_of_vials(data_config_list, __get_cc_params(), preprocessing_list)
 
 
 def baseline(dataset_name: DatasetName, dataset_root: Path) -> List[Vial]:

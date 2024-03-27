@@ -90,6 +90,32 @@ def product_of_londonaq_data_config(
     return data_config_list
 
 
+def product_of_londonaq_data_config_from_alpha(
+    londonaq_root: Path,
+    alpha_list: List[int],
+    graph_name_list: List[LondonaqGraphName],
+) -> List[DataConfig]:
+    """Iterate over data settings for the londonaq dataset"""
+    problems = {}
+    for name in graph_name_list:
+        problem_path = build_path_to_londonaq_yaml(londonaq_root, name)
+        problems[name] = PrizeCollectingTSP.from_yaml(problem_path)
+
+    data_config_list = []
+    for alpha, name in itertools.product(alpha_list, graph_name_list):
+        data_config_list.append(
+            DataConfig(
+                cost_function=problems[name].edge_weight_type,
+                dataset=DatasetName.londonaq,
+                graph_name=name,
+                quota=problems[name].get_quota(alpha),
+                root=problems[name].get_root_vertex(),
+                alpha=alpha,
+            )
+        )
+    return data_config_list
+
+
 def product_of_model_params(
     algorithm_list: List[AlgorithmName],
     collapse_paths: bool = False,

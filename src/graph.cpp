@@ -38,6 +38,12 @@ std::vector<SCIP_VAR*> getEdgeVariables(
     return getEdgeVariables(scip, graph, edge_variable_map, first, last);
 }
 
+void printEdges(std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edges){
+    for (auto& edge : edges) {
+        std::cout << edge.first << ", " << edge.second << std::endl;
+    }
+}
+
 std::vector<PCTSPedge> getEdgesInducedByVertices(PCTSPgraph& graph, std::vector<PCTSPvertex>& vertices) {
     auto first = vertices.begin();
     auto last = vertices.end();

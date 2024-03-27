@@ -130,13 +130,24 @@ def dataset_root(request) -> Path:
 
 
 @pytest.fixture(scope="function")
-def grid8(dataset_root) -> nx.Graph:
+def grid8() -> nx.Graph:
     """Undirected grid graph with 8 vertices"""
-    filepath = dataset_root / "grid8.dot"
-    G = nx.Graph(nx.drawing.nx_pydot.read_dot(filepath))
-    G = nx.relabel.convert_node_labels_to_integers(G)
-    for u, v, data in G.edges(data=True):
-        G[u][v]["cost"] = int(data["cost"])
+    G = nx.Graph()
+    G.add_weighted_edges_from(
+        [
+            (0, 1, 1),
+            (0, 2, 1),
+            (1, 3, 1),
+            (1, 4, 5),
+            (2, 3, 1),
+            (3, 5, 5),
+            (4, 5, 1),
+            (4, 6, 1),
+            (5, 7, 1),
+            (6, 7, 1),
+        ],
+        weight="cost",
+    )
     nx.set_node_attributes(G, 1, name="prize")
     return G
 

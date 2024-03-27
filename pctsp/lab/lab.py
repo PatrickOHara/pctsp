@@ -253,14 +253,16 @@ class Lab:
             filepath = self.get_experiment_dir(experiment.name) / EXPERIMENT_FILENAME
         self.logger.info("Writing experiment to %s", filepath)
         with open(filepath, "w", encoding="utf-8") as json_file:
-            json.dump(json.loads(experiment.json()), json_file, indent=4)
+            json.dump(json.loads(experiment.model_dump_json()), json_file, indent=4)
 
     def write_results_to_file(
         self, experiment_name: ExperimentName, results: List[Result]
     ) -> None:
         """Write a backup of the results incase writing results to mongo fails"""
         filepath = self.get_experiment_dir(experiment_name) / RESULT_FILENAME
-        result_list = [json.loads(result_model.json()) for result_model in results]
+        result_list = [
+            json.loads(result_model.model_dump_json()) for result_model in results
+        ]
         with open(filepath, "w", encoding="utf-8") as json_file:
             json.dump(result_list, json_file)
 

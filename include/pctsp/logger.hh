@@ -6,6 +6,7 @@
 #include <boost/log/core.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
 
 namespace logging = boost::log;
 

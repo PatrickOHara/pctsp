@@ -1,6 +1,5 @@
 """Test the commands that make up the tspwp CLI app"""
 
-
 import logging
 import pandas as pd
 from tspwplib import Generation, GraphName
