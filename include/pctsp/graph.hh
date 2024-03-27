@@ -2,6 +2,7 @@
 
 #ifndef __PCTSP_GRAPH__
 #define __PCTSP_GRAPH__
+#include <iostream>
 #include <boost/bimap.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
@@ -149,6 +150,17 @@ std::vector<SCIP_VAR*> getEdgeVariables(
     PCTSPedgeVariableMap& edge_variable_map,
     std::vector<PCTSPedge>& edges
 );
+
+template <typename TGraph, typename EdgeIt>
+void printEdges(TGraph& graph, EdgeIt& first, EdgeIt& last) {
+    // typedef typename boost::graph_traits< TGraph >::edge_descriptor TEdge;
+    for (; first != last; first++) {
+        auto edge = *first;
+        std::cout << boost::source(edge, graph) << ", " << boost::target(edge, graph) << std::endl;
+    }
+};
+
+void printEdges(std::vector<std::pair<PCTSPvertex, PCTSPvertex>>& edges);
 
 template <typename TGraph, typename EdgeIt>
 std::vector<typename boost::graph_traits< TGraph >::vertex_descriptor> getVerticesOfEdges(

@@ -3,6 +3,7 @@
 #include "fixtures.hh"
 #include "pctsp/graph.hh"
 #include "pctsp/algorithms.hh"
+#include "pctsp/node_selection.hh"
 
 typedef GraphFixture AlgorithmsFixture;
 typedef GraphFixture SuurballeGraphFixture;
@@ -159,9 +160,16 @@ TEST_P(AlgorithmsFixture, testAddHeuristicVarsToSolver) {
     // initialise and create the model without subtour elimiation constraints
     SCIP* scip_model = NULL;
     SCIPcreate(&scip_model);
-    includeBranchRules(scip_model);
-    // SCIPincludeDefaultPlugins(scip_model);
-    SCIPcreateProbBasic(scip_model, "test-add-heuristic");
+    SCIPincludeDefaultPlugins(scip_model);
+    SCIPcreateProbBasic(scip_model, "testAddHeuristicVarsToSolver");
+
+    SCIP_MESSAGEHDLR* handler;
+    std::filesystem::path solver_dir = ".logs";
+    std::filesystem::create_directory(solver_dir);
+    std::string filename = "testAddHeuristicVarsToSolver_" + getParamName() + ".txt";
+    std::filesystem::path logs_txt = solver_dir / filename;
+    SCIPcreateMessagehdlrDefault(&handler, false, logs_txt.c_str(), true);
+    SCIPsetMessagehdlr(scip_model, handler);
 
     // add variables and constraints
     SCIP_RETCODE code =

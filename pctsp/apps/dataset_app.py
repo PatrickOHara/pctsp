@@ -10,7 +10,6 @@ from tspwplib import (
     EdgeWeightType,
     Generation,
     ProfitsProblem,
-    NotConnectedException,
     asymmetric_from_undirected,
     biggest_vertex_id_from_graph,
     build_path_to_londonaq_yaml,
@@ -109,7 +108,7 @@ def get_graph_stats(graph: nx.Graph, root_vertex: int) -> Dict[str, float]:
     instance_stats["total_prize"] = og_prize
     try:
         instance_stats["metricness"] = metricness(graph)
-    except NotConnectedException:
+    except nx.exception.NetworkXException:  # FIXME change to NotConnectedException
         largest_component_graph = graph.subgraph(max(nx.connected_components(graph), key=len))
         instance_stats["metricness"] = metricness(largest_component_graph)
 

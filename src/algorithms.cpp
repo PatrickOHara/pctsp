@@ -37,7 +37,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
 ) {
     auto edge_var_map = modelPrizeCollectingTSP(scip, graph, heuristic_edges, cost_map, prize_map, quota, root_vertex, name);
     SCIPsolve(scip);
-    if (SCIPgetStatus(scip) != SCIP_INFEASIBLE) {
+    if (SCIPgetStatus(scip) != SCIP_STATUS_INFEASIBLE) {
         SCIP_SOL* sol = SCIPgetBestSol(scip);
         auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
         return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
@@ -58,7 +58,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
 ) {
     auto edge_var_map = modelPrizeCollectingTSP(scip, graph, edge_list, heuristic_edges, cost_dict, prize_dict, quota, root_vertex, name);
     SCIPsolve(scip);
-    if (SCIPgetStatus(scip) != SCIP_INFEASIBLE) {
+    if (SCIPgetStatus(scip) != SCIP_STATUS_INFEASIBLE) {
         SCIP_SOL* sol = SCIPgetBestSol(scip);
         auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
         return getVertexPairVectorFromEdgeSubset(graph, solution_edges);
@@ -211,7 +211,7 @@ std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solvePrizeCollectingTSP(
     std::vector<PCTSPedge> solution_edges = std::vector<PCTSPedge>();
     if (SCIPgetNSols(scip) > 0) {
         SCIP_SOL* sol = SCIPgetBestSol(scip);
-        auto solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
+        solution_edges = getSolutionEdges(scip, graph, sol, edge_var_map);
     }
 
     // get the node stats of the solver
