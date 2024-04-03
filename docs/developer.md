@@ -66,6 +66,6 @@ black */
 
 ### Type hinting
 
-We are moving towards adding [type hints](https://docs.python.org/3.8/library/typing.html) so you may optionally add types to your code.
+We are moving towards adding [type hints](https://docs.python.org/3.12/library/typing.html) so you may optionally add types to your code.
 In which case you do not need to include types in your google style docstrings.
 

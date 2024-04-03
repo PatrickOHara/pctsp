@@ -1,5 +1,6 @@
 add_library(pypctsp SHARED "pypctsp.cpp")
-set_target_properties(pypctsp PROPERTIES SUFFIX ${PYTHON_MODULE_EXTENSION})
+
+set_target_properties(pypctsp PROPERTIES SUFFIX ${Python_SOABI})
 set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 17)
 
 # setting for Mac OS X
@@ -10,7 +11,7 @@ endif()
 target_include_directories(pypctsp PUBLIC ${PCTSP_INCLUDE_DIRS})
 target_include_directories(pypctsp PRIVATE
 	${Boost_INCLUDE_DIRS}
-	${Python3_INCLUDE_DIRS}
+	${Python_INCLUDE_DIRS}
 	${SCIP_INCLUDE_DIRS}
 	${pybind11_INCLUDE_DIRS}
 )

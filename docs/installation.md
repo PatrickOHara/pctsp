@@ -16,7 +16,7 @@ docker pull patrickohara/pctsp:latest
 
 ## Dependencies
 
-Installation requires [CMake](https://cmake.org/), [Ninja](https://ninja-build.org/), a compiler with [support for C++ 17 or later](https://en.cppreference.com/w/cpp/compiler_support) and python 3.8 or later.
+Installation requires [CMake](https://cmake.org/), [Ninja](https://ninja-build.org/), a compiler with [support for C++ 17 or later](https://en.cppreference.com/w/cpp/compiler_support) and python 3.12 or later.
 
 There are three C++ library dependencies:
 - [Boost](https://www.boost.org/) for graph algorithms, logging and bimaps.
@@ -72,6 +72,15 @@ Python_ROOT=${PREFIX}
 Notice we have set both the `Python3_ROOT` and `Python_ROOT` to be the same.
 This is because some dependencies (gtest, scikit-build) use the [FindPython](https://cmake.org/cmake/help/latest/module/FindPython.html)
 cmake function instead of [FindPython3](https://cmake.org/cmake/help/latest/module/FindPython3.html?highlight=findpython3) which can cause different versions of python to be found for different dependencies.
+
+### TBB
+
+When installing TBB with conda, the installation does not include the header files.
+You may need to install the developers version of TBB:
+
+```
+conda install tbb-devel
+```
 
 ## Dynamic linking (Mac OS X problems)
 

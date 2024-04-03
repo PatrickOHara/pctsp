@@ -255,25 +255,25 @@ def test_cycle_cover_grid8(grid8, root, logger_dir):
 
 
 # NOTE below code is useful when running a python debugger
-# if __name__ == "__main__":
-#     from pathlib import Path
-#     from tspwplib import (
-#         build_path_to_oplib_instance,
-#         ProfitsProblem,
-#         Generation,
-#         GraphName,
-#     )
-#     import itertools
+if __name__ == "__main__":
+    from pathlib import Path
+    from tspwplib import (
+        build_path_to_oplib_instance,
+        ProfitsProblem,
+        Generation,
+        GraphName,
+    )
+    import itertools
 
-#     oplib_root = Path("/Users/patrick/External/OPLib/")
-#     for graph_name, generation in itertools.product(
-#         [GraphName.att48, GraphName.eil76, GraphName.st70],
-#         [Generation.gen1, Generation.gen2, Generation.gen3],
-#     ):
-#         print(graph_name, generation)
-#         filepath = build_path_to_oplib_instance(oplib_root, generation, graph_name)
-#         problem = ProfitsProblem.load(filepath)
-#         graph = problem.get_graph(normalize=True)
-#         test_pctsp_with_heuristic(
-#             graph, problem.get_root_vertex(), Path(".logs"), 100.0
-#         )
+    oplib_root = Path("/Users/patrick/External/OPLib/")
+    for graph_name, generation in itertools.product(
+        [GraphName.att48, GraphName.eil76, GraphName.st70],
+        [Generation.gen1, Generation.gen2, Generation.gen3],
+    ):
+        print(graph_name, generation)
+        filepath = build_path_to_oplib_instance(oplib_root, generation, graph_name)
+        problem = ProfitsProblem.load(filepath)
+        graph = problem.get_graph(normalize=True)
+        test_pctsp_with_heuristic(
+            graph, problem.get_root_vertex(), Path(".logs"), 100.0
+        )
