@@ -1,6 +1,6 @@
 """Functions for running algorithms using vials"""
 
-from datetime import datetime
+import datetime
 from logging import Logger
 from pathlib import Path
 from typing import Mapping, Optional, no_type_check
@@ -162,7 +162,7 @@ def run_algorithm(
         vial.model_params.algorithm.value,
         vial.uuid,
     )
-    start_time = datetime.utcnow()
+    start_time = datetime.datetime.now(datetime.UTC)
 
     # run Suurballe's algorithm needed by a heuristic or by the cost cover inequalities
     biggest_vertex = biggest_vertex_id_from_graph(graph)
@@ -245,7 +245,7 @@ def run_algorithm(
         )
 
     # end time
-    end_time = datetime.utcnow()
+    end_time = datetime.datetime.now(datetime.UTC)
 
     try:
         edge_list = remove_self_loops_from_edge_list(edge_list)

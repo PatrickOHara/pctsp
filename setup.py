@@ -15,7 +15,7 @@ setup(
         "plotly>=4.14.1",
         "pydantic>=1.8.0",
         "pyscipopt>=4.0.0",
-        "tspwplib>=0.7.9",
+        "tspwplib@git+https://github.com/PatrickOHara/tspwplib.git@main",
         "typer>=0.4.0",
     ],
     name="pctsp",

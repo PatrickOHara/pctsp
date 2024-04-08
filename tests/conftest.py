@@ -1,5 +1,6 @@
 """Fixtures for algorithms"""
 
+import os
 from datetime import datetime
 from pathlib import Path
 import sys
@@ -9,9 +10,11 @@ import networkx as nx
 import pytest
 import tspwplib.types as tp
 from tspwplib import (
+    Alpha,
     build_path_to_oplib_instance,
     edge_list_from_walk,
     Generation,
+    GraphName,
     ProfitsProblem,
     sparsify_uid,
 )
@@ -34,6 +37,88 @@ from pctsp.vial import (
 
 
 # fixtures that use the tspwplib
+
+
+def pytest_addoption(parser):
+    """Options for filepaths"""
+    group = parser.getgroup("tspwplib")
+    group.addoption(
+        "--tsplib-root",
+        default=os.getenv("TSPLIB_ROOT"),
+        required=False,
+        type=str,
+        help="Filepath to tsplib95 directory",
+    )
+    group.addoption(
+        "--oplib-root",
+        default=os.getenv("OPLIB_ROOT"),
+        required=False,
+        type=str,
+        help="Filepath to oplib directory",
+    )
+
+    group = parser.getgroup("pctsp")
+    group.addoption(
+        "--datasets-root",
+        default="datasets",
+        required=False,
+        type=str,
+        help="Filepath to test datasets directory",
+    )
+
+
+# fixtures for filepaths
+
+
+@pytest.fixture(scope="function")
+def tsplib_root(request) -> Path:
+    """Root of tsplib95 data"""
+    return Path(request.config.getoption("--tsplib-root"))
+
+
+@pytest.fixture(scope="function")
+def oplib_root(request) -> Path:
+    """Root of the cloned OP lib"""
+    return Path(request.config.getoption("--oplib-root"))
+
+
+# fixtures for types
+
+
+@pytest.fixture(scope="function", params=[Alpha.fifty])
+def alpha(request) -> int:
+    """Alpha values"""
+    return request.param.value
+
+
+@pytest.fixture(
+    scope="function",
+    params=[
+        GraphName.eil76,
+        GraphName.st70,
+        GraphName.att48,
+    ],
+)
+def graph_name(request) -> GraphName:
+    """Loop through valid instance names"""
+    return request.param
+
+
+@pytest.fixture(
+    scope="function",
+    params=[
+        Generation.gen1,
+        Generation.gen2,
+        Generation.gen3,
+    ],
+)
+def generation(request) -> Generation:
+    """Loop through valid generations"""
+    # NOTE generation 4 has different alpha values
+    return request.param
+
+
+# fixtures for complete graphs
 
 
 @pytest.fixture(scope="function")
@@ -109,18 +194,6 @@ def suurballes_edges() -> Set[Tuple[int, int, int]]:
         (7, 2, 3),
         (7, 6, 7),
     ]
-
-
-def pytest_addoption(parser):
-    """Options for filepaths for pytest-tspwplib"""
-    group = parser.getgroup("pctsp")
-    group.addoption(
-        "--datasets-root",
-        default="datasets",
-        required=False,
-        type=str,
-        help="Filepath to test datasets directory",
-    )
 
 
 @pytest.fixture(scope="function")
