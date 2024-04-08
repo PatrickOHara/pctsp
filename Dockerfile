@@ -19,5 +19,5 @@ RUN git clone https://github.com/rhgrant10/tsplib95.git /app/tsplib95
 COPY . /app/pctsp
 
 # Install package
-RUN pip3 install pybind11
+RUN pip3 install pybind11 ninja
 RUN pip3 install /app/pctsp
