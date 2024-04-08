@@ -8,5 +8,4 @@ mypy>=1.4.1
 pydot>=1.4.2
 pylint>=-2.17.4
 pytest>=6.1.1
-pytest-tspwplib>=0.2.5
 types-PyYAML>=5.4.3

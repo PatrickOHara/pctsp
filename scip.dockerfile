@@ -1,12 +1,12 @@
 # Build from official python image
-FROM python:3.8
+FROM python:3.12
 
 # Set working directory
 WORKDIR /app
 
 # Boost variables
 ENV BOOST_MAJOR 1
-ENV BOOST_MINOR 74
+ENV BOOST_MINOR 84
 ENV BOOST_PATCH 0
 ENV BOOST_VERSION "${BOOST_MAJOR}.${BOOST_MINOR}.${BOOST_PATCH}"
 ENV BOOST_SRC_DIR "/app/boost_${BOOST_MAJOR}_${BOOST_MINOR}_${BOOST_PATCH}"
@@ -14,7 +14,7 @@ ENV BOOST_FILENAME "boost_${BOOST_MAJOR}_${BOOST_MINOR}_${BOOST_PATCH}.tar.bz2"
 ENV BOOST_URL "https://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/${BOOST_FILENAME}/download"
 
 # SCIP variables
-ENV SCIP_VERSION 8.0.0
+ENV SCIP_VERSION 9.0.0
 ENV SCIP_SRC_DIR /app/scipoptsuite-${SCIP_VERSION}
 ENV SCIP_FILENAME scipoptsuite-${SCIP_VERSION}.tgz
 ENV SCIP_URL https\://www.scipopt.org/download/release

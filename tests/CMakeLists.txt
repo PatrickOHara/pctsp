@@ -51,7 +51,7 @@ find_package(TBB REQUIRED)
 
 # link libraries and include files
 target_link_libraries(${TARGET} PRIVATE
-    ${Python3_LIBRARIES}        # link at compile time for building tests
+    ${Python_LIBRARIES}        # link at compile time for building tests
     ${Boost_LIBRARIES}
     gtest
     gmock
@@ -68,7 +68,7 @@ target_link_libraries(${TARGET} PRIVATE
 )
 target_include_directories(${TARGET} PUBLIC
     ${PCTSP_INCLUDE_DIRS}
-    ${Python3_INCLUDE_DIRS}
+    ${Python_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${SCIP_INCLUDE_DIRS}
     ${Readline_INCLUDE_DIR}

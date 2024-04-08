@@ -1,10 +1,13 @@
 """Tests for exact algorithms for PCTSP"""
 
+from pathlib import Path
+import itertools
 import networkx as nx
 from pyscipopt import Model, SCIP_STAGE
 from tspwplib import (
     asymmetric_from_undirected,
     biggest_vertex_id_from_graph,
+    build_path_to_oplib_instance,
     edge_list_from_walk,
     is_complete_with_self_loops,
     order_edge_list,
@@ -14,6 +17,9 @@ from tspwplib import (
     split_head,
     total_prize_of_tour,
     walk_from_edge_list,
+    ProfitsProblem,
+    Generation,
+    GraphName,
 )
 from pctsp.algorithms import random_tour_complete_graph, solve_pctsp, SummaryStats
 from pctsp.constants import PCTSP_SUMMARY_STATS_YAML
@@ -255,25 +261,16 @@ def test_cycle_cover_grid8(grid8, root, logger_dir):
 
 
 # NOTE below code is useful when running a python debugger
-# if __name__ == "__main__":
-#     from pathlib import Path
-#     from tspwplib import (
-#         build_path_to_oplib_instance,
-#         ProfitsProblem,
-#         Generation,
-#         GraphName,
-#     )
-#     import itertools
-
-#     oplib_root = Path("/Users/patrick/External/OPLib/")
-#     for graph_name, generation in itertools.product(
-#         [GraphName.att48, GraphName.eil76, GraphName.st70],
-#         [Generation.gen1, Generation.gen2, Generation.gen3],
-#     ):
-#         print(graph_name, generation)
-#         filepath = build_path_to_oplib_instance(oplib_root, generation, graph_name)
-#         problem = ProfitsProblem.load(filepath)
-#         graph = problem.get_graph(normalize=True)
-#         test_pctsp_with_heuristic(
-#             graph, problem.get_root_vertex(), Path(".logs"), 100.0
-#         )
+if __name__ == "__main__":
+    oplib_root = Path("/Users/patrick/External/OPLib/")
+    for graph_name, generation in itertools.product(
+        [GraphName.att48, GraphName.eil76, GraphName.st70],
+        [Generation.gen1, Generation.gen2, Generation.gen3],
+    ):
+        print(graph_name, generation)
+        filepath = build_path_to_oplib_instance(oplib_root, generation, graph_name)
+        problem = ProfitsProblem.load(filepath)
+        test_graph = problem.get_graph(normalize=True)
+        test_pctsp_with_heuristic(
+            test_graph, problem.get_root_vertex(), Path(".logs"), 100.0
+        )
