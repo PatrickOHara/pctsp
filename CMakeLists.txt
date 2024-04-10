@@ -15,7 +15,8 @@ if (NOT CMAKE_SYSTEM_PREFIX_PATH)
 endif()
 
 # option to turn of building the tests
-option(PCTSP_BUILD_TESTS "Turn on/off building the tests." ON)
+# option(PCTSP_BUILD_TESTS "Turn on/off building the tests." ON)
+include(CTest)
 
 # required dependencies
 find_package(Python 3.12 REQUIRED COMPONENTS Interpreter Development REQUIRED)
@@ -23,6 +24,7 @@ find_package(Boost 1.84.0 REQUIRED COMPONENTS graph log log_setup thread filesys
 find_package(SCIP 9.0.0 REQUIRED)
 find_package(YAML_CPP REQUIRED FOUND_VAR YAML_CPP_FOUND)
 find_package(pybind11 CONFIG HINTS ${Python_SITELIB} PATH_SUFFIXES "pybind11")
+find_package(SCIPSDP REQUIRED)
 
 # depends upon scikit-build being installed
 list(APPEND CMAKE_MODULE_PATH "${Python_SITELIB}/skbuild/resources/cmake;")
@@ -35,6 +37,6 @@ endif()
 
 add_subdirectory(src)
 add_subdirectory(pctsp)
-if (${PCTSP_BUILD_TESTS})
+if (BUILD_TESTING)
   add_subdirectory(tests)
 endif()

@@ -57,6 +57,7 @@ target_link_libraries(${TARGET} PRIVATE
     gmock
     ${CMAKE_THREAD_LIBS_INIT}   # prevents -pthread issues
     ${SCIP_LIBRARIES}
+    ${SCIPSDP_LIBRARIES}
     ${Readline_LIBRARY}
     ${GMP_LIBRARIES}
     ${ZLIB_LIBRARIES}
@@ -77,4 +78,4 @@ target_include_directories(${TARGET} PUBLIC
     ${YAML_CPP_INCLUDE_DIRS}
     ${TBB_INCLUDE_DIRS}
 )
-message("done testing")
+add_test(NAME TestPCTSP COMMAND ${TARGET})

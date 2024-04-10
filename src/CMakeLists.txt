@@ -13,6 +13,7 @@ add_library(${TARGET} SHARED
     "logger.cpp"
     "node_selection.cpp"
     "preprocessing.cpp"
+    "robust.cpp"
     "sciputils.cpp"
     "separation.cpp"
     "solution.cpp"
