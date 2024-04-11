@@ -14,9 +14,11 @@ TEST(TestSoc, testSoc) {
 
     int nVars = 4;
     VarVector vars (nVars);
-    for (auto& var : vars) {
-        SCIPcreateVarBasic(scip, &var, NULL, 0, 1, 0, SCIP_Vartype::SCIP_VARTYPE_BINARY);
-        SCIPaddVar(scip, var);
+    SCIP_EXPR* lhsExprs[nVars];
+    for (int i = 0; i < nVars; i++) {
+        SCIPcreateVarBasic(scip, &vars[i], NULL, 0, 1, 0, SCIP_Vartype::SCIP_VARTYPE_BINARY);
+        SCIPaddVar(scip, vars[i]);
+        SCIPcreateExprVar(scip, &lhsExprs[i], vars[i], NULL, NULL);
     }
 
     SCIP_VAR* t = NULL;
@@ -32,7 +34,7 @@ TEST(TestSoc, testSoc) {
     // SCIPcreateConsBasicSOCNonlinear(scip, &socCons, consName.c_str(), nVars, vars.data(), NULL, NULL, 0, t, 1, 0);
     std::vector<SCIP_VAR*> rhsVars = {t, z};
     std::vector<double> rhsCoefs = {1, 1};
-    SCIPcreateConsSOC(scip, &socCons, consName.c_str(), nVars, vars.data(), NULL, NULL, 0, rhsVars.size(), rhsVars.data(), rhsCoefs.data(), 0);
+    SCIPcreateConsSOC(scip, &socCons, consName.c_str(), nVars, lhsExprs, NULL, NULL, 0, rhsVars.size(), rhsVars.data(), rhsCoefs.data(), 0);
     SCIPaddCons(scip, socCons);
 
     SCIP_CONS* knapsack = NULL;

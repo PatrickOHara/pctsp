@@ -5,14 +5,14 @@
 
 #include "algorithms.hh"
 
-std::vector<std::pair<PCTSPvertex, PCTSPvertex>> DistRobustPrizeCollectingTsp(
+std::vector<std::pair<PCTSPvertex, PCTSPvertex>> solveDistRobustPrizeCollectingTsp(
     SCIP * scip,
     PCTSPgraph& graph,
-    EdgeCostMap& cost_mean_map,
-    EdgeCostMap& cost_var_map,
-    VertexPrizeMap& prize_map,
+    EdgeCostMap& costMeanMap,
+    EdgeCostMap& costSigmaMap,
+    VertexPrizeMap& prizeMap,
     PrizeNumberType& quota,
-    PCTSPvertex& root_vertex,
+    PCTSPvertex& rootVertex,
     std::string& name
 );
 
@@ -26,9 +26,9 @@ SCIP_RETCODE SCIPcreateConsSOC(
     SCIP*                 scip,               /**< SCIP data structure */
     SCIP_CONS**           cons,               /**< pointer to hold the created constraint */
     const char*           name,               /**< name of constraint */
-    int                   nvars,              /**< number of variables on left hand side of constraint (n) */
-    SCIP_VAR**            vars,               /**< array with variables on left hand side (x_i) */
-    SCIP_Real*            coefs,              /**< array with coefficients of left hand side variables (alpha_i), or NULL if all 1.0 */
+    int                   nlhsexprs,          /**< number of variables on left hand side of constraint (n) */
+    SCIP_EXPR**           lhsexprs,           /**< array of expressions on left hand side (x_i) */
+    SCIP_Real*            lhscoefs,           /**< array with coefficients of left hand side variables (alpha_i), or NULL if all 1.0 */
     SCIP_Real*            offsets,            /**< array with offsets of variables (beta_i), or NULL if all 0.0 */
     SCIP_Real             constant,           /**< constant on left hand side (gamma) */
     int                   nrhsvars,           /**< number of variables on right hand side of constraint */

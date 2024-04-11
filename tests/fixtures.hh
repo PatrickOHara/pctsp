@@ -19,6 +19,7 @@ class GraphFixture : public::testing::TestWithParam<GraphType> {
 	public:
 		PCTSPgraph getGraph();
 		EdgeCostMap getCostMap(PCTSPgraph& graph);
+		EdgeCostMap getCostSigmaMap(PCTSPgraph& graph);
 		VertexPrizeMap getPrizeMap(PCTSPgraph& graph);
 		VertexPrizeMap getGenOnePrizeMap(PCTSPgraph& graph);
 		std::vector<std::pair<int, int>> getEdgeVector();
